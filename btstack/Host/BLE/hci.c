@@ -801,19 +801,19 @@ static void hci_initializing_run()
                 hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS;
                 le_hci_send_cmd(&hci_le_set_advertising_parameters,
                     0x0320, 0x0320, 
-                    0x01, 0x02, 
+                    0x04, 0x00, 
                     0x0, rpa[0].peer_identity_address, 
                     0x7, 0x0);
                 break;
         case HCI_INIT_LE_SET_ADV_DATA:
             puts("HCI_INIT_LE_SET_ADV_DATA\n");
             hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_DATA;
-            le_hci_send_cmd(&hci_le_set_advertising_data,31, adv_ind_data);
+            le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data),sizeof(adv_ind_data),  adv_ind_data);
                 break;
         case HCI_INIT_LE_SET_RSP_DATA:
             puts("HCI_INIT_LE_SET_RSP_DATA\n");
             hci_stack->substate = HCI_INIT_W4_LE_SET_RSP_DATA;
-            le_hci_send_cmd(&hci_le_set_scan_response_data, 31, scan_rsp_data);
+            le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data);
             break;
         //privacy 
         case HCI_INIT_LE_READ_RESOLVING_LIST_SIZE:
@@ -833,7 +833,7 @@ static void hci_initializing_run()
         case HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT:
             puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n");
             hci_stack->substate = HCI_INIT_W4_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT;
-            le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0x384);
+            le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0x5);
             break;
         case HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE:
             puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n");
@@ -1028,8 +1028,8 @@ static void event_handler(uint8_t *packet, int size)
                     puts("peer RPA : "); printf_buf(&packet[20], 6);
                     puts("\n");
 				case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
+                    //Status error
 					// Connection management
-					puts("le_connection_complete\n");
 					bt_flip_addr(addr, &packet[8]);
 					addr_type = (bd_addr_type_t)packet[7];
 
@@ -1051,8 +1051,13 @@ static void event_handler(uint8_t *packet, int size)
 						if (packet[3] == 0x05) {
 							hci_drop_link_key_for_bd_addr(addr);
 						}
+                        //DIRECTED_ADVERTISING_TIMEOUT
+                        if (packet[3] == 0x3C) 
+                        {
+                        }
 						break;
 					}
+					puts("le_connection_complete\n");
 					// on success, both hosts receive connection complete event
                     if (packet[6] == HCI_ROLE_MASTER){
                         // if we're master, it was an outgoing connection and we're done with it

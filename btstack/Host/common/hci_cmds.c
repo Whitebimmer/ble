@@ -789,7 +789,7 @@ OPCODE(OGF_LE_CONTROLLER, 0x07), ""
  * @param advertising_data (31 bytes)
  */
 const hci_cmd_t hci_le_set_advertising_data= {
-OPCODE(OGF_LE_CONTROLLER, 0x08), "1A"
+OPCODE(OGF_LE_CONTROLLER, 0x08), "1LV"
 // return: status
 };
 
@@ -798,7 +798,7 @@ OPCODE(OGF_LE_CONTROLLER, 0x08), "1A"
  * @param scan_response_data (31 bytes)
  */
 const hci_cmd_t hci_le_set_scan_response_data= {
-OPCODE(OGF_LE_CONTROLLER, 0x09), "1A"
+OPCODE(OGF_LE_CONTROLLER, 0x09), "1LV"
 // return: status
 };
 

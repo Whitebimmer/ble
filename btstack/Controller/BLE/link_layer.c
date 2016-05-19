@@ -46,6 +46,16 @@ struct link_layer{
 	struct thread ll_thread;
 };
 
+//privacy
+struct ll_privacy{
+    struct sys_timer RPA_timeout;
+    u32 RPA_timeout_cnt;
+
+    u8 random48[6];
+};
+
+struct ll_privacy le_privacy;
+
 u8 ll_error_code;
 /*
  *-------------------HCI PARAMETER
@@ -849,18 +859,19 @@ static bool device_addr_verify(const u8 *addr, u8 start, u8 len)
     return TRUE;
 }
 
-
-static void device_addr_generate(u8 *addr, u8 *irk, u8 type)
+static void __random48_update(void)
 {
-    u8 rand[6];
-
     u8 i;
     
     for(i = 0; i < 6;)
     {
-        rand[i++] = RAND64L;
-        rand[i++] = RAND64H;
+        le_privacy.random48[i++] = RAND64L;
+        le_privacy.random48[i++] = RAND64H;
     }
+}
+
+static void device_addr_generate(u8 *addr, u8 *irk, u8 type)
+{
 
     switch(type)
     {
@@ -869,27 +880,27 @@ static void device_addr_generate(u8 *addr, u8 *irk, u8 type)
             /* A device may choose to initialize its static address to a new value after each */
             /* power cycle. A device shall not change its static address value once initialized */
             /* until the device is power cycled. */
-            rand[5] |= 0xc0;
-            memcpy(addr, rand, 6);
+            le_privacy.random48[5] |= 0xc0;
+            memcpy(addr, le_privacy.random48, 6);
             break;
 
         /* The two most significant bits of the address shall be equal to 0 */
         /* The address shall not be equal to the public address */
         case NON_RESOLVABLE_PRIVATE_ADDR:
-            rand[5] &= ~0xc0;
-            memcpy(addr, rand, 6);
+            le_privacy.random48[5] &= ~0xc0;
+            memcpy(addr, le_privacy.random48, 6);
             break;
 
-        /* The two most significant bits of prand shall be equal to 0 and 1  */
+        /* The two most significant bits of rand shall be equal to 0 and 1  */
         case RESOLVABLE_PRIVATE_ADDR:
-            /* hash = ah(irk, prand); */
+            /* hash = ah(irk, ple_privacy.random48); */
             //LSB
-            rand[2] &= ~0xc0;
-            rand[2] |= 0x40;
-            irk_enc(irk, rand, addr);
+            le_privacy.random48[2] &= ~0xc0;
+            le_privacy.random48[2] |= 0x40;
+            irk_enc(irk, le_privacy.random48, addr);
 
             //MSB
-            memcpy(addr + 3, rand, 3);
+            memcpy(addr + 3, le_privacy.random48, 3);
             /* memcpy(addr, hash, 3); */
             break;
     }
@@ -995,6 +1006,8 @@ static struct resolving_list *ll_resolving_list_match(const u8 addr_type, const 
 }
 static void __set_ll_public_device_addr(u8 *addr)
 {
+    /* puts(__func__); */
+    /* printf_buf(hci_param_t->priv->public_addr, 6); */
     memcpy(addr, hci_param_t->priv->public_addr, 6);
 }
 
@@ -1096,6 +1109,37 @@ static void __set_ll_peer_resolvable_private_addr(u8 *addr,
     memcpy(addr, resolving_list_t->peer_PRA, 6);
 }
 
+static void __set_ll_adv_local_RPA(struct le_link *link)
+{
+    struct resolving_list *resolving_list_t = NULL;
+
+    switch (le_param.adv_param.Own_Address_Type)
+    {
+        case 2:
+        case 3:
+            //pairs ok
+            puts("Adv Own_Address_Type\n");
+            //override public or random address
+            if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
+            {
+                resolving_list_t = 
+                    ll_resolving_list_match(le_param.adv_param.Peer_Address_Type,
+                        le_param.adv_param.Peer_Address);
+            }
+            if ((resolving_list_t != NULL)
+                && (__resolve_list_IRK_verify(resolving_list_t->resolving_list_param.Local_IRK) == TRUE))
+            {
+                __set_ll_local_resolvable_private_addr(link->local.addr, resolving_list_t);
+            }
+            break; 
+        default:
+            return;
+    }
+
+    __ble_ops->ioctrl(link->hw, BLE_SET_LOCAL_ADDR,
+            link->local.addr_type,
+            link->local.addr); 
+}
 
 static void __set_ll_adv_local_addr(struct le_link *link)
 {
@@ -1115,32 +1159,14 @@ static void __set_ll_adv_local_addr(struct le_link *link)
            break; 
     }
 
-    struct resolving_list *resolving_list_t = NULL;
-
-    //override public or random address
-    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
-    {
-        resolving_list_t = 
-            ll_resolving_list_match(le_param.adv_param.Peer_Address_Type,
-                le_param.adv_param.Peer_Address);
-    }
-    switch (le_param.adv_param.Own_Address_Type)
-    {
-        case 2:
-        case 3:
-            //pairs ok
-            puts("Adv Own_Address_Type\n");
-            if ((resolving_list_t != NULL)
-                && (__resolve_list_IRK_verify(resolving_list_t->resolving_list_param.Local_IRK) == TRUE))
-            {
-                __set_ll_local_resolvable_private_addr(link->local.addr, resolving_list_t);
-            }
-            break; 
-    }
-
     __ble_ops->ioctrl(link->hw, BLE_SET_LOCAL_ADDR,
             link->local.addr_type,
             link->local.addr); 
+
+    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
+    {
+        __set_ll_adv_local_RPA(link);
+    }
 }
 
 
@@ -1183,9 +1209,9 @@ static void __set_ll_adv_peer_addr(struct le_link *link)
             break; 
     }
 
-    /* __ble_ops->ioctrl(link->hw, BLE_SET_PEER_ADDR, */
-            /* link->peer.addr_type, */
-            /* link->peer.addr);  */
+    __ble_ops->ioctrl(link->hw, BLE_SET_PEER_ADDR,
+            link->peer.addr_type,
+            link->peer.addr); 
 
     //specify Peer addr
     __ble_ops->ioctrl(link->hw, BLE_WHITE_LIST_ADDR,
@@ -1397,9 +1423,6 @@ static struct resolving_list *ll_resolve_local_addr(const u8 *addr)
     return NULL;
 }
 
-//privacy
-static struct sys_timer RPA_timeout;
-static u32 RPA_timeout_cnt;
 
 static void ll_RPA_timeout_timer_handler(struct sys_timer *timer)
 {
@@ -1410,58 +1433,67 @@ static void ll_RPA_timeout_timer_handler(struct sys_timer *timer)
     ASSERT(link != NULL, "%s\n", __func__);
     puts("-----LL RPA Timeout\n");
 
+    __random48_update();
     /* TO*DO */
     switch (link->state)    
     {
-    case 1:
+    case LL_ADVERTISING:
         __set_ll_adv_local_addr(link);
         break;
+    case LL_SCANNING:
+    case LL_INITIATING:
+        break;
+    default:
+        break;
     }
-    sys_timer_remove(&RPA_timeout);
+    sys_timer_remove(&le_privacy.RPA_timeout);
 
     //Periodic Timer
-    sys_timer_register(&RPA_timeout, RPA_timeout_cnt, ll_RPA_timeout_timer_handler);
-    sys_timer_set_user(&RPA_timeout, link);
+    sys_timer_register(&le_privacy.RPA_timeout, le_privacy.RPA_timeout_cnt, ll_RPA_timeout_timer_handler);
+    sys_timer_set_user(&le_privacy.RPA_timeout, link);
 }
 
 static void ll_RPA_timeout_start(u32 timeout)
 {
     //set ll RPA timeout
-    sys_timer_register(&RPA_timeout, timeout, ll_RPA_timeout_timer_handler);
-    /* sys_timer_set_user(&RPA_timeout, link); */
+    printf("RPA timeout %x\n", timeout);
+    sys_timer_register(&le_privacy.RPA_timeout, timeout, ll_RPA_timeout_timer_handler);
+    /* sys_timer_set_user(&le_privacy.RPA_timeout, link); */
 }
 
 static void ll_RPA_timeout_stop(void)
 {
-    sys_timer_remove(&RPA_timeout);
+    sys_timer_remove(&le_privacy.RPA_timeout);
 }
 
 static void ll_set_resolvable_private_address_timeout(const u8 *data)
 {
-    struct le_link *link = sys_timer_get_user(&RPA_timeout);
+    struct le_link *link = sys_timer_get_user(&le_privacy.RPA_timeout);
    
     //remove already exsit
     if (link != NULL);
     {
-        sys_timer_remove(&RPA_timeout);
+        sys_timer_remove(&le_privacy.RPA_timeout);
     }
 
-    RPA_timeout_cnt = READ_BT16(data, 0);
-    RPA_timeout_cnt = RPA_timeout_cnt;
+    le_privacy.RPA_timeout_cnt = READ_BT16(data, 0);
+    le_privacy.RPA_timeout_cnt = le_privacy.RPA_timeout_cnt*1000; //1sec 
 
-    ll_RPA_timeout_start(RPA_timeout_cnt);
+    ll_RPA_timeout_start(le_privacy.RPA_timeout_cnt);
 }
 
 static void ll_resolution_enable(void)
 {
     puts(__func__);
 
-    if (RPA_timeout_cnt == 0)
+    if (le_privacy.RPA_timeout_cnt == 0)
     {
-        RPA_timeout_cnt = 15*60*1000;
+        le_privacy.RPA_timeout_cnt = 15*60*1000;
     }
+
+    __random48_update();
     //default 
-    ll_RPA_timeout_start(RPA_timeout_cnt);   //update every 15mins
+    ll_RPA_timeout_start(le_privacy.RPA_timeout_cnt);   //update every 15mins
 }
 
 /********************************************************************************/
@@ -1490,6 +1522,18 @@ static void ll_adv_timeout_handler(struct sys_timer *timer)
     __le_connection_complete_event(link, DIRECTED_ADVERTISING_TIMEOUT);
 
     sys_timer_remove(&link->adv_timeout);
+
+    //exit adv state
+    __ble_ops->close(link->hw);
+    ll.handle &= ~(link->handle);
+    __free_link(link);
+
+
+    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
+    {
+        sys_timer_remove(&le_privacy.RPA_timeout);
+    }
+
 }
 
 static void ll_adv_timeout_start(struct le_link *link, u32 timeout)
@@ -1540,7 +1584,7 @@ static void __set_ll_adv_state(struct le_link *link)
             break;
         case LL_ADV_DIRECT_IND_HIGH:   //exit 1.28s
             adv->interval = 6;
-            adv->pdu_interval = 6/adv->pkt_cnt;
+            adv->pdu_interval = 1;
             adv->adv_type = ADV_DIRECT_IND;
             //TO*DO timeout
             ll_adv_timeout_start(link, 1280);
@@ -4637,7 +4681,10 @@ static int ll_open(int state)
 	__set_link_state(link, state);
 
     //privacy
-    __ble_ops->ioctrl(link->hw, BLE_SET_PRIVACY_ENABLE, le_param.resolution_enable);
+    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY))
+    {
+        __ble_ops->ioctrl(link->hw, BLE_SET_PRIVACY_ENABLE, le_param.resolution_enable);
+    }
 	puts("exit\n");
 	return 0;
 }
