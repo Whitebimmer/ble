@@ -1,0 +1,72 @@
+#------------------------complier linker   
+export LD=c:/JL/dv10/bin/dv10-elf-ld
+export CC=c:/JL/dv10/bin/dv10-elf-gcc
+export AR=c:/JL/dv10/bin/dv10-elf-ar
+#------------------------CC FLAGS
+export FLAGS +=  -Wall -Os -fomit-frame-pointer -fno-delete-null-pointer-checks -c 
+
+#-fomit-frame-pointer -fno-delete-null-pointer-checks -c 
+#------------------------include path 
+export includes += \
+-I../include \
+-I../cpu/$(CPU)/include \
+-IC:/JL/dv10/include \
+
+#------------------------include lib 
+LIBS = 	\
+C:/JL/dv10/lib/libc.a \
+C:/JL/dv10/lib/libgcc.a \
+C:/JL/dv10/lib/libgcov.a \
+C:/JL/dv10/lib/libiberty.a \
+C:/JL/dv10/lib/libm.a \
+
+#------------------------include marco 
+export DEFINS = \
+-DNOFLOAT \
+-DEMBEDDED \
+-DBREDR \
+
+DEFINS += -DSH60
+
+W_TOOLS = tools\$(CPU)
+export TOOLS = ..\$(subst \,/,$(W_TOOLS))
+
+
+
+ifeq ($(shell),cmd)
+
+.PHONY:  all clean
+all: 
+	@for /f %%i in ('dir /ad/b') do if exist %%i\Makefile make -C %%i 
+	@$(W_TOOLS)\funs.bat ld $(LD) $(LIBS)
+
+clean:
+	@for /r %%i in (*.d) do del %%i 
+	@for /r %%i in (*.o) do del %%i 
+
+else
+
+
+LIBS = /home/pan/tools/bfin-elf/lib/libc.a \
+	/home/pan/tools/bfin-elf/lib/libgcc.a
+subdir = $(shell find -maxdepth 1 -type d)
+objs_o = $(shell find -name "*.o")
+objs_d = $(shell find -name "*.d")
+	
+.PHONY:  all clean
+all: 
+	@-rm main.or32
+	@for i in $(subdir); do \
+		if [ $$i != "." ] && [ -f $$i/Makefile ]; then \
+			make -j4 -C $$i; \
+		fi \
+	done
+	@x=`find ./ -name "*.o"`; \
+	$(LD) $$x  $(LIBS)  -o main.or32 -Tram.ld -Map=map.txt; \
+	./post.sh
+	
+
+clean:
+	-rm $(objs_o) $(objs_d)
+
+endif

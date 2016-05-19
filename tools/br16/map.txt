@@ -1,0 +1,1539 @@
+Archive member included to satisfy reference by file (symbol)
+
+/opt/pi32/lib/libc.a(lib_a-memcmp.o)
+                              ./btstack/Controller/BLE/ble_hci.o (memcmp)
+/opt/pi32/lib/libc.a(lib_a-memcpy.o)
+                              ./lib/vsprintf.o (memcpy)
+/opt/pi32/lib/libc.a(lib_a-memset.o)
+                              ./btstack/Controller/BLE/ble_hci.o (memset)
+/opt/pi32/lib/libc.a(lib_a-strcmp.o)
+                              ./driver/platform.o (strcmp)
+/opt/pi32/lib/libc.a(lib_a-strcpy.o)
+                              ./btstack/Host/BLE/ble_peripheral_test.o (strcpy)
+/opt/pi32/lib/libc.a(lib_a-strlen.o)
+                              ./btstack/Host/BLE/ble_peripheral_test.o (strlen)
+./cpu/br16/driver/br16_ccm_aes.a(aes.o)
+                              ./btstack/Controller/BLE/ble_hci.o (aes128_start_dec)
+./cpu/br16/driver/br16_ccm_aes.a(ccm_memory.o)
+                              ./btstack/Baseband/BLE/br16/RF_ble.o (ccm_memory)
+
+Allocating common symbols
+Common symbol       size              file
+
+LE_EVENT_MASK       0x4               ./btstack/Controller/BLE/ble_hci.o
+EVENT_MASK          0x4               ./btstack/Controller/BLE/ble_hci.o
+DEVICE_ADDR_TYPE    0x4               ./btstack/Controller/BLE/link_layer.o
+ERROR_CODES_LIST    0x4               ./btstack/Controller/BLE/ble_hci.o
+HCI_EVENTS          0x4               ./btstack/Controller/BLE/ble_hci.o
+fsk_offset_dly      0x2               ./btstack/Baseband/BLE/br16/analog_ble.o
+jiffies             0x4               ./cpu/br16/board/main.o
+g_rand_seed         0x4               ./cpu/br16/board/main.o
+offset_cnt          0x2               ./btstack/Baseband/BLE/br16/analog_ble.o
+ll_error_code       0x1               ./btstack/Controller/BLE/link_layer.o
+LL_CONTROL_PROCEDURE
+                    0x4               ./btstack/Controller/BLE/ble_hci.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+flash            0x0000000001000000 0x0000000000800000 x
+ram              0x0000000000300000 0x0000000000010000 rw
+ram2             0x0000000000310000 0x000000000000a000 rw
+ram1             0x0000000000340000 0x0000000000003ff0
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD ./lib/run_loop.o
+LOAD ./lib/lbuf.o
+LOAD ./lib/stdio/printf-stdarg.o
+LOAD ./lib/stdio/fcvt.o
+LOAD ./lib/vsprintf.o
+LOAD ./lib/delay.o
+LOAD ./btstack/Controller/BLE/ble_hci.o
+LOAD ./btstack/Controller/BLE/link_layer.o
+LOAD ./btstack/Controller/BLE/ble_main.o
+LOAD ./btstack/Controller/common/bd_memory.o
+LOAD ./btstack/Controller/common/br16/bt_power_driver.o
+LOAD ./btstack/Controller/common/bt_power.o
+LOAD ./btstack/Protocol/BLE/att.o
+LOAD ./btstack/Protocol/BLE/att_server.o
+LOAD ./btstack/Protocol/BLE/att_dispatch.o
+LOAD ./btstack/Protocol/BLE/sm.o
+LOAD ./btstack/Baseband/BLE/br16/RF_ble.o
+LOAD ./btstack/Baseband/BLE/br16/analog_ble.o
+LOAD ./btstack/Baseband/common/br16/RF.o
+LOAD ./btstack/Baseband/common/br16/fpga_analog.o
+LOAD ./btstack/Host/BLE/btstack_memory.o
+LOAD ./btstack/Host/BLE/ble_peripheral_test.o
+LOAD ./btstack/Host/BLE/l2cap_le.o
+LOAD ./btstack/Host/BLE/le_device_db_memory.o
+LOAD ./btstack/Host/BLE/hci.o
+LOAD ./btstack/Host/BLE/h4_transport.o
+LOAD ./btstack/Host/common/utils.o
+LOAD ./btstack/Host/common/hci_cmds.o
+LOAD ./btstack/Host/common/linked_list.o
+LOAD ./btstack/Host/common/memory_pool.o
+LOAD ./os/thread.o
+LOAD ./os/sys_timer.o
+LOAD ./cpu/br16/board/main.o
+LOAD ./cpu/br16/driver/uart.o
+LOAD ./cpu/br16/driver/hwi.o
+LOAD ./cpu/br16/driver/spi_ctl.o
+LOAD ./cpu/br16/driver/timer.o
+LOAD ./cpu/br16/driver/clock.o
+LOAD ./cpu/br16/startup.o
+LOAD ./cpu/br16/device.o
+LOAD ./cpu/br16/irq.o
+LOAD ./cpu/br16/clock.o
+LOAD ./driver/platform.o
+LOAD ./driver/init.o
+LOAD ./driver/interrupt.o
+LOAD /opt/pi32/lib/libc.a
+LOAD ./cpu/br16/driver/br16_ccm_aes.a
+                0x0000000001000000                . = ORIGIN (flash)
+
+.code           0x0000000001000000    0x13dc2
+ *startup.o(.text)
+ .text          0x0000000001000000       0xe0 ./cpu/br16/startup.o
+                0x0000000001000000                _start
+                0x00000000010000ba                CPU_INT_DIS
+                0x00000000010000cc                CPU_INT_EN
+                0x00000000010000e0                . = ((. + 0x3) & 0xfffffffffffffffc)
+                0x00000000010000e0                _early_initcall_begin = .
+ *(.early.initcall)
+ .early.initcall
+                0x00000000010000e0        0x4 ./cpu/br16/driver/timer.o
+                0x00000000010000e0                __initcall_timer0_irq_hannel_init
+ .early.initcall
+                0x00000000010000e4        0x4 ./cpu/br16/device.o
+                0x00000000010000e4                __initcall_bt16_machine_init
+ .early.initcall
+                0x00000000010000e8        0x4 ./cpu/br16/irq.o
+                0x00000000010000e8                __initcall_irq_handler_init
+                0x00000000010000ec                _early_initcall_end = .
+                0x00000000010000ec                . = ((. + 0x3) & 0xfffffffffffffffc)
+                0x00000000010000ec                _initcall_begin = .
+ *(.initcall)
+                0x00000000010000ec                _initcall_end = .
+                0x00000000010000ec                . = ((. + 0x3) & 0xfffffffffffffffc)
+                0x00000000010000ec                _late_initcall_begin = .
+ *(.late.initcall)
+                0x00000000010000ec                _late_initcall_end = .
+                0x00000000010000ec                . = ((. + 0x3) & 0xfffffffffffffffc)
+                0x00000000010000ec                _lmp_hci_handler_begin = .
+ *(.lmp_hci_handler)
+                0x00000000010000ec                _lmp_hci_handler_end = .
+                0x00000000010000ec                . = ((. + 0x3) & 0xfffffffffffffffc)
+                0x00000000010000ec                _a2dp_media_codec_begin = .
+ *(.a2dp_media_codec)
+                0x00000000010000ec                _a2dp_media_codec_end = .
+ *(.eh_frame)
+ *(.ble)
+ .ble           0x00000000010000ec        0x4 ./btstack/Controller/BLE/ble_hci.o
+                0x00000000010000ec                ble_h4_send_packet
+ .ble           0x00000000010000f0        0x4 ./btstack/Controller/BLE/link_layer.o
+                0x00000000010000f0                __ll_api
+ .ble           0x00000000010000f4        0x4 ./btstack/Baseband/BLE/br16/RF_ble.o
+                0x00000000010000f4                __ble_ops
+ .ble           0x00000000010000f8        0x4 ./btstack/Host/BLE/h4_transport.o
+                0x00000000010000f8                ble_h4_packet_handler
+ *(.bredr)
+ *(.bt_power)
+ .bt_power      0x00000000010000fc        0x4 ./btstack/Controller/common/br16/bt_power_driver.o
+                0x00000000010000fc                __power_ops
+ *(.poweroff_flash)
+ .poweroff_flash
+                0x0000000001000100       0x24 ./btstack/Controller/common/br16/bt_power_driver.o
+                0x0000000001000100                __power_is_poweroff
+ *(.text .rodata*)
+ .text          0x0000000001000124      0x146 ./lib/run_loop.o
+                0x0000000001000124                __timer_register
+                0x000000000100015c                __timer_set
+                0x0000000001000182                __timer_delete
+                0x000000000100019c                __timer_delete_region
+                0x00000000010001d0                __timer_delete_all
+                0x00000000010001f4                __timer_schedule
+                0x000000000100022a                __run_loop_register
+                0x0000000001000254                __run_loop_schedule
+ .rodata.str1.1
+                0x000000000100026a       0x35 ./lib/run_loop.o
+ *fill*         0x000000000100029f        0x1 
+ .text          0x00000000010002a0      0x226 ./lib/lbuf.o
+                0x00000000010002a0                lbuf_init
+                0x00000000010002dc                lbuf_alloc
+                0x0000000001000358                lbuf_realloc
+                0x00000000010003b4                lbuf_free
+                0x0000000001000444                lbuf_empty
+                0x0000000001000450                lbuf_clear
+                0x000000000100046e                lbuf_push
+                0x000000000100049a                lbuf_pop
+ .rodata.str1.1
+                0x00000000010004c6       0x58 ./lib/lbuf.o
+ *fill*         0x000000000100051e        0x2 
+ .text          0x0000000001000520      0x376 ./lib/stdio/printf-stdarg.o
+                0x0000000001000520                printf
+                0x00000000010006b4                sprintf
+                0x00000000010006ce                puts
+ .rodata.str1.1
+                0x0000000001000896        0x7 ./lib/stdio/printf-stdarg.o
+ *fill*         0x000000000100089d        0x3 
+ .text          0x00000000010008a0        0x0 ./lib/stdio/fcvt.o
+ .text          0x00000000010008a0      0x198 ./lib/vsprintf.o
+                0x00000000010008a0                __vsprintf_len
+                0x00000000010008f6                __vsprintf
+ .rodata.str1.1
+                0x0000000001000a38       0x13 ./lib/vsprintf.o
+ *fill*         0x0000000001000a4b        0x1 
+ .text          0x0000000001000a4c        0xc ./lib/delay.o
+                0x0000000001000a4c                delay
+ .text          0x0000000001000a58      0xc24 ./btstack/Controller/BLE/ble_hci.o
+                0x0000000001000a58                le_hci_push_control_data
+                0x0000000001000a60                link_control_cmd_handler
+                0x0000000001000ae4                ctrl_baseband_cmd_handler
+                0x0000000001000bc4                le_hci_push_command
+                0x0000000001000bfc                le_hci_push_acl_data
+                0x0000000001000c6c                aes128_test
+                0x0000000001000e40                hci_firmware_init
+ .rodata.str1.1
+                0x000000000100167c      0x596 ./btstack/Controller/BLE/ble_hci.o
+                                        0x59e (size before relaxing)
+ *fill*         0x0000000001001c12        0x2 
+ .rodata        0x0000000001001c14       0x1a ./btstack/Controller/BLE/ble_hci.o
+ .rodata.cst16  0x0000000001001c2e       0x60 ./btstack/Controller/BLE/ble_hci.o
+ *fill*         0x0000000001001c8e        0x2 
+ .text          0x0000000001001c90     0x2e28 ./btstack/Controller/BLE/link_layer.o
+                0x0000000001001c90                aes128_start
+                0x0000000001001cac                ll_link_for_handle
+                0x0000000001001ccc                ll_send_acl_packet
+                0x0000000001001d10                le_features_exchange
+                0x0000000001001da8                le_disconnect
+                0x0000000001001df8                le_ll_push_control_data
+                0x000000000100208c                ll_read_channel_map
+                0x00000000010020c4                debug_ll_privacy
+ .rodata.str1.1
+                0x0000000001004ab8      0xf77 ./btstack/Controller/BLE/link_layer.o
+                                       0x10e7 (size before relaxing)
+ *fill*         0x0000000001005a2f        0x1 
+ .rodata        0x0000000001005a30       0xd8 ./btstack/Controller/BLE/link_layer.o
+ .text          0x0000000001005b08       0x34 ./btstack/Controller/BLE/ble_main.o
+                0x0000000001005b08                sdp_normalize_uuid
+                0x0000000001005b28                ble_main
+ .rodata        0x0000000001005b3c       0x10 ./btstack/Controller/BLE/ble_main.o
+                0x0000000001005b3c                sdp_bluetooth_base_uuid
+ .rodata.str1.1
+                0x0000000001005b4c        0xf ./btstack/Controller/BLE/ble_main.o
+ *fill*         0x0000000001005b5b        0x1 
+ .text          0x0000000001005b5c       0xc4 ./btstack/Controller/common/bd_memory.o
+                0x0000000001005b5c                bd_malloc
+                0x0000000001005b8c                bd_realloc
+                0x0000000001005b94                bd_free
+                0x0000000001005b9c                bd_memory_init
+                0x0000000001005bb0                bd_ram1_malloc
+                0x0000000001005be0                bd_ram1_memory_init
+                0x0000000001005bf4                bt_malloc
+                0x0000000001005c18                bt_free
+ .rodata.str1.1
+                0x0000000001005c20       0x23 ./btstack/Controller/common/bd_memory.o
+                                         0x2f (size before relaxing)
+ *fill*         0x0000000001005c43        0x1 
+ .text          0x0000000001005c44      0x76a ./btstack/Controller/common/br16/bt_power_driver.o
+                0x0000000001005c44                ldo15_off
+                0x0000000001005c52                __pmu_debug
+                0x0000000001005cde                __tcnt_us
+                0x0000000001005d0c                __tcnt_ms
+                0x0000000001005d38                __tus_cnt
+                0x0000000001005d68                __hw_poweroff_time
+                0x0000000001005eb0                bt_poweroff_recover
+                0x0000000001005ec0                rtc_tbuf
+                0x0000000001005efc                rtc_rbuf
+ .rodata.str1.1
+                0x00000000010063ae       0xa3 ./btstack/Controller/common/br16/bt_power_driver.o
+ *fill*         0x0000000001006451        0x3 
+ .rodata        0x0000000001006454       0x20 ./btstack/Controller/common/br16/bt_power_driver.o
+ .text          0x0000000001006474      0x1a0 ./btstack/Controller/common/bt_power.o
+                0x0000000001006474                bt_power_on
+                0x0000000001006498                bt_power_off
+                0x00000000010064e0                bt_power_off_lock
+                0x00000000010064f0                bt_power_off_unlock
+                0x0000000001006518                bt_power_get
+                0x000000000100654c                bt_power_put
+                0x0000000001006578                bt_power_init
+                0x00000000010065c0                bt_power_is_poweroff_probe
+                0x00000000010065d8                bt_power_is_poweroff_post
+ .rodata.str1.1
+                0x0000000001006614       0x2b ./btstack/Controller/common/bt_power.o
+                                         0x31 (size before relaxing)
+ *fill*         0x000000000100663f        0x1 
+ .text          0x0000000001006640      0xcfc ./btstack/Protocol/BLE/att.o
+                0x0000000001006640                att_uuid_for_handle
+                0x000000000100669c                att_set_db
+                0x00000000010066a8                att_set_read_callback
+                0x00000000010066b4                att_set_write_callback
+                0x00000000010066c0                att_dump_attributes
+                0x000000000100676a                att_clear_transaction_queue
+                0x0000000001006790                att_prepare_handle_value_notification
+                0x00000000010067d0                att_prepare_handle_value_indication
+                0x00000000010067e4                att_handle_request
+ .rodata.str1.1
+                0x000000000100733c       0x4e ./btstack/Protocol/BLE/att.o
+ .rodata        0x000000000100738a       0x10 ./btstack/Protocol/BLE/att.o
+ *fill*         0x000000000100739a        0x2 
+ .text          0x000000000100739c      0x5bc ./btstack/Protocol/BLE/att_server.o
+                0x000000000100739c                att_server_init
+                0x0000000001007608                att_server_register_packet_handler
+                0x0000000001007614                att_server_can_send
+                0x000000000100762c                att_server_notify
+                0x0000000001007674                att_server_indicate
+ .rodata.str1.1
+                0x0000000001007958       0xa7 ./btstack/Protocol/BLE/att_server.o
+                                         0xad (size before relaxing)
+ *fill*         0x00000000010079ff        0x1 
+ .text          0x0000000001007a00       0xac ./btstack/Protocol/BLE/att_dispatch.o
+                0x0000000001007a00                att_dispatch_register_client
+                0x0000000001007a88                att_dispatch_register_server
+ .rodata.str1.1
+                0x0000000001007aac       0x1e ./btstack/Protocol/BLE/att_dispatch.o
+ *fill*         0x0000000001007aca        0x2 
+ .text          0x0000000001007acc     0x265c ./btstack/Protocol/BLE/sm.o
+                0x0000000001007acc                sm_address_resolution_lookup
+                0x0000000001008618                sm_cmac_start
+                0x0000000001008698                sm_cmac_ready
+                0x00000000010086ac                sm_register_oob_data_callback
+                0x00000000010086b8                sm_register_packet_handler
+                0x00000000010086c4                sm_set_accepted_stk_generation_methods
+                0x00000000010086d0                sm_set_encryption_key_size_range
+                0x00000000010086dc                sm_set_authentication_requirements
+                0x00000000010086e8                sm_set_io_capabilities
+                0x00000000010086f4                sm_set_request_security
+                0x0000000001008700                sm_set_er
+                0x000000000100872c                sm_set_ir
+                0x0000000001008758                sm_test_set_irk
+                0x0000000001008774                sm_test_use_fixed_local_csrk
+                0x0000000001008784                sm_init
+                0x0000000001009500                sm_encryption_key_size
+                0x000000000100952e                sm_authenticated
+                0x000000000100955c                sm_authorization_state
+                0x0000000001009590                sm_send_security_request
+                0x00000000010095b8                sm_request_pairing
+                0x0000000001009626                sm_authorization_decline
+                0x000000000100968c                sm_authorization_grant
+                0x00000000010096b6                sm_bonding_decline
+                0x0000000001009718                sm_just_works_confirm
+                0x0000000001009754                sm_just_works_confirm1
+                0x0000000001009784                sm_passkey_input
+                0x00000000010097c8                sm_le_device_index
+ .rodata.str1.1
+                0x000000000100a128      0x95f ./btstack/Protocol/BLE/sm.o
+                                        0x9ac (size before relaxing)
+ *fill*         0x000000000100aa87        0x1 
+ .rodata        0x000000000100aa88       0x67 ./btstack/Protocol/BLE/sm.o
+ *fill*         0x000000000100aaef        0x1 
+ .text          0x000000000100aaf0     0x1fe4 ./btstack/Baseband/BLE/br16/RF_ble.o
+                0x000000000100aaf0                ble_hw_alloc_rx
+                0x000000000100ab3c                __debug_interval
+                0x000000000100aba8                le_hw_initiating
+                0x000000000100ae04                ble_rf_init
+ .rodata.str1.1
+                0x000000000100cad4      0x3e1 ./btstack/Baseband/BLE/br16/RF_ble.o
+                                        0x437 (size before relaxing)
+ *fill*         0x000000000100ceb5        0x3 
+ .rodata        0x000000000100ceb8       0x57 ./btstack/Baseband/BLE/br16/RF_ble.o
+ *fill*         0x000000000100cf0f        0x1 
+ .text          0x000000000100cf10      0x49a ./btstack/Baseband/BLE/br16/analog_ble.o
+                0x000000000100cf10                ble_agc_normal_set
+                0x000000000100d040                ble_agc_lowpw_set
+                0x000000000100d170                ble_txpwr_normal_set
+                0x000000000100d248                ble_txpwr_lowpw_set
+                0x000000000100d30c                ble_fsk_offset
+                0x000000000100d3a8                ble_mdm_init
+ *fill*         0x000000000100d3aa        0x2 
+ .text          0x000000000100d3ac      0x282 ./btstack/Baseband/common/br16/RF.o
+                0x000000000100d3ac                fsk_offset
+                0x000000000100d430                RF_mdm_init
+                0x000000000100d5d2                RF_init
+ *fill*         0x000000000100d62e        0x2 
+ .text          0x000000000100d630      0x5ee ./btstack/Baseband/common/br16/fpga_analog.o
+                0x000000000100d630                RF_rxtx_init
+                0x000000000100d8a4                RF_trim_iq_all
+                0x000000000100dac8                bt_rf_analog_init
+                0x000000000100dbc6                rf_debug
+                0x000000000100dc1a                get_bta_pll_bank
+ *fill*         0x000000000100dc1e        0x2 
+ .rodata.str4.16
+                0x000000000100dc20       0x20 ./btstack/Baseband/common/br16/fpga_analog.o
+ .text          0x000000000100dc40       0xbc ./btstack/Host/BLE/btstack_memory.o
+                0x000000000100dc40                le_btstack_memory_hci_connection_get
+                0x000000000100dc50                le_btstack_memory_hci_connection_free
+                0x000000000100dc60                le_btstack_memory_l2cap_service_get
+                0x000000000100dc64                le_btstack_memory_l2cap_service_free
+                0x000000000100dc66                le_btstack_memory_l2cap_channel_get
+                0x000000000100dc6a                le_btstack_memory_l2cap_channel_free
+                0x000000000100dc6c                btstack_memory_gatt_client_get
+                0x000000000100dc7c                btstack_memory_gatt_client_free
+                0x000000000100dc8c                btstack_memory_gatt_subclient_get
+                0x000000000100dc9c                btstack_memory_gatt_subclient_free
+                0x000000000100dcac                btstack_memory_whitelist_entry_get
+                0x000000000100dcb0                btstack_memory_whitelist_entry_free
+                0x000000000100dcb2                btstack_memory_sm_lookup_entry_get
+                0x000000000100dcb6                btstack_memory_sm_lookup_entry_free
+                0x000000000100dcb8                le_btstack_memory_init
+ .text          0x000000000100dcfc      0xa7c ./btstack/Host/BLE/ble_peripheral_test.o
+                0x000000000100dcfc                stdin_process
+                0x000000000100e3ac                btstack_main
+                0x000000000100e594                ble_initial_setup
+                0x000000000100e5a4                ble_set_adv
+                0x000000000100e638                ble_set_scan
+                0x000000000100e690                ble_set_conn
+                0x000000000100e720                ble_test
+ .rodata        0x000000000100e778      0x1b9 ./btstack/Host/BLE/ble_peripheral_test.o
+                0x000000000100e778                profile_data
+ .rodata.str1.1
+                0x000000000100e931      0x793 ./btstack/Host/BLE/ble_peripheral_test.o
+                                        0x798 (size before relaxing)
+ .text          0x000000000100f0c4      0x1ac ./btstack/Host/BLE/l2cap_le.o
+                0x000000000100f0c4                le_l2cap_init
+                0x000000000100f18c                l2cap_max_le_mtu
+                0x000000000100f190                le_l2cap_register_packet_handler
+                0x000000000100f19c                le_l2cap_can_send_fixed_channel_packet_now
+                0x000000000100f1a4                le_l2cap_can_send_connectionless_packet_now
+                0x000000000100f1b0                le_l2cap_get_outgoing_buffer
+                0x000000000100f1ba                le_l2cap_reserve_packet_buffer
+                0x000000000100f1c2                le_l2cap_release_packet_buffer
+                0x000000000100f1ca                le_l2cap_send_prepared_connectionless
+                0x000000000100f222                le_l2cap_send_connectionless
+                0x000000000100f254                le_l2cap_register_fixed_channel
+ .text          0x000000000100f270      0x474 ./btstack/Host/BLE/le_device_db_memory.o
+                0x000000000100f270                le_device_db_init
+                0x000000000100f282                le_device_db_remove
+                0x000000000100f2b0                le_device_db_count
+                0x000000000100f2f4                le_device_db_add
+                0x000000000100f364                le_device_db_info
+                0x000000000100f3c8                le_device_db_encryption_set
+                0x000000000100f430                le_device_db_encryption_get
+                0x000000000100f4d4                le_device_db_remote_csrk_get
+                0x000000000100f510                le_device_db_remote_csrk_set
+                0x000000000100f54c                le_device_db_local_csrk_get
+                0x000000000100f588                le_device_db_local_csrk_set
+                0x000000000100f5c4                le_device_db_remote_counter_get
+                0x000000000100f5f0                le_device_db_remote_counter_set
+                0x000000000100f61c                le_device_db_local_counter_get
+                0x000000000100f648                le_device_db_local_counter_set
+                0x000000000100f674                le_device_db_dump
+ .rodata.str1.1
+                0x000000000100f6e4      0x1a4 ./btstack/Host/BLE/le_device_db_memory.o
+                                        0x1a8 (size before relaxing)
+ .text          0x000000000100f888     0x199c ./btstack/Host/BLE/hci.o
+                0x000000000100f888                gap_le_get_connection_parameter_range
+                0x000000000100f8a0                gap_le_set_connection_parameter_range
+                0x000000000100f8b8                le_hci_connections_get_iterator
+                0x000000000100f8cc                le_hci_connection_for_handle
+                0x000000000100f904                le_hci_connection_for_bd_addr_and_type
+                0x000000000100f950                hci_number_free_acl_slots_for_handle
+                0x000000000100f9c4                le_hci_can_send_command_packet_now
+                0x000000000100f9c8                le_hci_can_send_prepared_acl_packet_now
+                0x000000000100f9cc                le_hci_can_send_acl_packet_now
+                0x000000000100f9d0                le_hci_is_packet_buffer_reserved
+                0x000000000100f9e0                le_hci_reserve_packet_buffer
+                0x000000000100f9fc                le_hci_release_packet_buffer
+                0x000000000100fa10                hci_transport_synchronous
+                0x000000000100fa24                hci_max_acl_le_data_packet_length
+                0x000000000100fa40                le_hci_send_acl_packet_buffer
+                0x000000000100fb9c                le_hci_get_outgoing_packet_buffer
+                0x000000000100fba8                le_hci_max_acl_data_packet_length
+                0x000000000100fbb8                hci_non_flushable_packet_boundary_flag_supported
+                0x000000000100fbcc                hci_ssp_supported
+                0x000000000100fbe0                hci_classic_supported
+                0x000000000100fbf8                hci_le_advertisement_address
+                0x000000000100fc34                le_handle_advertisement_report
+                0x000000000100fcb4                le_hci_register_packet_handler
+                0x000000000100fcc0                le_hci_init
+                0x00000000010103fc                le_hci_set_class_of_device
+                0x0000000001010408                le_hci_set_bd_addr
+                0x0000000001010430                le_hci_disable_l2cap_timeout_check
+                0x000000000101043c                le_hci_power_control
+                0x00000000010104b4                le_hci_run
+                0x0000000001010910                le_hci_local_bd_addr
+                0x0000000001010924                le_hci_send_cmd
+                0x0000000001010978                le_hci_send_cmd_packet
+                0x0000000001010a74                hci_emit_le_connection_complete
+                0x0000000001010ae8                le_hci_emit_disconnection_complete
+                0x0000000001010b28                le_hci_emit_l2cap_check_timeout
+                0x0000000001010b68                le_hci_emit_nr_connections_changed
+                0x0000000001010ba4                le_hci_emit_hci_open_failed
+                0x0000000001010bcc                hci_emit_security_level
+                0x0000000001010c08                gap_set_bondable_mode
+                0x0000000001010c20                gap_security_level_for_link_key_type
+                0x0000000001010c38                gap_mitm_protection_required_for_security_level
+                0x0000000001010c42                gap_security_level
+                0x0000000001010c7e                gap_request_security_level
+                0x0000000001010cf4                gap_dedicated_bonding
+                0x0000000001010da4                gap_set_local_name
+                0x0000000001010db0                le_central_start_scan
+                0x0000000001010dd0                le_central_stop_scan
+                0x0000000001010df0                le_central_set_scan_parameters
+                0x0000000001010e18                le_central_connect
+                0x0000000001010e7a                le_central_connect_cancel
+                0x0000000001010ed4                gap_update_connection_parameters
+                0x0000000001010f08                gap_request_connection_parameter_update
+                0x0000000001010f3c                gap_advertisements_set_data
+                0x0000000001010f7c                hci_le_advertisements_set_params
+                0x0000000001011008                gap_advertisements_enable
+                0x0000000001011058                gap_disconnect
+                0x000000000101107c                gap_auto_connection_start
+                0x00000000010110dc                gap_auto_connection_stop
+                0x0000000001011154                gap_auto_connection_stop_all
+                0x00000000010111a8                hci_disconnect_all
+ .rodata.str1.1
+                0x0000000001011224      0x329 ./btstack/Host/BLE/hci.o
+                                        0x36f (size before relaxing)
+ .rodata        0x000000000101154d       0x35 ./btstack/Host/BLE/hci.o
+ *fill*         0x0000000001011582        0x2 
+ .text          0x0000000001011584       0x50 ./btstack/Host/BLE/h4_transport.o
+                0x0000000001011594                ble_hci_transport_h4_instance
+ .rodata        0x00000000010115d4       0x1c ./btstack/Host/BLE/h4_transport.o
+ .rodata.str1.1
+                0x00000000010115f0        0xc ./btstack/Host/BLE/h4_transport.o
+ .text          0x00000000010115fc      0x26e ./btstack/Host/common/utils.o
+                0x00000000010115fc                bt_store_16
+                0x000000000101160c                bt_store_32
+                0x0000000001011632                net_store_16
+                0x0000000001011644                net_store_32
+                0x000000000101166a                bt_flip_addr
+                0x0000000001011684                swapX
+                0x000000000101169e                swap24
+                0x00000000010116a6                swap32
+                0x00000000010116ae                swap48
+                0x00000000010116b6                swap56
+                0x00000000010116be                swap64
+                0x00000000010116c6                swap128
+                0x00000000010116ce                char_for_nibble
+                0x00000000010116ea                printf_hexdump
+                0x00000000010116ec                hexdump
+                0x00000000010116ee                hexdumpf
+                0x00000000010116f0                log_key
+                0x00000000010116f2                uuid128_to_str
+                0x000000000101176c                printUUID128
+                0x0000000001011784                bd_addr_to_str
+                0x00000000010117c0                link_key_to_str
+                0x00000000010117fc                link_key_type_to_str
+                0x0000000001011804                print_bd_addr
+                0x0000000001011806                is_authenticated_link_key
+                0x0000000001011822                crc8
+                0x0000000001011848                crc8_check
+                0x000000000101185c                crc8_calc
+ .rodata.str1.1
+                0x000000000101186a       0x45 ./btstack/Host/common/utils.o
+                                         0x48 (size before relaxing)
+ .rodata        0x00000000010118af      0x100 ./btstack/Host/common/utils.o
+ *fill*         0x00000000010119af        0x1 
+ .text          0x00000000010119b0      0x194 ./btstack/Host/common/hci_cmds.o
+                0x00000000010119b0                le_hci_create_cmd_internal
+ .rodata.str1.1
+                0x0000000001011b44       0xb9 ./btstack/Host/common/hci_cmds.o
+                                         0xdd (size before relaxing)
+ *fill*         0x0000000001011bfd        0x3 
+ .rodata        0x0000000001011c00      0x308 ./btstack/Host/common/hci_cmds.o
+                0x0000000001011c00                hci_disconnect
+                0x0000000001011c08                hci_create_connection_cancel
+                0x0000000001011c10                hci_accept_connection_request
+                0x0000000001011c18                hci_reject_connection_request
+                0x0000000001011c20                hci_link_key_request_reply
+                0x0000000001011c28                hci_link_key_request_negative_reply
+                0x0000000001011c30                hci_pin_code_request_reply
+                0x0000000001011c38                hci_pin_code_request_negative_reply
+                0x0000000001011c40                hci_change_connection_packet_type
+                0x0000000001011c48                hci_authentication_requested
+                0x0000000001011c50                hci_set_connection_encryption
+                0x0000000001011c58                hci_change_connection_link_key
+                0x0000000001011c60                hci_remote_name_request
+                0x0000000001011c68                hci_remote_name_request_cancel
+                0x0000000001011c70                hci_read_remote_supported_features_command
+                0x0000000001011c78                hci_setup_synchronous_connection_command
+                0x0000000001011c80                hci_accept_synchronous_connection_command
+                0x0000000001011c88                hci_io_capability_request_reply
+                0x0000000001011c90                hci_user_confirmation_request_reply
+                0x0000000001011c98                hci_user_confirmation_request_negative_reply
+                0x0000000001011ca0                hci_user_passkey_request_reply
+                0x0000000001011ca8                hci_user_passkey_request_negative_reply
+                0x0000000001011cb0                hci_remote_oob_data_request_negative_reply
+                0x0000000001011cb8                hci_io_capability_request_negative_reply
+                0x0000000001011cc0                hci_enhanced_setup_synchronous_connection
+                0x0000000001011cc8                hci_enhanced_accept_synchronous_connection
+                0x0000000001011cd0                hci_sniff_mode
+                0x0000000001011cd8                hci_qos_setup
+                0x0000000001011ce0                hci_role_discovery
+                0x0000000001011ce8                hci_switch_role_command
+                0x0000000001011cf0                hci_read_link_policy_settings
+                0x0000000001011cf8                hci_write_link_policy_settings
+                0x0000000001011d00                hci_set_event_mask
+                0x0000000001011d08                hci_reset
+                0x0000000001011d10                hci_delete_stored_link_key
+                0x0000000001011d18                hci_write_local_name
+                0x0000000001011d20                hci_write_page_timeout
+                0x0000000001011d28                hci_write_scan_enable
+                0x0000000001011d30                hci_write_authentication_enable
+                0x0000000001011d38                hci_write_class_of_device
+                0x0000000001011d40                hci_read_num_broadcast_retransmissions
+                0x0000000001011d48                hci_write_num_broadcast_retransmissions
+                0x0000000001011d50                hci_write_synchronous_flow_control_enable
+                0x0000000001011d58                hci_host_buffer_size
+                0x0000000001011d60                hci_read_link_supervision_timeout
+                0x0000000001011d68                hci_write_link_supervision_timeout
+                0x0000000001011d70                hci_write_inquiry_mode
+                0x0000000001011d78                hci_write_extended_inquiry_response
+                0x0000000001011d80                hci_write_simple_pairing_mode
+                0x0000000001011d88                hci_read_le_host_supported
+                0x0000000001011d90                hci_write_le_host_supported
+                0x0000000001011d98                hci_read_local_version_information
+                0x0000000001011da0                hci_read_local_supported_features
+                0x0000000001011da8                hci_read_buffer_size
+                0x0000000001011db0                hci_read_bd_addr
+                0x0000000001011db8                hci_read_rssi
+                0x0000000001011dc0                hci_le_set_event_mask
+                0x0000000001011dc8                hci_le_read_buffer_size
+                0x0000000001011dd0                hci_le_read_supported_features
+                0x0000000001011dd8                hci_le_set_random_address
+                0x0000000001011de0                hci_le_set_advertising_parameters
+                0x0000000001011de8                hci_le_read_advertising_channel_tx_power
+                0x0000000001011df0                hci_le_set_advertising_data
+                0x0000000001011df8                hci_le_set_scan_response_data
+                0x0000000001011e00                hci_le_set_advertise_enable
+                0x0000000001011e08                hci_le_set_scan_parameters
+                0x0000000001011e10                hci_le_set_scan_enable
+                0x0000000001011e18                hci_le_create_connection
+                0x0000000001011e20                hci_le_create_connection_cancel
+                0x0000000001011e28                hci_le_read_white_list_size
+                0x0000000001011e30                hci_le_clear_white_list
+                0x0000000001011e38                hci_le_add_device_to_white_list
+                0x0000000001011e40                hci_le_remove_device_from_white_list
+                0x0000000001011e48                hci_le_connection_update
+                0x0000000001011e50                hci_le_set_host_channel_classification
+                0x0000000001011e58                hci_le_read_channel_map
+                0x0000000001011e60                hci_le_read_remote_used_features
+                0x0000000001011e68                hci_le_encrypt
+                0x0000000001011e70                hci_le_rand
+                0x0000000001011e78                hci_le_start_encryption
+                0x0000000001011e80                hci_le_long_term_key_request_reply
+                0x0000000001011e88                hci_le_long_term_key_negative_reply
+                0x0000000001011e90                hci_le_read_supported_states
+                0x0000000001011e98                hci_le_receiver_test
+                0x0000000001011ea0                hci_le_transmitter_test
+                0x0000000001011ea8                hci_le_test_end
+                0x0000000001011eb0                hci_le_read_suggested_default_data_length
+                0x0000000001011eb8                hci_le_write_suggested_default_data_length
+                0x0000000001011ec0                hci_le_add_device_to_resolving_list
+                0x0000000001011ec8                hci_le_remove_device_from_resolving_list
+                0x0000000001011ed0                hci_le_clear_resolving_list
+                0x0000000001011ed8                hci_le_read_resolving_list_size
+                0x0000000001011ee0                hci_le_peer_resolvable_address
+                0x0000000001011ee8                hci_le_local_resolvable_address
+                0x0000000001011ef0                hci_le_set_address_resolution_enable
+                0x0000000001011ef8                hci_le_set_resolvable_private_address_timeout
+                0x0000000001011f00                hci_read_remote_version_information
+ .text          0x0000000001011f08       0xdc ./btstack/Host/common/linked_list.o
+                0x0000000001011f08                linked_list_empty
+                0x0000000001011f14                linked_list_get_last_item
+                0x0000000001011f24                linked_list_add
+                0x0000000001011f3a                linked_list_add_tail
+                0x0000000001011f50                linked_list_remove
+                0x0000000001011f66                linked_list_count
+                0x0000000001011f76                linked_item_set_user
+                0x0000000001011f7e                linked_item_get_user
+                0x0000000001011f82                linked_list_iterator_init
+                0x0000000001011f8e                linked_list_iterator_has_next
+                0x0000000001011fb2                linked_list_iterator_next
+                0x0000000001011fd4                linked_list_iterator_remove
+ .text          0x0000000001011fe4       0x4e ./btstack/Host/common/memory_pool.o
+                0x0000000001011fe4                memory_pool_create
+                0x000000000101200a                memory_pool_free
+                0x0000000001012020                memory_pool_get
+ *fill*         0x0000000001012032        0x2 
+ .text          0x0000000001012034      0x17e ./os/thread.o
+                0x0000000001012034                thread_create
+                0x000000000101210c                thread_suspend
+                0x0000000001012126                thread_resume
+                0x000000000101214c                thread_delete
+                0x000000000101217c                thread_init
+                0x00000000010121b0                thread_run
+ .rodata.str1.1
+                0x00000000010121b2       0x8e ./os/thread.o
+ .text          0x0000000001012240      0x148 ./os/sys_timer.o
+                0x0000000001012240                sys_timer_register
+                0x00000000010122b8                sys_timer_reset
+                0x00000000010122e0                sys_timer_remove
+                0x000000000101233c                sys_timer_schedule
+                0x0000000001012374                sys_timer_init
+                0x0000000001012380                sys_timer_set_user
+                0x0000000001012384                sys_timer_get_user
+ .rodata.str1.1
+                0x0000000001012388       0x72 ./os/sys_timer.o
+ *fill*         0x00000000010123fa        0x2 
+ .text          0x00000000010123fc      0x314 ./cpu/br16/board/main.o
+                0x00000000010123fc                os_create_thread
+                0x000000000101241c                os_delete_thread
+                0x0000000001012440                os_suspend_thread
+                0x0000000001012470                os_resume_thread
+                0x0000000001012490                bt_task_run_loop
+                0x00000000010124bc                set_exception_isr_hook
+                0x00000000010124cc                disable_wtd
+                0x00000000010124ec                main
+                0x00000000010126a8                hal_tick_init
+                0x00000000010126aa                hal_tick_set_handler
+                0x00000000010126ac                hal_tick_get_tick_period_in_ms
+                0x00000000010126ae                hal_cpu_disable_irqs
+                0x00000000010126b0                hal_cpu_enable_irqs
+                0x00000000010126b2                hal_cpu_enable_irqs_and_sleep
+                0x00000000010126b4                bt_puts
+                0x00000000010126bc                bt_flip_access_addr
+                0x00000000010126d2                endian_change
+                0x00000000010126f4                crc16
+ .rodata        0x0000000001012710       0x58 ./cpu/br16/board/main.o
+                0x0000000001012710                os_thread_ins
+                0x0000000001012720                pubDate
+                0x000000000101275c                bt_power_param
+ .rodata.str1.1
+                0x0000000001012768      0x121 ./cpu/br16/board/main.o
+ *fill*         0x0000000001012889        0x3 
+ .text          0x000000000101288c      0x1f2 ./cpu/br16/driver/uart.o
+                0x000000000101288c                uart_init
+                0x00000000010128ca                putbyte
+                0x000000000101290c                putchar
+                0x0000000001012924                getchar
+                0x0000000001012948                put_u4hex
+                0x0000000001012960                put_u64hex
+                0x00000000010129c6                put_u32hex
+                0x00000000010129fc                put_u16hex
+                0x0000000001012a14                put_u8hex
+                0x0000000001012a22                printf_buf
+ *fill*         0x0000000001012a7e        0x2 
+ .text          0x0000000001012a80      0x188 ./cpu/br16/driver/hwi.o
+                0x0000000001012a80                hwi_init
+                0x0000000001012aa4                HWI_Install
+                0x0000000001012b58                ENABLE_INT
+                0x0000000001012b60                DISABLE_INT
+                0x0000000001012b68                clear_ie
+                0x0000000001012b90                set_ie
+                0x0000000001012bae                DisableOSInt
+                0x0000000001012bb6                EnableOSInt
+                0x0000000001012bbe                trig_fun
+                0x0000000001012bc4                default_isr_handler
+                0x0000000001012bd4                CRC16
+ .rodata.str1.1
+                0x0000000001012c08       0x2b ./cpu/br16/driver/hwi.o
+ *fill*         0x0000000001012c33        0x1 
+ .text          0x0000000001012c34      0x35c ./cpu/br16/driver/spi_ctl.o
+                0x0000000001012c34                chdat
+                0x0000000001012c3a                spi_int
+                0x0000000001012c94                spi_wr
+                0x0000000001012d28                spi_rd
+                0x0000000001012dbc                spi_wr_rg
+                0x0000000001012de4                spi_agc_inc
+                0x0000000001012ef8                spi_pwr_inc
+ .rodata.str1.1
+                0x0000000001012f90        0x8 ./cpu/br16/driver/spi_ctl.o
+ .text          0x0000000001012f98      0x100 ./cpu/br16/driver/timer.o
+                0x0000000001012f98                handle__timer0_isr
+                0x0000000001012fc4                timer0_start
+                0x0000000001012fec                timer1_init
+                0x000000000101300c                timer1_isr
+                0x000000000101302a                handle__timer1_isr
+ .rodata.str1.1
+                0x0000000001013098       0x18 ./cpu/br16/driver/timer.o
+                                         0x1a (size before relaxing)
+ .text          0x00000000010130b0       0x40 ./cpu/br16/driver/clock.o
+                0x00000000010130b0                pll_init
+ .text          0x00000000010130f0       0x20 ./cpu/br16/device.o
+ .rodata.str1.1
+                0x0000000001013110       0x17 ./cpu/br16/device.o
+                                         0x1b (size before relaxing)
+ *fill*         0x0000000001013127        0x1 
+ .text          0x0000000001013128       0x40 ./cpu/br16/irq.o
+                0x0000000001013128                handle__ble_irq_handler
+ .rodata.str1.1
+                0x0000000001013168       0x12 ./cpu/br16/irq.o
+ *fill*         0x000000000101317a        0x2 
+ .text          0x000000000101317c      0x194 ./cpu/br16/clock.o
+                0x000000000101317c                osc_clk_init
+                0x00000000010131f8                clk_out
+                0x0000000001013218                br16_pll_init
+ .text          0x0000000001013310      0x108 ./driver/platform.o
+                0x0000000001013310                platform_device_register
+                0x0000000001013328                platform_add_devices
+                0x0000000001013350                platform_get_resource
+                0x0000000001013382                platform_get_irq
+                0x0000000001013396                platform_driver_register
+                0x00000000010133d8                platform_get_driver
+                0x0000000001013404                platform_init
+ .text          0x0000000001013418       0x60 ./driver/init.o
+                0x0000000001013418                system_init
+ .rodata.str1.1
+                0x0000000001013478        0xe ./driver/init.o
+ *fill*         0x0000000001013486        0x2 
+ .text          0x0000000001013488       0xd0 ./driver/interrupt.o
+                0x0000000001013488                request_irq
+                0x00000000010134f8                generic_irq_handler
+                0x0000000001013530                interrupt_init
+ .text          0x0000000001013558       0x3e /opt/pi32/lib/libc.a(lib_a-memcmp.o)
+                0x0000000001013558                memcmp
+ *fill*         0x0000000001013596        0x2 
+ .text          0x0000000001013598      0x11e /opt/pi32/lib/libc.a(lib_a-memcpy.o)
+                0x0000000001013598                memmove
+                0x0000000001013598                memcpy
+ *fill*         0x00000000010136b6        0x2 
+ .text          0x00000000010136b8       0x48 /opt/pi32/lib/libc.a(lib_a-memset.o)
+                0x00000000010136b8                memset
+ .text          0x0000000001013700       0x14 /opt/pi32/lib/libc.a(lib_a-strcmp.o)
+                0x0000000001013700                strcmp
+ .text          0x0000000001013714       0x10 /opt/pi32/lib/libc.a(lib_a-strcpy.o)
+                0x0000000001013714                strcpy
+ .text          0x0000000001013724        0xc /opt/pi32/lib/libc.a(lib_a-strlen.o)
+                0x0000000001013724                strlen
+ .text          0x0000000001013730      0x394 ./cpu/br16/driver/br16_ccm_aes.a(aes.o)
+                0x0000000001013730                aes128_start_enc
+                0x0000000001013860                aes128_start_dec
+                0x0000000001013990                rijndael_setup
+                0x00000000010139d0                rijndael_ecb_encrypt
+ .text          0x0000000001013ac4      0x2fe ./cpu/br16/driver/br16_ccm_aes.a(ccm_memory.o)
+                0x0000000001013ac4                ccm_memory
+                0x0000000001013dc2                _text_end = .
+                0x0000000000300000                . = ORIGIN (ram)
+
+.data           0x0000000000300000      0x170
+ *(.data*)
+ .data          0x0000000000300000        0x0 ./lib/run_loop.o
+ .data          0x0000000000300000        0x0 ./lib/lbuf.o
+ .data          0x0000000000300000        0x0 ./lib/stdio/printf-stdarg.o
+ .data          0x0000000000300000        0x0 ./lib/stdio/fcvt.o
+ .data          0x0000000000300000        0x0 ./lib/vsprintf.o
+ .data          0x0000000000300000        0x0 ./lib/delay.o
+ .data          0x0000000000300000        0x0 ./btstack/Controller/BLE/ble_hci.o
+ .data          0x0000000000300000       0x4c ./btstack/Controller/BLE/link_layer.o
+                0x0000000000300000                rpa_set
+ .data          0x000000000030004c        0x0 ./btstack/Controller/BLE/ble_main.o
+ .data          0x000000000030004c        0x0 ./btstack/Controller/common/bd_memory.o
+ .data          0x000000000030004c        0x0 ./btstack/Controller/common/br16/bt_power_driver.o
+ .data          0x000000000030004c        0x0 ./btstack/Controller/common/bt_power.o
+ .data          0x000000000030004c        0x0 ./btstack/Protocol/BLE/att.o
+ .data          0x000000000030004c        0x0 ./btstack/Protocol/BLE/att_server.o
+ .data          0x000000000030004c        0x0 ./btstack/Protocol/BLE/att_dispatch.o
+ .data          0x000000000030004c        0x1 ./btstack/Protocol/BLE/sm.o
+ *fill*         0x000000000030004d        0x3 
+ .data          0x0000000000300050        0x0 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .data          0x0000000000300050        0x0 ./btstack/Baseband/BLE/br16/analog_ble.o
+ .data          0x0000000000300050        0x0 ./btstack/Baseband/common/br16/RF.o
+ .data          0x0000000000300050        0x0 ./btstack/Baseband/common/br16/fpga_analog.o
+ .data          0x0000000000300050        0x0 ./btstack/Host/BLE/btstack_memory.o
+ .data          0x0000000000300050       0xa4 ./btstack/Host/BLE/ble_peripheral_test.o
+                0x0000000000300050                conn_peer_addr
+ .data          0x00000000003000f4        0x0 ./btstack/Host/BLE/l2cap_le.o
+ .data          0x00000000003000f4        0x0 ./btstack/Host/BLE/le_device_db_memory.o
+ .data          0x00000000003000f4       0x27 ./btstack/Host/BLE/hci.o
+                0x00000000003000f4                rpa
+ *fill*         0x000000000030011b        0x1 
+ .data          0x000000000030011c        0x0 ./btstack/Host/BLE/h4_transport.o
+ .data          0x000000000030011c        0x0 ./btstack/Host/common/utils.o
+ .data          0x000000000030011c        0x0 ./btstack/Host/common/hci_cmds.o
+ .data          0x000000000030011c        0x0 ./btstack/Host/common/linked_list.o
+ .data          0x000000000030011c        0x0 ./btstack/Host/common/memory_pool.o
+ .data          0x000000000030011c        0x0 ./os/thread.o
+ .data          0x000000000030011c        0x0 ./os/sys_timer.o
+ .data          0x000000000030011c        0x4 ./cpu/br16/board/main.o
+                0x000000000030011c                __maskrom_set_exception_isr_hook
+ .data          0x0000000000300120        0x0 ./cpu/br16/driver/uart.o
+ .data          0x0000000000300120        0x0 ./cpu/br16/driver/hwi.o
+ .data          0x0000000000300120        0x0 ./cpu/br16/driver/spi_ctl.o
+ .data          0x0000000000300120        0x0 ./cpu/br16/driver/timer.o
+ .data          0x0000000000300120        0x0 ./cpu/br16/driver/clock.o
+ .data          0x0000000000300120        0x0 ./cpu/br16/startup.o
+ .data          0x0000000000300120       0x34 ./cpu/br16/device.o
+                0x0000000000300120                ble_resource
+                0x0000000000300138                device_ble
+                0x0000000000300150                bt16_devices
+ .data          0x0000000000300154        0x0 ./cpu/br16/irq.o
+ .data          0x0000000000300154        0x0 ./cpu/br16/clock.o
+ .data          0x0000000000300154        0x0 ./driver/platform.o
+ .data          0x0000000000300154        0x0 ./driver/init.o
+ .data          0x0000000000300154        0x0 ./driver/interrupt.o
+ .data          0x0000000000300154        0x0 /opt/pi32/lib/libc.a(lib_a-memcmp.o)
+ .data          0x0000000000300154        0x0 /opt/pi32/lib/libc.a(lib_a-memcpy.o)
+ .data          0x0000000000300154        0x0 /opt/pi32/lib/libc.a(lib_a-memset.o)
+ .data          0x0000000000300154        0x0 /opt/pi32/lib/libc.a(lib_a-strcmp.o)
+ .data          0x0000000000300154        0x0 /opt/pi32/lib/libc.a(lib_a-strcpy.o)
+ .data          0x0000000000300154        0x0 /opt/pi32/lib/libc.a(lib_a-strlen.o)
+ .data          0x0000000000300154        0x0 ./cpu/br16/driver/br16_ccm_aes.a(aes.o)
+ .data          0x0000000000300154        0x0 ./cpu/br16/driver/br16_ccm_aes.a(ccm_memory.o)
+ *(.dll_api)
+ .dll_api       0x0000000000300154       0x1c ./cpu/br16/board/main.o
+                0x0000000000300154                exception_isr
+
+.bss            0x0000000000300170     0x3978
+ *(.intr_stack)
+ *(.stack)
+ .stack         0x0000000000300170     0x1800 ./cpu/br16/startup.o
+                0x0000000000300970                _stack
+                0x0000000000301970                _ustack
+                0x0000000000301970                _bredr_base_addr = .
+ *(.bredr_base)
+ *(.baseband)
+ .baseband      0x0000000000301970     0x1000 ./btstack/Controller/common/bd_memory.o
+ *(.bss)
+ .bss           0x0000000000302970        0x0 ./lib/run_loop.o
+ .bss           0x0000000000302970        0x0 ./lib/lbuf.o
+ .bss           0x0000000000302970        0x0 ./lib/stdio/printf-stdarg.o
+ .bss           0x0000000000302970        0x0 ./lib/stdio/fcvt.o
+ .bss           0x0000000000302970        0x0 ./lib/vsprintf.o
+ .bss           0x0000000000302970        0x0 ./lib/delay.o
+ .bss           0x0000000000302970      0xa30 ./btstack/Controller/BLE/ble_hci.o
+ .bss           0x00000000003033a0      0x228 ./btstack/Controller/BLE/link_layer.o
+ .bss           0x00000000003035c8        0x0 ./btstack/Controller/BLE/ble_main.o
+ .bss           0x00000000003035c8        0x0 ./btstack/Controller/common/bd_memory.o
+ .bss           0x00000000003035c8        0x0 ./btstack/Controller/common/br16/bt_power_driver.o
+ .bss           0x00000000003035c8        0x0 ./btstack/Controller/common/bt_power.o
+ .bss           0x00000000003035c8        0x0 ./btstack/Protocol/BLE/att.o
+ *fill*         0x00000000003035c8        0x8 
+ .bss           0x00000000003035d0       0x38 ./btstack/Protocol/BLE/att_server.o
+ .bss           0x0000000000303608        0x0 ./btstack/Protocol/BLE/att_dispatch.o
+ *fill*         0x0000000000303608        0x8 
+ .bss           0x0000000000303610       0xd0 ./btstack/Protocol/BLE/sm.o
+ .bss           0x00000000003036e0        0x4 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .bss           0x00000000003036e4        0x4 ./btstack/Baseband/BLE/br16/analog_ble.o
+ .bss           0x00000000003036e8        0x0 ./btstack/Baseband/common/br16/RF.o
+ .bss           0x00000000003036e8        0x0 ./btstack/Baseband/common/br16/fpga_analog.o
+ .bss           0x00000000003036e8        0x0 ./btstack/Host/BLE/btstack_memory.o
+ *fill*         0x00000000003036e8        0x8 
+ .bss           0x00000000003036f0       0x84 ./btstack/Host/BLE/ble_peripheral_test.o
+ .bss           0x0000000000303774        0x4 ./btstack/Host/BLE/l2cap_le.o
+ .bss           0x0000000000303778        0x0 ./btstack/Host/BLE/le_device_db_memory.o
+ .bss           0x0000000000303778      0x1d0 ./btstack/Host/BLE/hci.o
+ .bss           0x0000000000303948        0x4 ./btstack/Host/BLE/h4_transport.o
+ .bss           0x000000000030394c       0x5a ./btstack/Host/common/utils.o
+ *fill*         0x00000000003039a6        0x2 
+ .bss           0x00000000003039a8        0x0 ./btstack/Host/common/hci_cmds.o
+ .bss           0x00000000003039a8        0x0 ./btstack/Host/common/linked_list.o
+ .bss           0x00000000003039a8        0x0 ./btstack/Host/common/memory_pool.o
+ *fill*         0x00000000003039a8        0x8 
+ .bss           0x00000000003039b0       0x24 ./os/thread.o
+ .bss           0x00000000003039d4        0x0 ./os/sys_timer.o
+ .bss           0x00000000003039d4       0x12 ./cpu/br16/board/main.o
+                0x00000000003039d4                thread_fun
+                0x00000000003039e4                g_thread_created
+                0x00000000003039e5                g_task_sleep_bitmap
+ *fill*         0x00000000003039e6        0x2 
+ .bss           0x00000000003039e8        0x0 ./cpu/br16/driver/uart.o
+ .bss           0x00000000003039e8        0x0 ./cpu/br16/driver/hwi.o
+ .bss           0x00000000003039e8        0x2 ./cpu/br16/driver/spi_ctl.o
+ *fill*         0x00000000003039ea        0x2 
+ .bss           0x00000000003039ec        0x4 ./cpu/br16/driver/timer.o
+ .bss           0x00000000003039f0        0x0 ./cpu/br16/driver/clock.o
+ .bss           0x00000000003039f0        0x4 ./cpu/br16/startup.o
+ .bss           0x00000000003039f4        0x0 ./cpu/br16/device.o
+ .bss           0x00000000003039f4        0x0 ./cpu/br16/irq.o
+ .bss           0x00000000003039f4        0x0 ./cpu/br16/clock.o
+ .bss           0x00000000003039f4       0x10 ./driver/platform.o
+ .bss           0x0000000000303a04        0x0 ./driver/init.o
+ *fill*         0x0000000000303a04        0xc 
+ .bss           0x0000000000303a10       0xb0 ./driver/interrupt.o
+ .bss           0x0000000000303ac0        0x0 /opt/pi32/lib/libc.a(lib_a-memcmp.o)
+ .bss           0x0000000000303ac0        0x0 /opt/pi32/lib/libc.a(lib_a-memcpy.o)
+ .bss           0x0000000000303ac0        0x0 /opt/pi32/lib/libc.a(lib_a-memset.o)
+ .bss           0x0000000000303ac0        0x0 /opt/pi32/lib/libc.a(lib_a-strcmp.o)
+ .bss           0x0000000000303ac0        0x0 /opt/pi32/lib/libc.a(lib_a-strcpy.o)
+ .bss           0x0000000000303ac0        0x0 /opt/pi32/lib/libc.a(lib_a-strlen.o)
+ .bss           0x0000000000303ac0        0x0 ./cpu/br16/driver/br16_ccm_aes.a(aes.o)
+ .bss           0x0000000000303ac0        0x0 ./cpu/br16/driver/br16_ccm_aes.a(ccm_memory.o)
+ COMMON         0x0000000000303ac0       0x14 ./btstack/Controller/BLE/ble_hci.o
+                0x0000000000303ac0                LE_EVENT_MASK
+                0x0000000000303ac4                EVENT_MASK
+                0x0000000000303ac8                ERROR_CODES_LIST
+                0x0000000000303acc                HCI_EVENTS
+                0x0000000000303ad0                LL_CONTROL_PROCEDURE
+ COMMON         0x0000000000303ad4        0x5 ./btstack/Controller/BLE/link_layer.o
+                0x0000000000303ad4                DEVICE_ADDR_TYPE
+                0x0000000000303ad8                ll_error_code
+ *fill*         0x0000000000303ad9        0x1 
+ COMMON         0x0000000000303ada        0x4 ./btstack/Baseband/BLE/br16/analog_ble.o
+                0x0000000000303ada                fsk_offset_dly
+                0x0000000000303adc                offset_cnt
+ *fill*         0x0000000000303ade        0x2 
+ COMMON         0x0000000000303ae0        0x8 ./cpu/br16/board/main.o
+                0x0000000000303ae0                jiffies
+                0x0000000000303ae4                g_rand_seed
+                0x0000000000310000                . = ORIGIN (ram2)
+
+.db             0x0000000000310000      0x280
+ *(.db_memory)
+ .db_memory     0x0000000000310000      0x180 ./btstack/Host/BLE/le_device_db_memory.o
+                0x0000000000310000                le_devices
+ .db_memory     0x0000000000310180      0x100 ./cpu/br16/board/main.o
+                0x0000000000310180                ram2_memory
+                0x0000000000340000                . = ORIGIN (ram1)
+
+.data1          0x0000000000340000     0x19ac
+                0x0000000000340000                _ble_ram1_begin = .
+ *(.btmem_highly_available)
+ .btmem_highly_available
+                0x0000000000340000       0x10 ./btstack/Controller/BLE/ble_hci.o
+                0x0000000000340000                hci_cmd_ptr
+                0x0000000000340004                hci_tx_buf
+                0x0000000000340008                hci_event_buf
+                0x000000000034000c                hci_rx_buf
+ .btmem_highly_available
+                0x0000000000340010       0xf2 ./btstack/Controller/BLE/link_layer.o
+                0x00000000003400fc                le_event_buf
+ *fill*         0x0000000000340102        0x2 
+ .btmem_highly_available
+                0x0000000000340104       0xc8 ./btstack/Controller/common/br16/bt_power_driver.o
+ .btmem_highly_available
+                0x00000000003401cc       0x18 ./btstack/Controller/common/bt_power.o
+ .btmem_highly_available
+                0x00000000003401e4       0x10 ./btstack/Protocol/BLE/att.o
+ .btmem_highly_available
+                0x00000000003401f4       0x3a ./btstack/Protocol/BLE/att_server.o
+ *fill*         0x000000000034022e        0x2 
+ .btmem_highly_available
+                0x0000000000340230        0x8 ./btstack/Protocol/BLE/att_dispatch.o
+ .btmem_highly_available
+                0x0000000000340238      0x13c ./btstack/Protocol/BLE/sm.o
+ .btmem_highly_available
+                0x0000000000340374      0x678 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .btmem_highly_available
+                0x00000000003409ec      0x29c ./btstack/Host/BLE/btstack_memory.o
+ .btmem_highly_available
+                0x0000000000340c88        0xa ./btstack/Host/BLE/ble_peripheral_test.o
+ *fill*         0x0000000000340c92        0x2 
+ .btmem_highly_available
+                0x0000000000340c94        0x8 ./btstack/Host/BLE/l2cap_le.o
+ .btmem_highly_available
+                0x0000000000340c9c        0x4 ./btstack/Host/BLE/hci.o
+ .btmem_highly_available
+                0x0000000000340ca0        0x8 ./os/sys_timer.o
+                0x0000000000340ca8                _ble_ram1_end = .
+                0x0000000000340ca8                _bredr_ram1_begin = .
+ *(.reg_buf)
+ *(.ram1_data)
+ .ram1_data     0x0000000000340ca8      0x800 ./btstack/Controller/common/bd_memory.o
+                0x00000000003414a8                _bredr_ram1_begin = .
+                0x00000000003414a8                poweroff_text_begin = .
+ *(.poweroff_text)
+ .poweroff_text
+                0x00000000003414a8      0x3cc ./btstack/Controller/common/br16/bt_power_driver.o
+ .poweroff_text
+                0x0000000000341874      0x138 ./btstack/Controller/common/bt_power.o
+                0x00000000003419ac                poweroff_text_end = .
+                0x0000000000300000                data_addr = ADDR (.data)
+                0x0000000000000170                data_size = SIZEOF (.data)
+                0x0000000000000170                data1_size = SIZEOF (.data)
+                0x0000000001013dc2                data_begin = _text_end
+                0x0000000000300170                bss_begin = ADDR (.bss)
+                0x0000000000003978                bss_size = SIZEOF (.bss)
+                0x0000000000303ae8                bss_end = (ADDR (.bss) + SIZEOF (.bss))
+                0x0000000000340000                ram1_addr = 0x340000
+                0x0000000001013f32                ram1_begin = (_text_end + SIZEOF (.data))
+                0x0000000000003fe0                ram1_size = 0x3fe0
+OUTPUT(tools/br16/main.or32 elf32-pi32)
+
+.debug_str      0x0000000000000000     0xbef9
+ .debug_str     0x0000000000000000      0x1cb ./lib/run_loop.o
+                                        0x251 (size before relaxing)
+ .debug_str     0x00000000000001cb       0xc9 ./lib/lbuf.o
+                                        0x26e (size before relaxing)
+ .debug_str     0x0000000000000294       0xa8 ./lib/stdio/printf-stdarg.o
+                                        0x1ec (size before relaxing)
+ .debug_str     0x000000000000033c        0xd ./lib/stdio/fcvt.o
+                                        0x103 (size before relaxing)
+ .debug_str     0x0000000000000349       0x35 ./lib/vsprintf.o
+                                        0x176 (size before relaxing)
+ .debug_str     0x000000000000037e        0xe ./lib/delay.o
+                                        0x118 (size before relaxing)
+ .debug_str     0x000000000000038c     0x18a5 ./btstack/Controller/BLE/ble_hci.o
+                                       0x1d84 (size before relaxing)
+ .debug_str     0x0000000000001c31     0x166d ./btstack/Controller/BLE/link_layer.o
+                                       0x328f (size before relaxing)
+ .debug_str     0x000000000000329e       0x58 ./btstack/Controller/BLE/ble_main.o
+                                        0xdbf (size before relaxing)
+ .debug_str     0x00000000000032f6       0x92 ./btstack/Controller/common/bd_memory.o
+                                        0x1c7 (size before relaxing)
+ .debug_str     0x0000000000003388      0x404 ./btstack/Controller/common/br16/bt_power_driver.o
+                                        0x5e1 (size before relaxing)
+ .debug_str     0x000000000000378c      0x15f ./btstack/Controller/common/bt_power.o
+                                        0xcc4 (size before relaxing)
+ .debug_str     0x00000000000038eb      0x731 ./btstack/Protocol/BLE/att.o
+                                        0x968 (size before relaxing)
+ .debug_str     0x000000000000401c      0x391 ./btstack/Protocol/BLE/att_server.o
+                                        0x674 (size before relaxing)
+ .debug_str     0x00000000000043ad       0x9d ./btstack/Protocol/BLE/att_dispatch.o
+                                        0x234 (size before relaxing)
+ .debug_str     0x000000000000444a     0x21b0 ./btstack/Protocol/BLE/sm.o
+                                       0x26bd (size before relaxing)
+ .debug_str     0x00000000000065fa      0xb5b ./btstack/Baseband/BLE/br16/RF_ble.o
+                                       0x1a16 (size before relaxing)
+ .debug_str     0x0000000000007155       0xce ./btstack/Baseband/BLE/br16/analog_ble.o
+                                        0x460 (size before relaxing)
+ .debug_str     0x0000000000007223       0x2e ./btstack/Baseband/common/br16/RF.o
+                                        0x196 (size before relaxing)
+ .debug_str     0x0000000000007251       0xb2 ./btstack/Baseband/common/br16/fpga_analog.o
+                                        0x1f6 (size before relaxing)
+ .debug_str     0x0000000000007303     0x113b ./btstack/Host/BLE/btstack_memory.o
+                                       0x226c (size before relaxing)
+ .debug_str     0x000000000000843e      0x4f2 ./btstack/Host/BLE/ble_peripheral_test.o
+                                        0x7df (size before relaxing)
+ .debug_str     0x0000000000008930      0x20b ./btstack/Host/BLE/l2cap_le.o
+                                        0x3bd (size before relaxing)
+ .debug_str     0x0000000000008b3b      0x213 ./btstack/Host/BLE/le_device_db_memory.o
+                                        0x3fb (size before relaxing)
+ .debug_str     0x0000000000008d4e     0x197e ./btstack/Host/BLE/hci.o
+                                       0x2e93 (size before relaxing)
+ .debug_str     0x000000000000a6cc       0xb4 ./btstack/Host/BLE/h4_transport.o
+                                        0x31a (size before relaxing)
+ .debug_str     0x000000000000a780      0x1ca ./btstack/Host/common/utils.o
+                                        0x4d5 (size before relaxing)
+ .debug_str     0x000000000000a94a      0xba4 ./btstack/Host/common/hci_cmds.o
+                                        0xd62 (size before relaxing)
+ .debug_str     0x000000000000b4ee      0x131 ./btstack/Host/common/linked_list.o
+                                        0x2b1 (size before relaxing)
+ .debug_str     0x000000000000b61f       0x79 ./btstack/Host/common/memory_pool.o
+                                        0x1ad (size before relaxing)
+ .debug_str     0x000000000000b698       0xfd ./os/thread.o
+                                        0x2ca (size before relaxing)
+ .debug_str     0x000000000000b795       0xb9 ./os/sys_timer.o
+                                        0x275 (size before relaxing)
+ .debug_str     0x000000000000b84e      0x221 ./cpu/br16/board/main.o
+                                        0x405 (size before relaxing)
+ .debug_str     0x000000000000ba6f       0x79 ./cpu/br16/driver/uart.o
+                                        0x1d8 (size before relaxing)
+ .debug_str     0x000000000000bae8       0x9b ./cpu/br16/driver/hwi.o
+                                        0x1ec (size before relaxing)
+ .debug_str     0x000000000000bb83       0x80 ./cpu/br16/driver/spi_ctl.o
+                                        0x1dc (size before relaxing)
+ .debug_str     0x000000000000bc03       0x85 ./cpu/br16/driver/timer.o
+                                        0x1b9 (size before relaxing)
+ .debug_str     0x000000000000bc88       0x14 ./cpu/br16/driver/clock.o
+                                        0x120 (size before relaxing)
+ .debug_str     0x000000000000bc9c       0x6e ./cpu/br16/device.o
+                                        0x1ef (size before relaxing)
+ .debug_str     0x000000000000bd0a       0x3f ./cpu/br16/irq.o
+                                        0x16e (size before relaxing)
+ .debug_str     0x000000000000bd49       0x30 ./cpu/br16/clock.o
+                                        0x145 (size before relaxing)
+ .debug_str     0x000000000000bd79      0x107 ./driver/platform.o
+                                        0x2b5 (size before relaxing)
+ .debug_str     0x000000000000be80       0x31 ./driver/init.o
+                                        0x144 (size before relaxing)
+ .debug_str     0x000000000000beb1       0x48 ./driver/interrupt.o
+                                        0x203 (size before relaxing)
+
+.debug_loc      0x0000000000000000     0x98e2
+ .debug_loc     0x0000000000000000      0x339 ./lib/run_loop.o
+ .debug_loc     0x0000000000000339      0x328 ./lib/lbuf.o
+ .debug_loc     0x0000000000000661      0x5c8 ./lib/stdio/printf-stdarg.o
+ .debug_loc     0x0000000000000c29        0x0 ./lib/stdio/fcvt.o
+ .debug_loc     0x0000000000000c29      0x213 ./lib/vsprintf.o
+ .debug_loc     0x0000000000000e3c       0x13 ./lib/delay.o
+ .debug_loc     0x0000000000000e4f      0x6b9 ./btstack/Controller/BLE/ble_hci.o
+ .debug_loc     0x0000000000001508     0x1a3b ./btstack/Controller/BLE/link_layer.o
+ .debug_loc     0x0000000000002f43       0x47 ./btstack/Controller/BLE/ble_main.o
+ .debug_loc     0x0000000000002f8a       0x88 ./btstack/Controller/common/bd_memory.o
+ .debug_loc     0x0000000000003012      0x172 ./btstack/Controller/common/br16/bt_power_driver.o
+ .debug_loc     0x0000000000003184      0x287 ./btstack/Controller/common/bt_power.o
+ .debug_loc     0x000000000000340b      0xed6 ./btstack/Protocol/BLE/att.o
+ .debug_loc     0x00000000000042e1      0x48d ./btstack/Protocol/BLE/att_server.o
+ .debug_loc     0x000000000000476e       0xca ./btstack/Protocol/BLE/att_dispatch.o
+ .debug_loc     0x0000000000004838     0x13db ./btstack/Protocol/BLE/sm.o
+ .debug_loc     0x0000000000005c13      0xcb3 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .debug_loc     0x00000000000068c6      0x14c ./btstack/Baseband/BLE/br16/analog_ble.o
+ .debug_loc     0x0000000000006a12       0x26 ./btstack/Baseband/common/br16/RF.o
+ .debug_loc     0x0000000000006a38        0x0 ./btstack/Baseband/common/br16/fpga_analog.o
+ .debug_loc     0x0000000000006a38       0x5a ./btstack/Host/BLE/btstack_memory.o
+ .debug_loc     0x0000000000006a92      0x258 ./btstack/Host/BLE/ble_peripheral_test.o
+ .debug_loc     0x0000000000006cea      0x1bc ./btstack/Host/BLE/l2cap_le.o
+ .debug_loc     0x0000000000006ea6      0x475 ./btstack/Host/BLE/le_device_db_memory.o
+ .debug_loc     0x000000000000731b      0xffb ./btstack/Host/BLE/hci.o
+ .debug_loc     0x0000000000008316       0x39 ./btstack/Host/BLE/h4_transport.o
+ .debug_loc     0x000000000000834f      0x24d ./btstack/Host/common/utils.o
+ .debug_loc     0x000000000000859c      0x1b4 ./btstack/Host/common/hci_cmds.o
+ .debug_loc     0x0000000000008750      0x13d ./btstack/Host/common/linked_list.o
+ .debug_loc     0x000000000000888d       0xc1 ./btstack/Host/common/memory_pool.o
+ .debug_loc     0x000000000000894e      0x257 ./os/thread.o
+ .debug_loc     0x0000000000008ba5      0x213 ./os/sys_timer.o
+ .debug_loc     0x0000000000008db8      0x15c ./cpu/br16/board/main.o
+ .debug_loc     0x0000000000008f14       0xf8 ./cpu/br16/driver/uart.o
+ .debug_loc     0x000000000000900c      0x211 ./cpu/br16/driver/hwi.o
+ .debug_loc     0x000000000000921d      0x3fd ./cpu/br16/driver/spi_ctl.o
+ .debug_loc     0x000000000000961a        0x0 ./cpu/br16/driver/timer.o
+ .debug_loc     0x000000000000961a        0x0 ./cpu/br16/driver/clock.o
+ .debug_loc     0x000000000000961a        0x0 ./cpu/br16/device.o
+ .debug_loc     0x000000000000961a        0x0 ./cpu/br16/irq.o
+ .debug_loc     0x000000000000961a        0x0 ./cpu/br16/clock.o
+ .debug_loc     0x000000000000961a      0x1d9 ./driver/platform.o
+ .debug_loc     0x00000000000097f3       0x29 ./driver/init.o
+ .debug_loc     0x000000000000981c       0xc6 ./driver/interrupt.o
+
+.debug_abbrev   0x0000000000000000     0x3fa3
+ .debug_abbrev  0x0000000000000000      0x12c ./lib/run_loop.o
+ .debug_abbrev  0x000000000000012c      0x122 ./lib/lbuf.o
+ .debug_abbrev  0x000000000000024e       0xfe ./lib/stdio/printf-stdarg.o
+ .debug_abbrev  0x000000000000034c       0x13 ./lib/stdio/fcvt.o
+ .debug_abbrev  0x000000000000035f       0x82 ./lib/vsprintf.o
+ .debug_abbrev  0x00000000000003e1       0x49 ./lib/delay.o
+ .debug_abbrev  0x000000000000042a      0x372 ./btstack/Controller/BLE/ble_hci.o
+ .debug_abbrev  0x000000000000079c      0x41b ./btstack/Controller/BLE/link_layer.o
+ .debug_abbrev  0x0000000000000bb7       0xd6 ./btstack/Controller/BLE/ble_main.o
+ .debug_abbrev  0x0000000000000c8d       0xda ./btstack/Controller/common/bd_memory.o
+ .debug_abbrev  0x0000000000000d67      0x2f1 ./btstack/Controller/common/br16/bt_power_driver.o
+ .debug_abbrev  0x0000000000001058      0x1fe ./btstack/Controller/common/bt_power.o
+ .debug_abbrev  0x0000000000001256      0x2b4 ./btstack/Protocol/BLE/att.o
+ .debug_abbrev  0x000000000000150a      0x206 ./btstack/Protocol/BLE/att_server.o
+ .debug_abbrev  0x0000000000001710       0xb8 ./btstack/Protocol/BLE/att_dispatch.o
+ .debug_abbrev  0x00000000000017c8      0x348 ./btstack/Protocol/BLE/sm.o
+ .debug_abbrev  0x0000000000001b10      0x3b1 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .debug_abbrev  0x0000000000001ec1      0x16a ./btstack/Baseband/BLE/br16/analog_ble.o
+ .debug_abbrev  0x000000000000202b       0xb7 ./btstack/Baseband/common/br16/RF.o
+ .debug_abbrev  0x00000000000020e2      0x12e ./btstack/Baseband/common/br16/fpga_analog.o
+ .debug_abbrev  0x0000000000002210      0x196 ./btstack/Host/BLE/btstack_memory.o
+ .debug_abbrev  0x00000000000023a6      0x234 ./btstack/Host/BLE/ble_peripheral_test.o
+ .debug_abbrev  0x00000000000025da      0x1a4 ./btstack/Host/BLE/l2cap_le.o
+ .debug_abbrev  0x000000000000277e       0xf9 ./btstack/Host/BLE/le_device_db_memory.o
+ .debug_abbrev  0x0000000000002877      0x473 ./btstack/Host/BLE/hci.o
+ .debug_abbrev  0x0000000000002cea      0x132 ./btstack/Host/BLE/h4_transport.o
+ .debug_abbrev  0x0000000000002e1c      0x14b ./btstack/Host/common/utils.o
+ .debug_abbrev  0x0000000000002f67       0xdd ./btstack/Host/common/hci_cmds.o
+ .debug_abbrev  0x0000000000003044       0xce ./btstack/Host/common/linked_list.o
+ .debug_abbrev  0x0000000000003112       0xd2 ./btstack/Host/common/memory_pool.o
+ .debug_abbrev  0x00000000000031e4      0x1a0 ./os/thread.o
+ .debug_abbrev  0x0000000000003384      0x178 ./os/sys_timer.o
+ .debug_abbrev  0x00000000000034fc      0x254 ./cpu/br16/board/main.o
+ .debug_abbrev  0x0000000000003750       0xdc ./cpu/br16/driver/uart.o
+ .debug_abbrev  0x000000000000382c       0xe9 ./cpu/br16/driver/hwi.o
+ .debug_abbrev  0x0000000000003915       0xc3 ./cpu/br16/driver/spi_ctl.o
+ .debug_abbrev  0x00000000000039d8       0xab ./cpu/br16/driver/timer.o
+ .debug_abbrev  0x0000000000003a83       0x48 ./cpu/br16/driver/clock.o
+ .debug_abbrev  0x0000000000003acb       0x28 ./cpu/br16/startup.o
+ .debug_abbrev  0x0000000000003af3       0xa5 ./cpu/br16/device.o
+ .debug_abbrev  0x0000000000003b98       0x86 ./cpu/br16/irq.o
+ .debug_abbrev  0x0000000000003c1e       0x48 ./cpu/br16/clock.o
+ .debug_abbrev  0x0000000000003c66      0x157 ./driver/platform.o
+ .debug_abbrev  0x0000000000003dbd       0xab ./driver/init.o
+ .debug_abbrev  0x0000000000003e68      0x13b ./driver/interrupt.o
+
+.debug_info     0x0000000000000000    0x18ce6
+ .debug_info    0x0000000000000000      0x56c ./lib/run_loop.o
+ .debug_info    0x000000000000056c      0x5fe ./lib/lbuf.o
+ .debug_info    0x0000000000000b6a      0x384 ./lib/stdio/printf-stdarg.o
+ .debug_info    0x0000000000000eee       0x1e ./lib/stdio/fcvt.o
+ .debug_info    0x0000000000000f0c      0x11c ./lib/vsprintf.o
+ .debug_info    0x0000000000001028       0x4f ./lib/delay.o
+ .debug_info    0x0000000000001077     0x1ab2 ./btstack/Controller/BLE/ble_hci.o
+ .debug_info    0x0000000000002b29     0x497a ./btstack/Controller/BLE/link_layer.o
+ .debug_info    0x00000000000074a3      0x391 ./btstack/Controller/BLE/ble_main.o
+ .debug_info    0x0000000000007834      0x1c3 ./btstack/Controller/common/bd_memory.o
+ .debug_info    0x00000000000079f7      0xa1e ./btstack/Controller/common/br16/bt_power_driver.o
+ .debug_info    0x0000000000008415      0x89c ./btstack/Controller/common/bt_power.o
+ .debug_info    0x0000000000008cb1     0x168d ./btstack/Protocol/BLE/att.o
+ .debug_info    0x000000000000a33e      0x728 ./btstack/Protocol/BLE/att_server.o
+ .debug_info    0x000000000000aa66      0x196 ./btstack/Protocol/BLE/att_dispatch.o
+ .debug_info    0x000000000000abfc     0x28f7 ./btstack/Protocol/BLE/sm.o
+ .debug_info    0x000000000000d4f3     0x2d54 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .debug_info    0x0000000000010247      0x632 ./btstack/Baseband/BLE/br16/analog_ble.o
+ .debug_info    0x0000000000010879       0xf9 ./btstack/Baseband/common/br16/RF.o
+ .debug_info    0x0000000000010972      0x19b ./btstack/Baseband/common/br16/fpga_analog.o
+ .debug_info    0x0000000000010b0d      0xf67 ./btstack/Host/BLE/btstack_memory.o
+ .debug_info    0x0000000000011a74      0x85b ./btstack/Host/BLE/ble_peripheral_test.o
+ .debug_info    0x00000000000122cf      0x38c ./btstack/Host/BLE/l2cap_le.o
+ .debug_info    0x000000000001265b      0x558 ./btstack/Host/BLE/le_device_db_memory.o
+ .debug_info    0x0000000000012bb3     0x272b ./btstack/Host/BLE/hci.o
+ .debug_info    0x00000000000152de      0x370 ./btstack/Host/BLE/h4_transport.o
+ .debug_info    0x000000000001564e      0x6ea ./btstack/Host/common/utils.o
+ .debug_info    0x0000000000015d38      0x85a ./btstack/Host/common/hci_cmds.o
+ .debug_info    0x0000000000016592      0x2f0 ./btstack/Host/common/linked_list.o
+ .debug_info    0x0000000000016882      0x173 ./btstack/Host/common/memory_pool.o
+ .debug_info    0x00000000000169f5      0x503 ./os/thread.o
+ .debug_info    0x0000000000016ef8      0x40b ./os/sys_timer.o
+ .debug_info    0x0000000000017303      0x547 ./cpu/br16/board/main.o
+ .debug_info    0x000000000001784a      0x261 ./cpu/br16/driver/uart.o
+ .debug_info    0x0000000000017aab      0x282 ./cpu/br16/driver/hwi.o
+ .debug_info    0x0000000000017d2d      0x253 ./cpu/br16/driver/spi_ctl.o
+ .debug_info    0x0000000000017f80       0xf3 ./cpu/br16/driver/timer.o
+ .debug_info    0x0000000000018073       0x49 ./cpu/br16/driver/clock.o
+ .debug_info    0x00000000000180bc      0x1b5 ./cpu/br16/startup.o
+ .debug_info    0x0000000000018271      0x183 ./cpu/br16/device.o
+ .debug_info    0x00000000000183f4       0x92 ./cpu/br16/irq.o
+ .debug_info    0x0000000000018486       0x7c ./cpu/br16/clock.o
+ .debug_info    0x0000000000018502      0x44f ./driver/platform.o
+ .debug_info    0x0000000000018951       0xcd ./driver/init.o
+ .debug_info    0x0000000000018a1e      0x2c8 ./driver/interrupt.o
+
+.debug_ranges   0x0000000000000000     0x1b90
+ .debug_ranges  0x0000000000000000       0x18 ./lib/run_loop.o
+ .debug_ranges  0x0000000000000018       0x18 ./lib/lbuf.o
+ .debug_ranges  0x0000000000000030       0x18 ./lib/stdio/printf-stdarg.o
+ .debug_ranges  0x0000000000000048        0x0 ./lib/stdio/fcvt.o
+ .debug_ranges  0x0000000000000048        0x0 ./lib/vsprintf.o
+ .debug_ranges  0x0000000000000048        0x0 ./lib/delay.o
+ .debug_ranges  0x0000000000000048       0x88 ./btstack/Controller/BLE/ble_hci.o
+ .debug_ranges  0x00000000000000d0      0x7e8 ./btstack/Controller/BLE/link_layer.o
+ .debug_ranges  0x00000000000008b8        0x0 ./btstack/Controller/BLE/ble_main.o
+ .debug_ranges  0x00000000000008b8        0x0 ./btstack/Controller/common/bd_memory.o
+ .debug_ranges  0x00000000000008b8       0x78 ./btstack/Controller/common/br16/bt_power_driver.o
+ .debug_ranges  0x0000000000000930       0x80 ./btstack/Controller/common/bt_power.o
+ .debug_ranges  0x00000000000009b0      0x470 ./btstack/Protocol/BLE/att.o
+ .debug_ranges  0x0000000000000e20       0x48 ./btstack/Protocol/BLE/att_server.o
+ .debug_ranges  0x0000000000000e68       0x18 ./btstack/Protocol/BLE/att_dispatch.o
+ .debug_ranges  0x0000000000000e80      0x468 ./btstack/Protocol/BLE/sm.o
+ .debug_ranges  0x00000000000012e8      0x560 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .debug_ranges  0x0000000000001848        0x0 ./btstack/Baseband/BLE/br16/analog_ble.o
+ .debug_ranges  0x0000000000001848        0x0 ./btstack/Baseband/common/br16/RF.o
+ .debug_ranges  0x0000000000001848       0x78 ./btstack/Baseband/common/br16/fpga_analog.o
+ .debug_ranges  0x00000000000018c0        0x0 ./btstack/Host/BLE/btstack_memory.o
+ .debug_ranges  0x00000000000018c0       0x50 ./btstack/Host/BLE/ble_peripheral_test.o
+ .debug_ranges  0x0000000000001910       0x18 ./btstack/Host/BLE/l2cap_le.o
+ .debug_ranges  0x0000000000001928        0x0 ./btstack/Host/BLE/le_device_db_memory.o
+ .debug_ranges  0x0000000000001928      0x190 ./btstack/Host/BLE/hci.o
+ .debug_ranges  0x0000000000001ab8        0x0 ./btstack/Host/BLE/h4_transport.o
+ .debug_ranges  0x0000000000001ab8        0x0 ./btstack/Host/common/utils.o
+ .debug_ranges  0x0000000000001ab8        0x0 ./btstack/Host/common/hci_cmds.o
+ .debug_ranges  0x0000000000001ab8        0x0 ./btstack/Host/common/linked_list.o
+ .debug_ranges  0x0000000000001ab8        0x0 ./btstack/Host/common/memory_pool.o
+ .debug_ranges  0x0000000000001ab8       0x18 ./os/thread.o
+ .debug_ranges  0x0000000000001ad0       0x20 ./os/sys_timer.o
+ .debug_ranges  0x0000000000001af0       0x38 ./cpu/br16/board/main.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/driver/uart.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/driver/hwi.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/driver/spi_ctl.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/driver/timer.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/driver/clock.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/device.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/irq.o
+ .debug_ranges  0x0000000000001b28        0x0 ./cpu/br16/clock.o
+ .debug_ranges  0x0000000000001b28       0x68 ./driver/platform.o
+ .debug_ranges  0x0000000000001b90        0x0 ./driver/init.o
+ .debug_ranges  0x0000000000001b90        0x0 ./driver/interrupt.o
+
+.debug_pubnames
+                0x0000000000000000     0x7937
+ .debug_pubnames
+                0x0000000000000000       0xfd ./lib/run_loop.o
+ .debug_pubnames
+                0x00000000000000fd       0xee ./lib/lbuf.o
+ .debug_pubnames
+                0x00000000000001eb       0x6e ./lib/stdio/printf-stdarg.o
+ .debug_pubnames
+                0x0000000000000259       0x34 ./lib/vsprintf.o
+ .debug_pubnames
+                0x000000000000028d       0x1c ./lib/delay.o
+ .debug_pubnames
+                0x00000000000002a9      0x45c ./btstack/Controller/BLE/ble_hci.o
+ .debug_pubnames
+                0x0000000000000705     0x16c5 ./btstack/Controller/BLE/link_layer.o
+ .debug_pubnames
+                0x0000000000001dca       0xb0 ./btstack/Controller/BLE/ble_main.o
+ .debug_pubnames
+                0x0000000000001e7a       0xae ./btstack/Controller/common/bd_memory.o
+ .debug_pubnames
+                0x0000000000001f28      0x37f ./btstack/Controller/common/br16/bt_power_driver.o
+ .debug_pubnames
+                0x00000000000022a7      0x18f ./btstack/Controller/common/bt_power.o
+ .debug_pubnames
+                0x0000000000002436      0x62b ./btstack/Protocol/BLE/att.o
+ .debug_pubnames
+                0x0000000000002a61      0x28e ./btstack/Protocol/BLE/att_server.o
+ .debug_pubnames
+                0x0000000000002cef       0xb2 ./btstack/Protocol/BLE/att_dispatch.o
+ .debug_pubnames
+                0x0000000000002da1      0xc6e ./btstack/Protocol/BLE/sm.o
+ .debug_pubnames
+                0x0000000000003a0f      0x9e6 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .debug_pubnames
+                0x00000000000043f5       0xce ./btstack/Baseband/BLE/br16/analog_ble.o
+ .debug_pubnames
+                0x00000000000044c3       0x5f ./btstack/Baseband/common/br16/RF.o
+ .debug_pubnames
+                0x0000000000004522       0xa0 ./btstack/Baseband/common/br16/fpga_analog.o
+ .debug_pubnames
+                0x00000000000045c2      0x2e7 ./btstack/Host/BLE/btstack_memory.o
+ .debug_pubnames
+                0x00000000000048a9      0x5a8 ./btstack/Host/BLE/ble_peripheral_test.o
+ .debug_pubnames
+                0x0000000000004e51      0x24a ./btstack/Host/BLE/l2cap_le.o
+ .debug_pubnames
+                0x000000000000509b      0x1f7 ./btstack/Host/BLE/le_device_db_memory.o
+ .debug_pubnames
+                0x0000000000005292      0xa4b ./btstack/Host/BLE/hci.o
+ .debug_pubnames
+                0x0000000000005cdd       0xde ./btstack/Host/BLE/h4_transport.o
+ .debug_pubnames
+                0x0000000000005dbb      0x235 ./btstack/Host/common/utils.o
+ .debug_pubnames
+                0x0000000000005ff0      0xd0f ./btstack/Host/common/hci_cmds.o
+ .debug_pubnames
+                0x0000000000006cff      0x150 ./btstack/Host/common/linked_list.o
+ .debug_pubnames
+                0x0000000000006e4f       0x52 ./btstack/Host/common/memory_pool.o
+ .debug_pubnames
+                0x0000000000006ea1      0x120 ./os/thread.o
+ .debug_pubnames
+                0x0000000000006fc1      0x132 ./os/sys_timer.o
+ .debug_pubnames
+                0x00000000000070f3      0x261 ./cpu/br16/board/main.o
+ .debug_pubnames
+                0x0000000000007354       0x9c ./cpu/br16/driver/uart.o
+ .debug_pubnames
+                0x00000000000073f0       0xb6 ./cpu/br16/driver/hwi.o
+ .debug_pubnames
+                0x00000000000074a6       0x84 ./cpu/br16/driver/spi_ctl.o
+ .debug_pubnames
+                0x000000000000752a       0xc9 ./cpu/br16/driver/timer.o
+ .debug_pubnames
+                0x00000000000075f3       0x1f ./cpu/br16/driver/clock.o
+ .debug_pubnames
+                0x0000000000007612       0x7a ./cpu/br16/device.o
+ .debug_pubnames
+                0x000000000000768c       0x77 ./cpu/br16/irq.o
+ .debug_pubnames
+                0x0000000000007703       0x41 ./cpu/br16/clock.o
+ .debug_pubnames
+                0x0000000000007744      0x103 ./driver/platform.o
+ .debug_pubnames
+                0x0000000000007847       0x48 ./driver/init.o
+ .debug_pubnames
+                0x000000000000788f       0xa8 ./driver/interrupt.o
+
+.debug_pubtypes
+                0x0000000000000000     0x2a4d
+ .debug_pubtypes
+                0x0000000000000000       0x7e ./lib/run_loop.o
+ .debug_pubtypes
+                0x000000000000007e       0xb8 ./lib/lbuf.o
+ .debug_pubtypes
+                0x0000000000000136       0x56 ./lib/stdio/printf-stdarg.o
+ .debug_pubtypes
+                0x000000000000018c       0x5e ./lib/vsprintf.o
+ .debug_pubtypes
+                0x00000000000001ea       0x28 ./lib/delay.o
+ .debug_pubtypes
+                0x0000000000000212      0x418 ./btstack/Controller/BLE/ble_hci.o
+ .debug_pubtypes
+                0x000000000000062a      0x4d5 ./btstack/Controller/BLE/link_layer.o
+ .debug_pubtypes
+                0x0000000000000aff       0x44 ./btstack/Controller/BLE/ble_main.o
+ .debug_pubtypes
+                0x0000000000000b43       0x4c ./btstack/Controller/common/bd_memory.o
+ .debug_pubtypes
+                0x0000000000000b8f       0xd9 ./btstack/Controller/common/br16/bt_power_driver.o
+ .debug_pubtypes
+                0x0000000000000c68       0xe6 ./btstack/Controller/common/bt_power.o
+ .debug_pubtypes
+                0x0000000000000d4e       0xf2 ./btstack/Protocol/BLE/att.o
+ .debug_pubtypes
+                0x0000000000000e40      0x18a ./btstack/Protocol/BLE/att_server.o
+ .debug_pubtypes
+                0x0000000000000fca       0x8a ./btstack/Protocol/BLE/att_dispatch.o
+ .debug_pubtypes
+                0x0000000000001054      0x3f7 ./btstack/Protocol/BLE/sm.o
+ .debug_pubtypes
+                0x000000000000144b      0x1c8 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .debug_pubtypes
+                0x0000000000001613       0x7b ./btstack/Baseband/BLE/br16/analog_ble.o
+ .debug_pubtypes
+                0x000000000000168e       0x59 ./btstack/Baseband/common/br16/RF.o
+ .debug_pubtypes
+                0x00000000000016e7       0x5e ./btstack/Baseband/common/br16/fpga_analog.o
+ .debug_pubtypes
+                0x0000000000001745      0x3ac ./btstack/Host/BLE/btstack_memory.o
+ .debug_pubtypes
+                0x0000000000001af1       0xaf ./btstack/Host/BLE/ble_peripheral_test.o
+ .debug_pubtypes
+                0x0000000000001ba0       0xa7 ./btstack/Host/BLE/l2cap_le.o
+ .debug_pubtypes
+                0x0000000000001c47       0xef ./btstack/Host/BLE/le_device_db_memory.o
+ .debug_pubtypes
+                0x0000000000001d36      0x453 ./btstack/Host/BLE/hci.o
+ .debug_pubtypes
+                0x0000000000002189       0xbc ./btstack/Host/BLE/h4_transport.o
+ .debug_pubtypes
+                0x0000000000002245       0xbf ./btstack/Host/common/utils.o
+ .debug_pubtypes
+                0x0000000000002304       0xdb ./btstack/Host/common/hci_cmds.o
+ .debug_pubtypes
+                0x00000000000023df       0x69 ./btstack/Host/common/linked_list.o
+ .debug_pubtypes
+                0x0000000000002448       0x49 ./btstack/Host/common/memory_pool.o
+ .debug_pubtypes
+                0x0000000000002491       0x9a ./os/thread.o
+ .debug_pubtypes
+                0x000000000000252b       0x7c ./os/sys_timer.o
+ .debug_pubtypes
+                0x00000000000025a7       0xb2 ./cpu/br16/board/main.o
+ .debug_pubtypes
+                0x0000000000002659       0x93 ./cpu/br16/driver/uart.o
+ .debug_pubtypes
+                0x00000000000026ec       0x67 ./cpu/br16/driver/hwi.o
+ .debug_pubtypes
+                0x0000000000002753       0x54 ./cpu/br16/driver/spi_ctl.o
+ .debug_pubtypes
+                0x00000000000027a7       0x3a ./cpu/br16/driver/timer.o
+ .debug_pubtypes
+                0x00000000000027e1       0x23 ./cpu/br16/driver/clock.o
+ .debug_pubtypes
+                0x0000000000002804       0x88 ./cpu/br16/device.o
+ .debug_pubtypes
+                0x000000000000288c       0x32 ./cpu/br16/irq.o
+ .debug_pubtypes
+                0x00000000000028be       0x39 ./cpu/br16/clock.o
+ .debug_pubtypes
+                0x00000000000028f7       0xae ./driver/platform.o
+ .debug_pubtypes
+                0x00000000000029a5       0x21 ./driver/init.o
+ .debug_pubtypes
+                0x00000000000029c6       0x87 ./driver/interrupt.o
+
+.debug_line     0x0000000000000000     0xc486
+ .debug_line    0x0000000000000000      0x20e ./lib/run_loop.o
+ .debug_line    0x000000000000020e      0x2da ./lib/lbuf.o
+ .debug_line    0x00000000000004e8      0x2a2 ./lib/stdio/printf-stdarg.o
+ .debug_line    0x000000000000078a       0x1d ./lib/stdio/fcvt.o
+ .debug_line    0x00000000000007a7      0x186 ./lib/vsprintf.o
+ .debug_line    0x000000000000092d       0x42 ./lib/delay.o
+ .debug_line    0x000000000000096f      0x852 ./btstack/Controller/BLE/ble_hci.o
+ .debug_line    0x00000000000011c1     0x22b4 ./btstack/Controller/BLE/link_layer.o
+ .debug_line    0x0000000000003475       0xd7 ./btstack/Controller/BLE/ble_main.o
+ .debug_line    0x000000000000354c      0x101 ./btstack/Controller/common/bd_memory.o
+ .debug_line    0x000000000000364d      0x79d ./btstack/Controller/common/br16/bt_power_driver.o
+ .debug_line    0x0000000000003dea      0x3c9 ./btstack/Controller/common/bt_power.o
+ .debug_line    0x00000000000041b3      0xa0f ./btstack/Protocol/BLE/att.o
+ .debug_line    0x0000000000004bc2      0x4c2 ./btstack/Protocol/BLE/att_server.o
+ .debug_line    0x0000000000005084      0x123 ./btstack/Protocol/BLE/att_dispatch.o
+ .debug_line    0x00000000000051a7     0x1816 ./btstack/Protocol/BLE/sm.o
+ .debug_line    0x00000000000069bd     0x18e3 ./btstack/Baseband/BLE/br16/RF_ble.o
+ .debug_line    0x00000000000082a0      0x2cd ./btstack/Baseband/BLE/br16/analog_ble.o
+ .debug_line    0x000000000000856d      0x124 ./btstack/Baseband/common/br16/RF.o
+ .debug_line    0x0000000000008691      0x45c ./btstack/Baseband/common/br16/fpga_analog.o
+ .debug_line    0x0000000000008aed      0x28d ./btstack/Host/BLE/btstack_memory.o
+ .debug_line    0x0000000000008d7a      0x47d ./btstack/Host/BLE/ble_peripheral_test.o
+ .debug_line    0x00000000000091f7      0x221 ./btstack/Host/BLE/l2cap_le.o
+ .debug_line    0x0000000000009418      0x2d7 ./btstack/Host/BLE/le_device_db_memory.o
+ .debug_line    0x00000000000096ef     0x11ba ./btstack/Host/BLE/hci.o
+ .debug_line    0x000000000000a8a9      0x126 ./btstack/Host/BLE/h4_transport.o
+ .debug_line    0x000000000000a9cf      0x355 ./btstack/Host/common/utils.o
+ .debug_line    0x000000000000ad24      0x235 ./btstack/Host/common/hci_cmds.o
+ .debug_line    0x000000000000af59      0x18a ./btstack/Host/common/linked_list.o
+ .debug_line    0x000000000000b0e3       0xbc ./btstack/Host/common/memory_pool.o
+ .debug_line    0x000000000000b19f      0x215 ./os/thread.o
+ .debug_line    0x000000000000b3b4      0x1f7 ./os/sys_timer.o
+ .debug_line    0x000000000000b5ab      0x2aa ./cpu/br16/board/main.o
+ .debug_line    0x000000000000b855      0x1cf ./cpu/br16/driver/uart.o
+ .debug_line    0x000000000000ba24      0x1c0 ./cpu/br16/driver/hwi.o
+ .debug_line    0x000000000000bbe4      0x1d3 ./cpu/br16/driver/spi_ctl.o
+ .debug_line    0x000000000000bdb7       0xf3 ./cpu/br16/driver/timer.o
+ .debug_line    0x000000000000beaa       0x57 ./cpu/br16/driver/clock.o
+ .debug_line    0x000000000000bf01       0x9c ./cpu/br16/startup.o
+ .debug_line    0x000000000000bf9d       0x9d ./cpu/br16/device.o
+ .debug_line    0x000000000000c03a       0x6d ./cpu/br16/irq.o
+ .debug_line    0x000000000000c0a7       0xa2 ./cpu/br16/clock.o
+ .debug_line    0x000000000000c149      0x1ae ./driver/platform.o
+ .debug_line    0x000000000000c2f7       0x86 ./driver/init.o
+ .debug_line    0x000000000000c37d      0x109 ./driver/interrupt.o
+
+.debug_aranges  0x0000000000000000       0x20
+ .debug_aranges
+                0x0000000000000000       0x20 ./cpu/br16/startup.o

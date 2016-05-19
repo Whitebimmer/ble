@@ -1,0 +1,40 @@
+
+Master   ---------pairing_request:(sm_m_preq)-------> Slave
+
+ 		<--------pairing_response:(sm_s_preq)--------
+
+		--------pairing_confirm:(sm_peer_confirm)--->
+slave :
+	send le_rand hci command get:  local_random
+
+	sm_c1_t1(local_random, sm_m_preq, sm_s_pres, 
+			sm_m_addr_type, sm_s_addr_type) ------>plaintext
+	aes(sm_tk, plaintext) ----> t2
+	sm_c1_t3(t2, sm_m_address, sm_s_address)---->sm_c1_t3_value
+	aes(sm_tk, sm_c1_t3_value) ---->sm_local_confirm
+
+
+
+master	<------pairing_confirm:(sm_local_confirm)------slave
+
+		------pairing_random: (sm_peer_random) -------->slave
+slave:
+ 		sm_c1_t1(sm_peer_random, sm_m_preq, sm_s_pres, 
+				sm_m_addr_type,sm_s_addr_type) ---------plaintext
+		aes(sm_tk, plaintext) ----> t2
+		sm_c1_t3(t2, sm_m_address, sm_s_address)---->sm_c1_t3_value
+		aes(sm_tk, sm_c1_t3_value) ---->peer_confirm_test
+
+		if (sm_peer_confirm != peer_confirm_test)
+master	<---------pairing faild------------------------------------slave
+		else 
+master	<---------pairing_random: (local_random)---------------------slave
+
+slave:
+	receive hci event: long_term_key_request
+	sm_s1_r_prime(local_random, sm_peer_random) -->palintext
+		aes(sm_tk, plaintext) ---->sm_ltk 
+            sm_truncate_key(sm_ltk, sm_actual_encryption_key_size)->sm_ltk
+	send hci command: long_term_key_request_replay
+
+

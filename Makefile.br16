@@ -1,0 +1,119 @@
+
+ifeq ($(shell),cmd)
+#------------------------complier linker   
+export LD=lld.exe
+export CC=clang.exe
+export AR=clang-ar.exe
+LIBS = 	\
+C:/JL/pi32/libc/libc.a \
+
+#------------------------include path 
+export includes += \
+-I../include \
+-I../cpu/$(CPU)/include \
+-IC:/JL/pi32/include \
+-IC:/JL/pi32/libc/include \
+
+W_TOOLS = tools\$(CPU)
+export TOOLS = ..\$(subst \,/,$(W_TOOLS))
+
+export FLAGS += -Wall -target pi32-unkown-unkown-unkown -integrated-as \
+								-fno-builtin \
+								-mllvm -pi32-memreg-opt \
+								-mllvm -pi32-mem-offset-adj-opt \
+								-mllvm -pi32-const-spill \
+								-mllvm -pi32-enable-jz \
+								-mllvm -pi32-tailcall-opt \
+								-mllvm -inline-threshold=5 \
+								-mllvm -pi32-enable-itblock=1 \
+								-nostrictpi32 \
+								-Oz
+
+else
+#------------------------complier linker   
+export JL_TOOLS=/opt/pi32
+export LD=$(JL_TOOLS)/bin/pi32-ld
+export CC=$(JL_TOOLS)/bin/pi32-clang
+export AR=ar
+#------------------------include lib 
+LIBS = 	\
+$(JL_TOOLS)/lib/libc.a \
+
+#------------------------include path 
+export includes += \
+-I../include \
+-I../cpu/$(CPU)/include \
+-I$(JL_TOOLS)/include \
+-I$(JL_TOOLS)/include/libc \
+
+#------------------------download tools
+export OBJCOPY=$(JL_TOOLS)/bin/pi32-objcopy
+export OBJDUMP=$(JL_TOOLS)/bin/pi32-objdump
+
+export TOOLS=../tools/$(CPU)
+
+export FLAGS += -target pi32 -integrated-as \
+								-fno-builtin \
+								-c -g \
+								-Wall \
+								-nostrictpi32 \
+								-Oz
+
+endif
+
+
+
+#------------------------include marco 
+export DEFINS = \
+-DNOFLOAT \
+-DEMBEDDED \
+-DBR16\
+-DFPGA\
+
+#DEFINS += -DSH60
+
+
+
+ifeq ($(shell),cmd)
+
+.PHONY:  all clean test
+all: 
+	@for /f %%i in ('dir /ad/b') do if exist %%i\Makefile make -C %%i 
+	@$(W_TOOLS)\funs.bat ld $(LD) $(LIBS)
+
+clean:
+	@for /r %%i in (*.d) do del %%i 
+	@for /r %%i in (*.o) do del %%i 
+
+test:
+	@echo "CMD"
+	@echo $(shell)
+
+else
+
+
+subdir = $(shell find -maxdepth 1 -type d)
+objs_o = $(shell find -name "*.o")
+objs_d = $(shell find -name "*.d")
+LIBS += $(shell find -name "*.a")
+	
+.PHONY:  all clean test
+all: 
+	@if [ -f tools/$(CPU)/main.or32 ]; then rm tools/$(CPU)/main.or32; fi 
+	@for i in $(subdir); do \
+		if [ $$i != "." ] && [ -f $$i/Makefile ]; then \
+			make -C $$i; \
+		fi \
+	done
+	@x=`find ./ -name "*.o"`; \
+	$(LD) $$x  $(LIBS) -o tools/$(CPU)/main.or32 -Tcpu/$(CPU)/ram.ld -Map=tools/$(CPU)/map.txt; \
+    $(shell) tools/$(CPU)/post.sh 	
+
+clean:
+	-rm $(objs_o) $(objs_d)
+
+test:
+	@echo "BASH"
+	@echo $(shell)
+
+endif
