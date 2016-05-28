@@ -4675,16 +4675,16 @@ static int ll_open(int state)
         puts("link over 8 err\n");
         return NULL;
     }
-
-	__ble_ops->handler_register(link->hw, link, &ll_handler);
-    
-	__set_link_state(link, state);
-
     //privacy
     if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY))
     {
         __ble_ops->ioctrl(link->hw, BLE_SET_PRIVACY_ENABLE, le_param.resolution_enable);
     }
+
+	__ble_ops->handler_register(link->hw, link, &ll_handler);
+    
+	__set_link_state(link, state);
+
 	puts("exit\n");
 	return 0;
 }
