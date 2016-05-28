@@ -22,6 +22,10 @@ static volatile int ble_debug_signal[BLE_HW_NUM];
 		((u32)(a) - ((u32)&ble_base)); \
 		})
 
+#define BLE_TO_PHY(a) \
+		((u32)(a) + ((u32)&ble_base)); \
+		})
+
 #define HW_ID(hw) \
 	((hw) - ble_base.hw)
 
@@ -515,10 +519,10 @@ static void __set_local_addr_ram(struct ble_hw *hw, u8 addr_type, const u8 *addr
     u16 *ptr;
 
     if (!(hw->ble_fp.TXTOG & BIT(0))) {
-        ptr = hw->ble_fp.TXPTR0;
+        ptr = BLE_TO_PHY(hw->ble_fp.TXPTR0);
     }
     else{
-        ptr = hw->ble_fp.TXPTR1;
+        ptr = BLE_TO_PHY(hw->ble_fp.TXPTR1);
     }
     *ptr++ = (addr[1] << 8) + addr[0];
     *ptr++ = (addr[3] << 8) + addr[2];
