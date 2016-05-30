@@ -197,26 +197,6 @@ struct le_addr{
 	u8 addr[6];
 };
 
-struct data_length{
-    u16 connMaxTxOctets;
-    u16 connMaxRxOctets;
-
-    u16 connRemoteMaxTxOctets;
-    u16 connRemoteMaxRxOctets;
-
-    u16 connEffectiveMaxTxOctets;
-    u16 connEffectiveMaxRxOctets;
-
-    u16 connMaxTxTime;
-    u16 connMaxRxTime;
-
-    u16 connRemoteMaxTxTime;
-    u16 connRemoteMaxRxTime;
-
-    u16 connEffectiveMaxTxTime;
-    u16 connEffectiveMaxRxTime;
-};
-
 struct le_link{
 	u8 state;
 	u8 role;
@@ -247,10 +227,6 @@ struct le_link{
     //supervision timeout
     struct sys_timer timeout;
     struct sys_timer adv_timeout;
-    struct sys_timer pr_timeout;    //control procedures response timeout Tprt
-    
-    //Data Length Update
-    struct data_length pdu_len;
 };
 
 

@@ -109,8 +109,8 @@ struct ble_conn_param{
 };
 
 struct ble_conn {
-    u8 scan_interval;
-    u8 scan_windows;
+    u16 scan_interval;
+    u16 scan_windows;
     u8 filter_policy;
     u8 own_addr_type;
     u8 peer_addr_type;
@@ -155,6 +155,7 @@ struct ble_operation{
 
     int (*get_conn_event)(void *);
 
+	int (*is_init_enter_conn)(void *);
 };
 
 

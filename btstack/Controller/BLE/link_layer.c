@@ -46,21 +46,7 @@ struct link_layer{
 	struct thread ll_thread;
 };
 
-//data length 4.2 feature 
-struct ll_data_pdu_length{
-    u16 connInitialMaxTxOctets;
-    u16 connInitialMaxTxTime;
-
-    u16 supportedMaxTxOctets;
-    u16 supportedMaxTxTime;
-
-    u16 supportedMaxRxOctets;
-    u16 supportedMaxRxTime;
-};
-
-struct ll_data_pdu_length le_data_length;
-
-//privacy 4.2 feature
+//privacy
 struct ll_privacy{
     struct sys_timer RPA_timeout;
     u32 RPA_timeout_cnt;
@@ -90,7 +76,7 @@ static struct link_layer ll sec(.btmem_highly_available);
  */
 #define LL_TRANSMIT_POWER_LEVEL         0x1
 
-#define LL_ACL_PDU_LENGTH               27 
+#define LL_ACL_PDU_LENGTH               64
 #define LL_TOTAL_NUM_LE_DATA_PACKET     8
 
 #define LL_WHITE_LIST_SIZE              1
@@ -1017,6 +1003,7 @@ static struct resolving_list *ll_resolving_list_match(const u8 addr_type, const 
             return p;
         }
     }
+	return NULL;
 }
 static void __set_ll_public_device_addr(u8 *addr)
 {
@@ -1220,6 +1207,7 @@ static void __set_ll_adv_peer_addr(struct le_link *link)
             {
                 __set_ll_peer_resolvable_private_addr(link->peer.addr, resolving_list_t);
             }
+			link->peer.addr_type = le_param.adv_param.Own_Address_Type; 
             break; 
     }
 
@@ -1310,14 +1298,43 @@ static void __set_ll_init_peer_addr(struct le_link *link)
     /* puts(__func__); */
     /* printf_buf(link->peer.addr, 6); */
 
-    /* __ble_ops->ioctrl(link->hw, BLE_SET_PEER_ADDR, */
-            /* link->peer.addr_type, */
-            /* link->peer.addr);  */
-
-    //specify Peer addr
-    __ble_ops->ioctrl(link->hw, BLE_WHITE_LIST_ADDR,
+    __ble_ops->ioctrl(link->hw, BLE_SET_PEER_ADDR,
             link->peer.addr_type,
             link->peer.addr); 
+
+    //specify Peer addr
+    struct ble_conn *conn = &link->conn;
+    struct white_list *white_list_t = NULL;
+	if(conn->filter_policy == 0)
+	{
+		__ble_ops->ioctrl(link->hw, BLE_WHITE_LIST_ADDR,
+				link->peer.addr_type,
+				link->peer.addr); 
+	}
+	else
+	{
+		white_list_t = ll_white_list_match(link,
+            link->peer.addr_type,
+            link->peer.addr); 
+		if(white_list_t != NULL)
+		{
+			__ble_ops->ioctrl(link->hw, BLE_WHITE_LIST_ADDR,
+					link->peer.addr_type,
+					link->peer.addr); 
+		}
+		else
+		{
+			struct white_list *p;
+
+			list_for_each_entry(p, &le_param.white_list_head, entry)
+			{
+				__ble_ops->ioctrl(link->hw, BLE_WHITE_LIST_ADDR,
+						p->white_list_param.Address_Type,
+						p->white_list_param.Address);
+				break;
+			}
+		}
+	}
 }
 
 
@@ -1334,7 +1351,7 @@ static void __set_ll_init_local_RPA(struct le_link *link, struct ble_rx *rx,
            if ((resolving_list_t != NULL)
                 && (__resolve_list_IRK_verify(resolving_list_t->resolving_list_param.Local_IRK) == TRUE))
            {
-               __set_ll_local_resolvable_private_addr(link, resolving_list_t);
+               __set_ll_local_resolvable_private_addr(link->local.addr, resolving_list_t);
            }
            break; 
     }
@@ -1391,7 +1408,7 @@ static struct resolving_list *ll_resolve_peer_addr(const u8 *addr)
     //Address is RPA
     if (__ll_resolvable_private_addr_verify(addr) == FALSE)
     {
-        puts("ll resolve addr format error\n");
+        puts("ll resolve peer addr format error\n");
         return NULL;
     }
 
@@ -1419,7 +1436,7 @@ static struct resolving_list *ll_resolve_local_addr(const u8 *addr)
     //Address is RPA
     if (__ll_resolvable_private_addr_verify(addr) == FALSE)
     {
-        puts("ll resolve addr format error\n");
+        puts("ll resolve local addr format error\n");
         return NULL;
     }
 
@@ -2336,6 +2353,18 @@ static void rx_probe_init_pdu_handler(struct le_link *link, struct ble_rx *rx)
     {
     case ADV_DIRECT_IND:
     case ADV_IND:
+		if(LE_FEATURES_IS_SUPPORT(LL_PRIVACY))
+		{
+			if(!__ble_ops->is_init_enter_conn(link->hw))
+			{
+				return;
+			}
+		}
+		putchar('A');
+		master_set_connection_param(link, rx);
+		//LL_CONNECTION_ESTABLISHED set ll connSupervision timeout
+		ll_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
+		ll_timeout_start(link, ll_timeout);
         break;
     case ADV_NONCONN_IND:
     case ADV_SCAN_IND:
@@ -2461,7 +2490,7 @@ static void rx_adv_state_handler(struct le_link *link, struct ble_rx *rx)
     //ScanA
     if (ADDR_IS_FAIL())
     {
-        puts("ScanA resolve fail\n");
+        puts("adv resolve fail\n");
         return;
     }
     //ScanA resolve 
@@ -2532,18 +2561,22 @@ static void rx_init_state_handler(struct le_link *link,struct ble_rx *rx)
         puts("AdvA resolve fail\n");
         return;
     }
-    //AdvA resolve && InitA resolve
-    __ble_ops->ioctrl(link->hw, BLE_SET_RPA_RESOLVE_RESULT, rx, ADDR_IS_FAIL());
+    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
+	{
+		int res;
+		res = __ble_ops->is_init_enter_conn(link->hw);
+		if(!res)
+		{
+			//AdvA resolve && InitA resolve
+			__ble_ops->ioctrl(link->hw, BLE_SET_RPA_RESOLVE_RESULT, rx, ADDR_IS_FAIL());
+			return;	
+		}
+	}
 
     switch (rx->type)
     {
     case ADV_IND:
     case ADV_DIRECT_IND:
-        putchar('A');
-        master_set_connection_param(link, rx);
-        //LL_CONNECTION_ESTABLISHED set ll connSupervision timeout
-        ll_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
-        ll_timeout_start(link, ll_timeout);
         break;
     case ADV_SCAN_IND:
     case ADV_NONCONN_IND:
@@ -3750,7 +3783,6 @@ void le_disconnect(
 /*
  *      LL Control Procedure - Data Length Update
  */
-
 static void __ll_send_length_req()
 {
     struct set_data_length_parameter *param;
@@ -3763,48 +3795,66 @@ static void __ll_send_length_req()
 
     ASSERT(link != NULL, "%s\n", __func__);
 
-    link->connMaxTxOctets   = param->tx_octets;
-    link->connMaxTxTime     = param->txtime;
+    __hci_param_free(le_param.set_data_length_param);
+
+    //TO*DO
+    u16 rxoctets;
+    u16 rxtime;
 
     ll_send_control_data(link, LL_LENGTH_REQ,
             "2222", 
-            link->connMaxRxOctets,
-            link->connMaxRxTime,
+            rxoctets,
+            rxtime,
             param->txoctets,
             param->txtime);
-
-    __hci_param_free(le_param.set_data_length_param);
 }
 
 static void __ll_receive_length_req(struct le_link *link, struct ble_rx *rx)
 {
+    //TO*DO
     u8 *data = &rx->data[1];
+
+    u16 remote_rxoctets;
+    u16 remote_rxtime;
+    u16 remote_txoctets;
+    u16 remote_txtime;
     
-    //It shall immediately start using the updated values for all New Data Channel PDUs 
-    link->connRemoteMaxRxOctets       = READ_BT16(data, 0);
-    link->connRemoteMaxRxTime         = READ_BT16(data, 2);
-    link->connRemoteMaxTxOctets       = READ_BT16(data, 4);
-    link->connRemoteMaxTxTime         = READ_BT16(data, 6);
+    remote_rxoctets = READ_BT16(data, 0);
+    remote_rxtime   = READ_BT16(data, 2);
+    remote_txoctets = READ_BT16(data, 4);
+    remote_txtime   = READ_BT16(data, 6);
 }
 
 static void __ll_send_length_rsp_auto(struct le_link *link)
 {
+    //TO*DO
+    u16 rxoctets;
+    u16 rxtime;
+    u16 txoctets;
+    u16 txtime;
+
     ll_send_control_data(link, LL_LENGTH_RSP,
             "2222", 
-            link->connMaxRxOctets,
-            link->connMaxRxTime,
-            link->connMaxTxOctets,
-            link->connMaxTxTimet);
+            rxoctets,
+            rxtime,
+            txoctets,
+            txtime);
 }
 
 static void __ll_receive_length_rsp(struct le_link *link, struct ble_rx *rx)
 {
+    //TO*DO
     u8 *data = &rx->data[1];
+
+    u16 remote_rxoctets;
+    u16 remote_rxtime;
+    u16 remote_txoctets;
+    u16 remote_txtime;
     
-    link->connRemoteMaxRxOctets = READ_BT16(data, 0);
-    link->connRemoteMaxRxTime   = READ_BT16(data, 2);
-    link->connRemoteMaxTxOctets = READ_BT16(data, 4);
-    link->connRemoteMaxTxTime   = READ_BT16(data, 6);
+    remote_rxoctets = READ_BT16(data, 0);
+    remote_rxtime   = READ_BT16(data, 2);
+    remote_txoctets = READ_BT16(data, 4);
+    remote_txtime   = READ_BT16(data, 6);
 }
 
 
@@ -3831,6 +3881,7 @@ static void le_data_length_update(
         malloc_len = sizeof(struct set_data_length_parameter);
 
         le_param.set_data_length_param = __hci_param_malloc(malloc_len);
+
 
         ll_control_data_step_start(data_length_update_steps);
     }else{
@@ -4643,90 +4694,6 @@ static void ll_thread_process(struct thread *th)
  * ----------------------------------------------------------------------*/
 
 
-static void __set_ll_data_length(struct le_link *link)
-{
-    //local
-    link->connMaxTxOctets = ll.connInitialMaxTxOctets; //should be 27
-    link->connMaxRxOctets = 27; //chosen by the Controller
-    link->connMaxTxTime = ll.connInitialMaxTxTime;
-    link->connMaxRxTime = 328;
-
-    __ble_ops->ioctrl(link->hw, BLE_SET_TX_LENGTH, link->connMaxTxOctets);
-    __ble_ops->ioctrl(link->hw, BLE_SET_RX_LENGTH, link->connMaxRxOctets);
-    //remote
-    link->connRemoteMaxTxOctets = 27;
-    link->connRemoteMaxRxOctets = 27;
-    link->connRemoteMaxTxTime = 328;
-    link->connRemoteMaxRxTime = 328;
-
-
-    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
-    {
-        if (link->connMaxTxOctets != link->connMaxRxOctets)
-        {
-            puts("issuse Data Length Update Procedure 1\n");
-        }
-
-        if (link->connMaxTxTime != link->connMaxRxTime)
-        {
-            puts("issuse Data Length Update Procedure 2\n");
-        }
-    }
-}
-
-#define LL_TXMAXOCTETS_IS_EXCEED(x)     (x > ll.supportedMaxTxOctets)
-#define LL_RXMAXOCTETS_IS_EXCEED(x)     (x > ll.supportedMaxRxOctets)
-#define LL_TXMAXTIME_IS_EXCEED(x)       (x > ll.supportedMaxTxTime)
-#define LL_RXMAXTIME_IS_EXCEED(x)       (x > ll.supportedMaxRxTime)
-
-static void __update_ll_data_length_txoctets(struct le_link *link, u16 octets)
-{
-    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
-    {
-        if (LL_TXMAXOCTETS_IS_EXCEED(len)){
-            puts("LL_TXMAXOCTETS_IS_EXCEED\n");
-            return;
-        }
-        link->connMaxTxOctets = octets;
-    }
-}
-
-static void __update_ll_data_length_txtime(struct le_link *link, u16 time)
-{
-    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
-    {
-        if (LL_TXMAXTIME_IS_EXCEED(len)){
-            puts("LL_TXMAXTIME_IS_EXCEED\n");
-            return;
-        }
-        link->connMaxTxTime = time;
-    }
-}
-
-static void __update_ll_data_length_rxoctets(struct le_link *link, u16 octets)
-{
-    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
-    {
-        if (LL_RXMAXOCTETS_IS_EXCEED(len)){
-            puts("LL_RXMAXOCTETS_IS_EXCEED\n");
-            return;
-        }
-        link->connMaxRxOctets = octets;
-    }
-}
-
-static void __update_ll_data_length_rxtime(struct le_link *link, u16 time)
-{
-    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
-    {
-        if (LL_RXMAXTIME_IS_EXCEED(len)){
-            puts("LL_RXMAXTIME_IS_EXCEED\n");
-            return;
-        }
-        link->connMaxRxTime = time;
-    }
-}
-
 
 static int ll_open(int state)
 {
@@ -4741,6 +4708,7 @@ static int ll_open(int state)
 
 	INIT_LIST_HEAD(&link->rx_oneshot_head);
 	INIT_LIST_HEAD(&link->event_oneshot_head);
+
 
 	link->hw = __ble_ops->open();
     ASSERT(link->hw != NULL);
@@ -4757,15 +4725,13 @@ static int ll_open(int state)
 
 	__ble_ops->handler_register(link->hw, link, &ll_handler);
     
-	__set_link_state(link, state);
-
     //privacy
     if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY))
     {
         __ble_ops->ioctrl(link->hw, BLE_SET_PRIVACY_ENABLE, le_param.resolution_enable);
     }
 
-    __set_ll_data_length(link);
+	__set_link_state(link, state);
 
 	puts("exit\n");
 	return 0;
@@ -4823,27 +4789,6 @@ static int ll_handler_register(const struct lc_handler *handler)
 }
 
 
-static void ll_data_length_init(void)
-{
-    //Vol 6 Part B 4.5.10
-    ll.connInitialMaxTxOctets = 27;
-    ll.connInitialMaxTxTime = 328;
-
-    ll.supportedMaxTxOctets = 27;
-    ll.supportedMaxTxTime = 328;
-
-    ll.supportedMaxRxOctets = 27;
-    ll.supportedMaxRxTime = 328;
-
-    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
-    {
-        ll.supportedMaxTxOctets = 251;
-        ll.supportedMaxTxTime = 2120;
-
-        ll.supportedMaxRxOctets = 251;
-        ll.supportedMaxRxTime = 2120;
-    }
-}
 
 static void *ll_init(struct hci_parameter *hci_param)
 {
@@ -4868,7 +4813,6 @@ static void *ll_init(struct hci_parameter *hci_param)
         ll_resolving_list_init();
     }
 
-    ll_data_length_init();
     
 	le_event_buf = lbuf_init(ll_buf, 512);
 
