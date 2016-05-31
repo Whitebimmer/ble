@@ -8,9 +8,9 @@ objs = \
    $(CPU)/board/main.o \
    $(CPU)/driver/clock.o \
    $(CPU)/driver/hwi.o \
-   $(CPU)/driver/spi_ctl.o \
    $(CPU)/driver/timer.o \
    $(CPU)/driver/uart.o \
+   # $(CPU)/driver/spi_ctl.o \
  
 includes += \
 -I$(CPU) \
