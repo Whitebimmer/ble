@@ -25,6 +25,8 @@ objs = \
    Protocol/BLE/att_dispatch.o \
    Protocol/BLE/att_server.o \
    Protocol/BLE/sm.o \
+   LL_TS_4_2_1_hci_test.o \
+   hcitest_uart.o
 
 includes += \
 -IBaseband/include/ble/$(CPU)/ \
@@ -36,6 +38,7 @@ includes += \
 -IHost/include/common/ \
 -IProtocol/include/ \
 -IProfile/include/ \
+-I./
  
 DEFINS +=
 CONFIG_LIB=n

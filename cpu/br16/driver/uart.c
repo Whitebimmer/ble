@@ -156,4 +156,30 @@ void printf_buf(u8 *buf, u32 len)
 	putbyte('\n') ;
 }
 
+void printf_buf_1(u8 *buf, u32 len)
+{
+    u32 i ;
+
+    putchar('\n');
+    put_u32hex(buf);
+    putchar('\n');
+	putchar('{');
+    for(i = 0 ; i < len ; i++)
+    {
+        if(i && (i % 16) == 0)
+        {
+            putbyte('\n') ;
+        }
+
+		puts("0x");
+        put_u8hex(buf[i]) ;
+		if (i+1 < len){
+			putchar(',');
+		}
+    }
+	putchar('}');
+
+	putbyte('\n') ;
+	putbyte('\n') ;
+}
 

@@ -89,7 +89,11 @@ static struct link_layer ll sec(.btmem_highly_available);
 
 
 static const struct le_read_parameter le_read_param = {
-    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE|LL_PRIVACY, 0, 0, 0, 0, 0, 0, 0},
+#ifndef	BLE_BQB_PROCESS_EN
+    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
+#else
+    .features = {LL_PRIVACY|LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
+#endif
     .version = {0x06, 0x0f, 0x00, 0x09, 0x61},
     .versnr = VERSNR,
     .compld = COMPLD,
@@ -960,8 +964,8 @@ static void ll_resolving_list_add(const u8 *data)
     memcpy((u8 *)&list->resolving_list_param, data, sizeof(struct resolving_list_parameter));
 
     //Device privacy is violated when all zero IRKs
-    ASSERT(((__resolve_list_IRK_verify(list->resolving_list_param.Local_IRK) == TRUE)
-            &&(__resolve_list_IRK_verify(list->resolving_list_param.Peer_IRK) == TRUE)), "%s\n", __func__);
+    /* ASSERT(((__resolve_list_IRK_verify(list->resolving_list_param.Local_IRK) == TRUE) */
+            /* &&(__resolve_list_IRK_verify(list->resolving_list_param.Peer_IRK) == TRUE)), "%s\n", __func__); */
 
     puts("\n ----------Resolving List --------------\n");
     printf("addr type : %x\n", list->resolving_list_param.Peer_Identity_Address_Type);
@@ -1093,7 +1097,9 @@ static void __set_ll_local_resolvable_private_addr(u8 *addr,
     device_addr_generate(resolving_list_t->local_PRA,\
            resolving_list_t->resolving_list_param.Local_IRK, RESOLVABLE_PRIVATE_ADDR);
 
+	u8 addr_1[6] ={0x8A,0x09,0xCD,0xC1,0x82,0x6A};
    memcpy(addr, resolving_list_t->local_PRA, 6);
+   /* memcpy(addr, addr_1, 6); */
 }
 
 
@@ -1130,6 +1136,7 @@ static void __set_ll_adv_local_RPA(struct le_link *link)
             if ((resolving_list_t != NULL)
                 && (__resolve_list_IRK_verify(resolving_list_t->resolving_list_param.Local_IRK) == TRUE))
             {
+				puts("set_local_RPA1\n");
                 __set_ll_local_resolvable_private_addr(link->local.addr, resolving_list_t);
             }
             break; 
@@ -1145,6 +1152,7 @@ static void __set_ll_adv_local_RPA(struct le_link *link)
 static void __set_ll_adv_local_addr(struct le_link *link)
 {
 	struct ble_adv *adv = &link->adv;
+	u8 adv_addr[] = {0x3E, 0x3A, 0xBA, 0x98, 0x22, 0x71};
 
     link->local.addr_type = le_param.adv_param.Own_Address_Type;
 
@@ -1152,8 +1160,9 @@ static void __set_ll_adv_local_addr(struct le_link *link)
     {
         case 0:
         case 2:
-           __set_ll_public_device_addr(link->local.addr);
-           break; 
+			__set_ll_public_device_addr(link->local.addr);
+			memcpy(link->local.addr, adv_addr, 6);
+			break; 
         case 1:
         case 3:
            __set_ll_random_device_addr(link->local.addr);
@@ -1166,6 +1175,7 @@ static void __set_ll_adv_local_addr(struct le_link *link)
 
     if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
     {
+		puts("set_local_RPA0\n");
         __set_ll_adv_local_RPA(link);
     }
 }
@@ -1181,6 +1191,8 @@ static void __set_ll_adv_peer_addr(struct le_link *link)
     link->peer.addr_type= le_param.adv_param.Peer_Address_Type;
 
     memcpy(link->peer.addr, le_param.adv_param.Peer_Address, 6);
+	puts("adv_peer_addr=");
+	printf_buf(link->peer.addr, 6);
 
 
     /* If Own_Address_Type equals 0x02 or 0x03, the Controller generates the */
@@ -1202,10 +1214,13 @@ static void __set_ll_adv_peer_addr(struct le_link *link)
         case 2:
         case 3:
             //pairs ok
+			puts("own_addr_type\n");
             if ((resolving_list_t != NULL)
                 && (__resolve_list_IRK_verify(resolving_list_t->resolving_list_param.Peer_IRK) == TRUE))
             {
                 __set_ll_peer_resolvable_private_addr(link->peer.addr, resolving_list_t);
+				puts("Privacy_peer_addr=");
+				printf_buf(link->peer.addr, 6);
             }
 			link->peer.addr_type = le_param.adv_param.Own_Address_Type; 
             break; 
@@ -1225,12 +1240,14 @@ static void __set_ll_adv_peer_addr(struct le_link *link)
 static void __set_ll_scan_local_addr(struct le_link *link) 
 {
     link->local.addr_type = le_param.scan_param.Own_Address_Type;
+	u8 scan_addr[] = {0x3E, 0x3A, 0xBA, 0x98, 0x11, 0x71};
 
     switch(le_param.scan_param.Own_Address_Type)
     {
         case 0:
         case 2:
            __set_ll_public_device_addr(link->local.addr);
+		   memcpy(link->local.addr, scan_addr, 6);
            break; 
         case 1:
         case 3:
@@ -1268,6 +1285,7 @@ static void __set_ll_scan_local_RPA(struct le_link *link,
 
 static void __set_ll_init_local_addr(struct le_link *link)
 {
+	u8 init_addr[] = {0x3E, 0x3A, 0xBA, 0x98, 0x11, 0x71};
     //TO*DO
     link->local.addr_type = le_param.conn_param.own_address_type;
 
@@ -1276,6 +1294,7 @@ static void __set_ll_init_local_addr(struct le_link *link)
         case 0:
         case 2:
            __set_ll_public_device_addr(link->local.addr);
+		   memcpy(link->local.addr, init_addr, 6);
            break; 
         case 1:
         case 3:
@@ -1291,9 +1310,11 @@ static void __set_ll_init_local_addr(struct le_link *link)
 
 static void __set_ll_init_peer_addr(struct le_link *link)
 {
+	printf("--func=%s\n", __FUNCTION__);
     link->peer.addr_type = le_param.conn_param.peer_address_type;
 
     memcpy(link->peer.addr, le_param.conn_param.peer_address, 6);
+	printf_buf(link->peer.addr, 6);
 
     /* puts(__func__); */
     /* printf_buf(link->peer.addr, 6); */
@@ -1406,6 +1427,8 @@ static struct resolving_list *ll_resolve_peer_addr(const u8 *addr)
     u8 hash[3];
 
     //Address is RPA
+	puts("conn_receive_adv_addr\n");
+	printf_buf(addr, 6);
     if (__ll_resolvable_private_addr_verify(addr) == FALSE)
     {
         puts("ll resolve peer addr format error\n");
@@ -1709,12 +1732,22 @@ const static struct ble_conn_param sample_conn_param = {
 #define LL_SLAVE_CONN_WINSIZE    800
 #define LL_MASTER_CONN_WINSIZE   30
 
+
+static void _1__set_ll_init_state(struct le_link *link)
+{
+    struct ble_conn *conn = &link->conn;
+    struct ble_conn_param *conn_param = &link->conn.ll_data;
+}
+
 static void __set_ll_init_state(struct le_link *link)
 {
     struct ble_conn *conn = &link->conn;
     struct ble_conn_param *conn_param = &link->conn.ll_data;
 
     conn->scan_interval = le_param.conn_param.le_scan_interval;
+	printf("ll_init_state=0x%x\n", conn->scan_interval);
+	printf("ll_init_state=0x%x\n", le_param.conn_param.le_scan_interval);
+	printf_buf(le_param.conn_param.le_scan_interval, 6);
     conn->scan_windows = le_param.conn_param.le_scan_window;
 
     conn->filter_policy = le_param.conn_param.initiator_filter_policy;
@@ -2216,6 +2249,7 @@ static void le_ll_init_addr_process(struct le_link *link, struct ble_rx *rx)
             {
                 if (rx->type == ADV_DIRECT_IND)
                 {
+					putchar('f');
                     struct resolving_list *resolving_list_t1 = NULL;
 
                     //resolve InitA
@@ -2309,7 +2343,7 @@ static void rx_probe_adv_pdu_handler(struct le_link *link, struct ble_rx *rx)
         case SCAN_REQ:
             break;
         case CONNECT_REQ:
-            putchar('C');
+            /* putchar('C'); */
             slave_set_connection_param(link, rx);
             //LL_CONNECTION_ESTABLISHED set ll connSupervision timeout 6*interval
             ll_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
@@ -2383,9 +2417,11 @@ static void le_ll_probe_pdu_handler(struct le_link *link, struct ble_rx *rx)
             rx_probe_adv_pdu_handler(link, rx);
             break;
         case LL_SCANNING:
+			putchar('S');
             rx_probe_scan_pdu_handler(link, rx);
             break;
         case LL_INITIATING:
+			putchar('I');
             rx_probe_init_pdu_handler(link, rx);
             break;
     }
@@ -2433,6 +2469,7 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
     switch(rx->llid)
     {
         case LL_RESERVED:
+			/* putchar('l'); */
             le_ll_probe_pdu_handler(link, rx);
             break;
         case LL_DATA_PDU_START:
@@ -2497,6 +2534,7 @@ static void rx_adv_state_handler(struct le_link *link, struct ble_rx *rx)
     __ble_ops->ioctrl(link->hw, BLE_SET_RPA_RESOLVE_RESULT, rx, ADDR_IS_FAIL());
 }
 
+extern u8 conn_peer_addr[6]; 
 static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
 {
     //AdvA
@@ -2506,8 +2544,12 @@ static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
         puts("AdvA resolve fail\n");
         return;
     }
+	putchar('c');
     //AdvA resolve 
     __ble_ops->ioctrl(link->hw, BLE_SET_RPA_RESOLVE_RESULT, rx, ADDR_IS_FAIL());
+	puts(__FUNCTION__);
+	printf_buf(rx->data, 6);
+	memcpy(conn_peer_addr, rx->data, 6);
 
     switch(rx->type)
     {
@@ -2632,7 +2674,7 @@ static void rx_conn_state_handler(struct le_link *link, struct ble_rx *rx)
     }
     else
     {
-        __le_connection_complete_event(link, 0x0);
+        /* __le_connection_complete_event(link, 0x0); */
     }
 
     debug_info(link);
@@ -2652,12 +2694,15 @@ static bool rx_pdu_handler(struct le_link *link, struct ble_rx *rx)
             rx_adv_state_handler(link, rx);
             break;
         case LL_SCANNING:
+			putchar('a');
             rx_scan_state_handler(link, rx);
             break;
         case LL_INITIATING:
+			putchar('d');
             rx_init_state_handler(link, rx);
             break;
         case LL_CONNECTION_CREATE:
+			puts("LL_CONNECTION_CREATE\n");
             rx_conn_state_handler(link, rx);
             break;
     }
@@ -4428,6 +4473,7 @@ static void ll_rx_post_handler(void *priv, struct ble_rx *rx)
     switch(rx->llid)
     {
         case LL_RESERVED:
+			putchar('b');
             upper_pass = rx_pdu_handler(link, rx);
             break;
         case LL_DATA_PDU_START:

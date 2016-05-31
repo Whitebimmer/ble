@@ -169,7 +169,7 @@ static void __set_anchor_cnt(struct ble_hw *hw, int slot)
 	BLE_ANCHOR_CON1 = 0;
 	BLE_ANCHOR_CON0 = (0<<12)|(HW_ID(hw)<<8)|(1<<2)|1; 
 
-	BLE_ANCHOR_CON1 = (1<<15)|(slot);       /*anchor_en/anchor_cnt N*625us*/ 
+	BLE_ANCHOR_CON1 = (1<<15)|slot;       /*anchor_en/anchor_cnt N*625us*/ 
 	BLE_ANCHOR_CON0 = (0<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
 }
 
@@ -499,9 +499,9 @@ static void __set_widen(struct ble_hw *hw, int widen)
 
 static void __set_local_addr(struct ble_hw *hw, u8 addr_type, const u8 *addr)
 {
-    puts(__func__);printf_buf(addr, 6);
-    hw->ble_fp.FORMAT |= BIT(3);    //set AdvA/ScanA/InitA from LOCALADR
+    puts(__func__);printf_buf_1(addr, 6);
 
+    hw->ble_fp.FORMAT |= BIT(3);       //set AdvA/ScanA/InitA from LOCALADR
     hw->local.addr_type = (addr_type) ? 1 : 0;
 
 	memcpy(hw->local.addr, addr, 6);
@@ -517,17 +517,31 @@ static void __set_local_addr_ram(struct ble_hw *hw, u8 addr_type, const u8 *addr
     hw->local.addr_type = (addr_type) ? 1 : 0;
 
 	memcpy(hw->local.addr, addr, 6);
+	printf("--func=%s\n", __FUNCTION__);
+	printf_buf(hw->local.addr, 6);
 
     //next tx buf to be send
     u16 *ptr;
 
-    ptr = (u32)hw->ble_fp.TXPTR0 + ((u32)&ble_base);
-	//printf("ptr0=0x%x\n", ptr);
-	memcpy(ptr, addr, 6);
-
-    ptr = (u32)hw->ble_fp.TXPTR1 + ((u32)&ble_base);
-	//printf("ptr1=0x%x\n", ptr);
-	memcpy(ptr, addr, 6);
+    /* if (!(hw->ble_fp.TXTOG & BIT(0))) { */
+        ptr = (u32)hw->ble_fp.TXPTR0 + ((u32)&ble_base);
+		printf("ptr0=0x%x\n", ptr);
+		memcpy(ptr, addr, 6);
+		/* *ptr++ = (addr[1] << 8) + addr[0]; */
+		/* *ptr++ = (addr[3] << 8) + addr[2]; */
+		/* *ptr++ = (addr[5] << 8) + addr[4]; */
+    /* } */
+    /* else{ */
+        ptr = (u32)hw->ble_fp.TXPTR1 + ((u32)&ble_base);
+		printf("ptr1=0x%x\n", ptr);
+		memcpy(ptr, addr, 6);
+		/* *ptr++ = (addr[1] << 8) + addr[0]; */
+		/* *ptr++ = (addr[3] << 8) + addr[2]; */
+		/* *ptr++ = (addr[5] << 8) + addr[4]; */
+    /* } */
+    /* *ptr++ = (addr[1] << 8) + addr[0]; */
+    /* *ptr++ = (addr[3] << 8) + addr[2]; */
+    /* *ptr++ = (addr[5] << 8) + addr[4]; */
 }
 
 static void __show_remote_addr(struct ble_hw *hw)
@@ -669,6 +683,9 @@ static void __set_connection_param(struct ble_hw *hw,
         //1.25ms + winoffset
         //update anchor cnt must disable first
         __set_anchor_cnt(hw, (conn_param->winoffset*2+2+2));
+		PORTB_DIR &= ~BIT(1);
+		PORTB_OUT |= BIT(1);
+		/* printf("(conn_param->winoffset*2+2+2));=0x%x\n", conn_param->winoffset*2+2+2); */
 
         //----HW state 
 		__set_hw_state(hw, MASTER_CONN_ST, !!conn_param->latency, conn_param->latency);
@@ -683,6 +700,8 @@ static void __set_connection_param(struct ble_hw *hw,
 		__set_hw_state(hw, SLAVE_CONN_ST, !!conn_param->latency, conn_param->latency);
         //----Channel map
         __set_widen(hw, conn_param->widening);
+		PORTB_DIR &= ~BIT(1);
+		PORTB_OUT |= BIT(1);
 	}
     //----Winsize
     __set_winsize(hw, 50, conn_param->winsize*1250 + 625);
@@ -695,6 +714,23 @@ static void __set_connection_param(struct ble_hw *hw,
     //BLE_ANCHOR_CON0 = (7<<12)|(HW_ID(hw)<<8)|(1<<1)|0;
 
     /* puts("\nbitoffset : ");put_u16hex(BLE_ANCHOR_CON2); */
+    /* u16 *ptr; */
+    /*  */
+	/* ptr = hw->ble_fp.TXPTR0; */
+	/* puts("----t----\n"); */
+	/* printf_buf(ptr, 6); */
+	/* ptr = hw->ble_fp.TXPTR1; */
+	/* printf_buf(ptr, 6); */
+	/* printf("format=0x%x\n", hw->ble_fp.FORMAT); */
+	/* printf("local=0x%x\n", hw->ble_fp.LOCALADRL); */
+	/* printf("local=0x%x\n", hw->ble_fp.LOCALADRM); */
+	/* printf("local=0x%x\n", hw->ble_fp.LOCALADRU); */
+	/* DISABLE_INT(); */
+	/* while(1); */
+	/* hw->ble_fp.OPTCNTL |= BIT(2);; */
+	/* puts("winoffset : ");put_u8hex(conn_param->winoffset); */
+	/* puts("widen : ");put_u16hex(conn_param->widening); */
+	/* puts("widen : ");put_u16hex(conn_param->winsize); */
 }
 
 static void __connection_update(struct ble_hw *hw, struct ble_conn_param *param)
@@ -725,15 +761,17 @@ static void __set_white_list_addr(struct ble_hw *hw, u8 addr_type, const u8 *add
     ble_fp->FILTERCNTL = ble_fp->FILTERCNTL & 0x7f | (addr_type&0x1)<<8 | 1;
     ble_fp->FILTERCNTL |= BIT(4);
 
+	printf("--func=%s\n", __FUNCTION__);
+	printf_buf(addr, 6);
 	ble_fp->WHITELIST0L = (addr[1] << 8) | addr[0];
 	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
 	ble_fp->WHITELIST0U = (addr[5] << 8) | addr[4];
 
     /* printf("addr type %x\n", addr_type); */
 
-    /* printf("addr L %x\n", ble_fp->WHITELIST0L); */
-    /* printf("addr M %x\n", ble_fp->WHITELIST0M); */
-    /* printf("addr U %x\n", ble_fp->WHITELIST0U); */
+    printf("addr L %x\n", ble_fp->WHITELIST0L);
+    printf("addr M %x\n", ble_fp->WHITELIST0M);
+    printf("addr U %x\n", ble_fp->WHITELIST0U);
 }
 
 static void __set_receive_encrypted(struct ble_hw *hw, u8 rx_enable)
@@ -785,6 +823,7 @@ static void __set_privacy_enable(struct ble_hw *hw, u8 enable)
     hw->privacy_enable = enable;
     
     //disable auto tx scan_rsp/conn_req/data
+	printf("privacy_enable=%d\n", hw->privacy_enable);
     puts("lock scan_rsp\n");
     __set_hw_tx_disable(&hw->ble_fp);
 
@@ -832,6 +871,7 @@ static void __set_hw_scan_expect_adv_rpa(struct ble_hw *hw, struct ble_rx *rx)
     const u8 *addr;
 
     //passive scan
+	printf("active0=%x\n", hw->backoff.active);
     if (hw->backoff.active == 0)
         return;
 
@@ -1461,10 +1501,11 @@ static bool ble_rx_pdus_filter(struct ble_hw *hw, struct ble_rx *rx)
                     if ((hw->peer.addr_type != rx->txadd) 
                         || (memcmp(hw->peer.addr, rx->data, 6)))
                     {
-                        /* put_u8hex(hw->peer.addr_type); */
-                        /* printf_buf(hw->peer.addr, 6); */
-                        /* put_u8hex(rx->txadd); */
-                        /* printf_buf(rx->data, 6); */
+						puts("--1--\n");
+                        put_u8hex(hw->peer.addr_type);
+                        printf_buf(hw->peer.addr, 6);
+                        put_u8hex(rx->txadd);
+                        printf_buf(rx->data, 6);
 
                         /* put_u8hex((hw->peer.addr_type != rx->txadd)); */
                         /* put_u8hex(memcmp(hw->peer.addr, rx->data, 6)); */
@@ -1605,26 +1646,26 @@ static void ble_rx_init_process(struct ble_hw *hw, struct ble_rx *rx)
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
 
-    if((rx->type == ADV_IND) || (rx->type == ADV_DIRECT_IND)) 
-    {
-        struct ble_tx *tx;
+	if((rx->type == ADV_IND) || (rx->type == ADV_DIRECT_IND)) 
+	{
+		struct ble_tx *tx;
 
-        ble_tx_init(hw);
+		ble_tx_init(hw);
 
-        hw->tx_seqn = 0;
+		hw->tx_seqn = 0;
 
-        if (!(ble_fp->TXTOG & BIT(0))) {
-            ble_fp->TXAHDR0 = rx->rxadd<<4;
-            ble_fp->TXDHDR0 = (0<<8)|(0<<2)|1;
-            ble_fp->TXAHDR1 = rx->rxadd<<4;
-            ble_fp->TXDHDR1 = (0<<8)|(1<<2)|1;
-        } else {
-            ble_fp->TXAHDR0 = rx->rxadd<<4;
-            ble_fp->TXDHDR0 = (0<<8)|(1<<2)|1;
-            ble_fp->TXAHDR1 = rx->rxadd<<4;
-            ble_fp->TXDHDR1 = (0<<8)|(0<<2)|1;
-        }
-    }
+		if (!(ble_fp->TXTOG & BIT(0))) {
+			ble_fp->TXAHDR0 = rx->rxadd<<4;
+			ble_fp->TXDHDR0 = (0<<8)|(0<<2)|1;
+			ble_fp->TXAHDR1 = rx->rxadd<<4;
+			ble_fp->TXDHDR1 = (0<<8)|(1<<2)|1;
+		} else {
+			ble_fp->TXAHDR0 = rx->rxadd<<4;
+			ble_fp->TXDHDR0 = (0<<8)|(1<<2)|1;
+			ble_fp->TXAHDR1 = rx->rxadd<<4;
+			ble_fp->TXDHDR1 = (0<<8)|(0<<2)|1;
+		}
+	}
 }
 
 static void ble_rx_pdus_process(struct ble_hw *hw, struct ble_rx *rx)
@@ -1770,6 +1811,18 @@ static void __hw_rx_process(struct ble_hw *hw)
 	u16 *rxptr;
 	struct ble_param *ble_fp = &hw->ble_fp;
 
+	static u8 flag=0;
+	flag ++;
+	if(flag == 1)
+	{
+
+    PORTB_OUT|=BIT(0);
+	trig_fun();
+	/* DISABLE_INT(); */
+	/* while(1); */
+	}
+	putchar('r');
+	/* puts("---i--\n"); */
     if (BLE_CON0 & BIT(5))
     {
         /* puts("XXXX\n"); */
@@ -2090,8 +2143,7 @@ static void le_hw_advertising(struct ble_hw *hw, struct ble_adv *adv)
 
     __set_adv_device_filter_param(hw, adv->filter_policy); 
 
-    hw->ble_fp.ADVIDX=(adv->pkt_cnt<<14)|adv->pdu_interval*625; 	//pkt_cnt:interval N*us
-    /* hw->ble_fp.ADVIDX=(2<<14)|625; 	//pkt_cnt:interval N*us */
+	hw->ble_fp.ADVIDX=(adv->pkt_cnt<<14)|adv->pdu_interval*625; 	//pkt_cnt:interval N*us
     /* __debug_interval(hw); */
 
     //The advDelay is a pseudo-random value with a range of 0 ms to 10 ms generated by the Link Layer for each advertising event.
@@ -2196,6 +2248,10 @@ void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
         __set_addr_match_enable(&hw->ble_fp);
     }
 
+	/* struct ble_param *ble_fp = &hw->ble_fp; */
+    /* ble_fp->FILTERCNTL |= BIT(4); */
+	/* ble_fp->OPTCNTL |= BIT(3); */
+	/* ble_fp->OPTCNTL |= BIT(4); */
 	ble_hw_enable(hw, 10);
 	__set_init_end(hw);
 }
@@ -2375,7 +2431,7 @@ REGISTER_BLE_OPERATION(ble_ops);
 
 void ble_rf_init(void)
 {
-	puts("ble_RF_init\n");
+	puts("huayue_ble_RF_init\n");
     BT_BLE_CON |= BIT(0);
 
 	/* SFR(BLE_RADIO_CON0, 0 , 10 , 150);    //TXPWRUP_OPEN_PLL */
@@ -2388,6 +2444,6 @@ void ble_rf_init(void)
 	BLE_CON0  = BIT(0);          //ble_en
 	/* BLE_CON1  = 3;               //sync_err */
     //debug
-    BLE_DBG_CON = BIT(0) | (10 << 8);
+    BLE_DBG_CON = BIT(0) | (11 << 8);
 }
 

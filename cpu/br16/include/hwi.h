@@ -71,7 +71,7 @@
         __asm__ volatile ("call %0" : : "i" (a)); \
         __asm__ volatile ("pop  {r3,r2,r1,r0}"); \
         __asm__ volatile ("pops {psr, rets, reti}"); \
-        __asm__ volatile ("rti"); \ 
+        __asm__ volatile ("rti"); \
     }
 
 #define INTALL_HWI(a,b,c)\

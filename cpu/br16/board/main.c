@@ -172,11 +172,11 @@ u8 ram2_memory[0x100] sec(.db_memory);
 
 int main()
 {
-
     /* printf("CLK_CON0 : %x\n", CLK_CON0); */
     /* printf("CLK_CON1 : %x\n", CLK_CON1); */
     /* printf("CLK_CON2 : %x\n", CLK_CON2); */
     /* printf("SYS_DIV : %x\n", SYS_DIV); */
+	disable_wtd();
 #ifdef FPGA 
 	pll_init();
     uart_init((48000000/ 460800));  // pa8
@@ -256,14 +256,14 @@ int main()
 
     if(bt_power_is_poweroff_post())
     {
+    	/* puts("-----6\n"); */
         ble_main();
         bt_poweroff_recover();
     }
     else
     {
+    	puts("-----7\n");
     	bt_power_init(&bt_power_param);
-
-    	puts("-----6\n");
     	ble_main();
     	btstack_main();
     }
@@ -292,34 +292,38 @@ int main()
             c = getchar();
 
             /* puts("user cmd : ADV\n"); */
-            if (c)
-            {
-                putchar(c);
-
-                stdin_process(c);
-            }
-            /* switch(c) */
+            /* if (c) */
             /* { */
+                /* putchar(c); */
 
-                /* case 'A': */
-                    /* puts("user cmd : ADV\n"); */
-                    /* ble_set_adv(); */
-                    /* break; */
-                /* case 'S': */
-                    /* puts("user cmd : SCAN\n"); */
-                    /* ble_set_scan(); */
-                    /* break; */
-                /* case 'C': */
-                    /* puts("user cmd : CONN\n"); */
-                    /* ble_set_conn(); */
-                    /* break; */
-                /* case 'T': */
-                    /* puts("user cmd : TEST\n"); */
-                    /* ble_test(); */
-                    /* break; */
-                /* default: */
-                    /* break; */
+                /* stdin_process(c); */
             /* } */
+            switch(c)
+            {
+
+                case 'A':
+                    puts("user cmd : ADV\n");
+#ifndef BLE_BQB_PROCESS_EN
+                    ble_set_adv();
+#else
+					ble_set_direct_RPA_adv();
+#endif
+                    break;
+                case 'S':
+                    puts("user cmd : SCAN\n");
+                    ble_set_scan();
+                    break;
+                case 'C':
+                    puts("user cmd : CONN\n");
+                    ble_set_conn();
+                    break;
+                case 'T':
+                    puts("user cmd : TEST\n");
+                    ble_test();
+                    break;
+                default:
+                    break;
+            }
             if (TASK_IS_AWAKE())
                 break;
         }

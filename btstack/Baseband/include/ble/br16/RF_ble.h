@@ -57,8 +57,8 @@ struct ble_param
     volatile unsigned short EVTCOUNT;
     volatile unsigned short RXBIT;
     volatile unsigned short IFSCNT;
-    volatile unsigned short RFPRIOSTAT; // 
-    volatile unsigned short RFPRIOCNTL; //31
+    volatile unsigned short RFPRIOSTAT; 
+    volatile unsigned short RFPRIOCNTL;
     volatile unsigned short UNDEF1; 
 
     volatile unsigned char  FRQ_IDX0[40];
