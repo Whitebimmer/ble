@@ -84,9 +84,15 @@ SECTIONS
     . = ORIGIN(ram1);
     .data1 :SUBALIGN(4)
     {
+		_ble_ram1_begin = .;
         *(.btmem_highly_available)
+		_ble_ram1_end = .;
+
+		_bredr_ram1_begin = .;
         *(.reg_buf)
         *(.ram1_data)
+		_bredr_ram1_begin = .;
+
         poweroff_text_begin = . ;
         *(.poweroff_text)
         poweroff_text_end = . ;
