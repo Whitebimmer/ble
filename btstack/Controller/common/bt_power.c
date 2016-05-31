@@ -127,7 +127,7 @@ static void __power_off()
 		}
 
         __this->driver->off_enter();
-		RFI_CON &= ~BIT(1);
+		/* RFI_CON &= ~BIT(1); */
 		/* while(1); */
 	}
     CPU_INT_EN();
