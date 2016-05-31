@@ -69,6 +69,7 @@ export DEFINS = \
 -DEMBEDDED \
 -DBR17\
 -DFPGA\
+# -DBLE_BQB_PROCESS_EN\
 
 #DEFINS += -DSH60
 
