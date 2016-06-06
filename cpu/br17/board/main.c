@@ -270,7 +270,7 @@ int main()
 	/*INTALL_HWI(BT_BLE_INT, le_hw_isr, 0);
 	INTALL_HWI(18, le_test_uart_isr, 0);*/
 
-    puts("------------BLE 4.2  start run loop-----------\n");
+    puts("------------BLE 4.2 1 start run loop-----------\n");
     while(1)
     {
 		int c;
