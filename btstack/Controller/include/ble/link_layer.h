@@ -217,6 +217,25 @@ struct data_length{
     u16 connEffectiveMaxRxTime;
 };
 
+struct ll_data_pdu_length_read_only{
+
+    u16 supportedMaxTxOctets;
+    u16 supportedMaxTxTime;
+
+    u16 supportedMaxRxOctets;
+    u16 supportedMaxRxTime;
+};
+
+struct ll_data_pdu_length{
+    u16 suggestedMaxTxOctets;
+    u16 suggestedMaxTxTime;
+
+    u16 connInitialMaxTxOctets;
+    u16 connInitialMaxTxTime;
+
+    struct ll_data_pdu_length_read_only *priv;
+};
+
 struct le_link{
 	u8 state;
 	u8 role;

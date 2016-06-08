@@ -23,8 +23,7 @@ static volatile int ble_debug_signal[BLE_HW_NUM];
 		})
 
 #define BLE_TO_PHY(a) \
-		((u32)(a) + ((u32)&ble_base)); \
-		})
+		((u32)(a) + ((u32)&ble_base)) 
 
 #define HW_ID(hw) \
 	((hw) - ble_base.hw)

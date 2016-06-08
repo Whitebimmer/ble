@@ -985,6 +985,23 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
             __hci_emit_event_of_cmd_complete(opcode, "12", 0,
                     READ_CONNECTION_HANDLE(data));
             break;
+        case HCI_LE_READ_SUGGESTED_DEFAULT_DATA_LENGTH:
+            {
+                struct ll_data_pdu_length *priv;
+
+                priv = ll_read_suggested_default_data_length();
+                __hci_emit_event_of_cmd_complete(opcode, "122", 0,
+                    priv->connInitialMaxTxOctets,
+                    priv->connInitialMaxTxTime);
+            }
+            
+            break;
+        case HCI_LE_WRITE_SUGGESTED_DEFAULT_DATA_LENGTH:
+            {
+                ll_write_suggested_default_data_length(data);
+                __hci_emit_event_of_cmd_complete(opcode, "1", 0);
+            }
+            break;
             
         case HCI_LE_ADD_DEVICE_TO_RESOLVING_LIST:
 			hci_puts("HCI_LE_ADD_DEVICE_TO_RESOLVING_LIST\n");
@@ -1034,6 +1051,20 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
 			hci_puts("HCI_LE_SET_RESOLVABLE_PRIVATE_ADDRESS_TIMEOUT\n");
             __ll_api->set_RPA_timeout(data);
             __hci_emit_event_of_cmd_complete(opcode, "1", 0);
+            break;
+        case HCI_LE_READ_MAXIMUM_DATA_LENGTH:
+			hci_puts("HCI_LE_READ_MAXIMUM_DATA_LENGTH\n");
+            {
+                struct ll_data_pdu_length_read_only *ll_data_pdu_length_ro;
+                
+                ll_data_pdu_length_ro = ll_read_maximum_data_length();
+
+                __hci_emit_event_of_cmd_complete(opcode, "12222", 0,
+                        ll_data_pdu_length_ro->supportedMaxTxOctets,
+                        ll_data_pdu_length_ro->supportedMaxTxTime,
+                        ll_data_pdu_length_ro->supportedMaxRxOctets,
+                        ll_data_pdu_length_ro->supportedMaxRxTime);
+            }
             break;
             
         default:
