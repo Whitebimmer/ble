@@ -1135,7 +1135,6 @@ static void ble_hci_h4_download_data(int packet_type, u8 *packet, int len)
 	}
     //hci resume thread
     thread_resume(&hci_thread);
-
 }
 REGISTER_H4_CONTROLLER(ble_hci_h4_download_data);
 

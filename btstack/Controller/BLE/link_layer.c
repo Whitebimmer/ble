@@ -4023,6 +4023,7 @@ static void master_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             break;
         
         case LL_LENGTH_REQ:
+            ll_puts("--LL_LENGTH_REQ\n");
             if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
             {
                 __ll_receive_length_req(link, rx);
@@ -4648,17 +4649,17 @@ static void __set_ll_data_length(struct le_link *link)
     //local
     link->connMaxTxOctets = ll.connInitialMaxTxOctets; //should be 27
     link->connMaxRxOctets = 27; //chosen by the Controller
+    __ble_ops->ioctrl(link->hw, BLE_SET_TX_LENGTH, link->connMaxTxOctets);
+
     link->connMaxTxTime = ll.connInitialMaxTxTime;
     link->connMaxRxTime = 328;
-
-    __ble_ops->ioctrl(link->hw, BLE_SET_TX_LENGTH, link->connMaxTxOctets);
     __ble_ops->ioctrl(link->hw, BLE_SET_RX_LENGTH, link->connMaxRxOctets);
+
     //remote
     link->connRemoteMaxTxOctets = 27;
     link->connRemoteMaxRxOctets = 27;
     link->connRemoteMaxTxTime = 328;
     link->connRemoteMaxRxTime = 328;
-
 
     if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
     {
