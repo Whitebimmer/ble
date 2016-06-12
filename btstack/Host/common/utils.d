@@ -12,5 +12,5 @@ Host/common/utils.o Host/common/utils.d :  Host/common/utils.c Controller/includ
   /opt/pi32/include/libc/sys/lock.h /opt/pi32/include/libc/sys/cdefs.h \
   /opt/pi32/include/libc/sys/string.h Host/include/ble/debug.h \
   Host/include/ble/hci_dump.h ../include/typedef.h \
-  ../cpu/br16/include/asm_type.h ../cpu/br16/include/cpu.h \
-  ../cpu/br16/include/br16.h
+  ../cpu/br17/include/asm_type.h ../cpu/br17/include/cpu.h \
+  ../cpu/br17/include/br17.h

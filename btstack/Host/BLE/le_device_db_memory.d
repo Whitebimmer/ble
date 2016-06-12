@@ -13,5 +13,5 @@ Host/BLE/le_device_db_memory.o Host/BLE/le_device_db_memory.d :  Host/BLE/le_dev
   /opt/pi32/include/libc/sys/lock.h /opt/pi32/include/libc/sys/cdefs.h \
   /opt/pi32/include/libc/sys/string.h Host/include/ble/debug.h \
   Controller/include/ble/btstack-config.h Host/include/ble/hci_dump.h \
-  ../include/typedef.h ../cpu/br16/include/asm_type.h \
-  ../cpu/br16/include/cpu.h ../cpu/br16/include/br16.h
+  ../include/typedef.h ../cpu/br17/include/asm_type.h \
+  ../cpu/br17/include/cpu.h ../cpu/br17/include/br17.h

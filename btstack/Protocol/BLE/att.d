@@ -11,6 +11,6 @@ Protocol/BLE/att.o Protocol/BLE/att.d :  Protocol/BLE/att.c ../include/stdio.h \
   /opt/pi32/include/libc/stdint.h /opt/pi32/include/libc/sys/_intsup.h \
   /opt/pi32/include/libc/sys/_stdint.h Host/include/ble/debug.h \
   Controller/include/ble/btstack-config.h Host/include/ble/hci_dump.h \
-  ../include/typedef.h ../cpu/br16/include/asm_type.h \
-  ../cpu/br16/include/cpu.h ../cpu/br16/include/br16.h \
+  ../include/typedef.h ../cpu/br17/include/asm_type.h \
+  ../cpu/br17/include/cpu.h ../cpu/br17/include/br17.h \
   Host/include/common/utils.h

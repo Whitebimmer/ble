@@ -13,8 +13,8 @@ Host/common/hci_cmds.o Host/common/hci_cmds.d :  Host/common/hci_cmds.c Host/inc
   /opt/pi32/include/libc/sys/string.h \
   Controller/include/ble/btstack-config.h Host/include/ble/hci.h \
   Host/include/common/utils.h Host/include/ble/hci_transport.h \
-  ../include/typedef.h ../cpu/br16/include/asm_type.h \
-  ../cpu/br16/include/cpu.h ../cpu/br16/include/br16.h \
+  ../include/typedef.h ../cpu/br17/include/asm_type.h \
+  ../cpu/br17/include/cpu.h ../cpu/br17/include/br17.h \
   Host/include/ble/bt_control.h Host/include/ble/remote_device_db.h \
   Profile/include/ble/gap.h Host/include/common/linked_list.h \
   Controller/include/ble/btstack_run_loop.h ../include/thread.h \

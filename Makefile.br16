@@ -27,7 +27,8 @@ export FLAGS += -Wall -target pi32-unkown-unkown-unkown -integrated-as \
 								-mllvm -inline-threshold=5 \
 								-mllvm -pi32-enable-itblock=1 \
 								-nostrictpi32 \
-								-Oz
+								-Oz \
+								-w
 
 else
 #------------------------complier linker   

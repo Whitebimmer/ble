@@ -1,8 +1,8 @@
 Host/BLE/ble_peripheral_test.o Host/BLE/ble_peripheral_test.d :  Host/BLE/ble_peripheral_test.c \
   Controller/include/ble/btstack-config.h \
   Controller/include/ble/btstack_run_loop.h ../include/thread.h \
-  ../include/typedef.h ../cpu/br16/include/asm_type.h \
-  ../cpu/br16/include/cpu.h ../cpu/br16/include/br16.h ../include/list.h \
+  ../include/typedef.h ../cpu/br17/include/asm_type.h \
+  ../cpu/br17/include/cpu.h ../cpu/br17/include/br17.h ../include/list.h \
   ../include/sys_timer.h Host/include/ble/debug.h \
   Host/include/ble/hci_dump.h Host/include/ble/btstack_memory.h \
   Host/include/ble/hci.h Host/include/common/hci_cmds.h \
