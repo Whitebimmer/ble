@@ -1977,7 +1977,7 @@ static void __le_advertising_report_event(struct le_link *link, struct ble_rx *r
 }
 
 
-static void __le_direct_advertising_report_event(struct le_link *link, struct ble_rx *rx, u8 event_type)
+static void __le_direct_advertising_report_event(struct le_link *link, struct ble_rx *rx)
 {
 	struct ble_scan *scan = &link->scan;
 
@@ -1989,13 +1989,13 @@ static void __le_direct_advertising_report_event(struct le_link *link, struct bl
     __hci_emit_le_meta_event(LE_DIRECT_ADVERTISING_REPORT_EVENT,
             "111A1A1", 
             1,
-            1,          //event type
+            0x1,          //event type : ADV_DIRECT_IND
             rx->txadd,  //address type
             rx->data,   //address
             link->rssi);
 }
 
-static void __le_data_length_change(struct le_link *link)
+static void __le_data_length_change_event(struct le_link *link)
 {
     ll_puts("LE_DATA_LENGTH_CHANGE_EVENT\n");
 
@@ -2518,7 +2518,7 @@ static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
                 //InitA is RPA?
                 if (__ll_resolvable_private_addr_verify(rx->data + 6) == TRUE)
                 {
-                    __le_direct_advertising_report_event(link, rx, 0x2);
+                    __le_direct_advertising_report_event(link, rx);
                     break;
                 }
             }
@@ -3881,6 +3881,7 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
     
     if (!LL_IS_FINSH())
     {
+        //accident break
         procedure =  ll_control_last_step();
     }
     
@@ -3934,6 +3935,7 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
             __hci_event_emit(procedure, link, rx);
             break;
         case DATA_LENGTH_UPDATE_STEPS:
+            __le_data_length_change_event(link);
             break;
     }
 }
@@ -4050,6 +4052,8 @@ static void master_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             {
                 __ll_receive_length_req(link, rx);
                 __ll_send_length_rsp_auto(link);
+
+                __le_data_length_change_event(link);
             }
             else{
                 __ll_send_unknow_rsp_auto(link, rx);
@@ -4213,6 +4217,8 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             {
                 __ll_receive_length_req(link, rx);
                 __ll_send_length_rsp_auto(link);
+
+                __le_data_length_change_event(link);
             }
             else{
                 __ll_send_unknow_rsp_auto(link, rx);
