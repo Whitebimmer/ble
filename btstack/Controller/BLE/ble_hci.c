@@ -734,6 +734,9 @@ void ctrl_baseband_cmd_handler(u16 opcode, u8 *data, int len)
 
 static const struct hci_read_parameter hci_read_param = {
     .features = {HOLD_MODE|SNIFF_MODE|POWER_CONTROL_REQUESTS},
+#ifdef BR17
+    .public_addr = {0x2e, 0x3a, 0xba, 0x98, 0x36, 0x54},
+#endif
 #ifdef BR16
     .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x36, 0x54},
 #endif
@@ -986,6 +989,7 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
                     READ_CONNECTION_HANDLE(data));
             break;
         case HCI_LE_READ_SUGGESTED_DEFAULT_DATA_LENGTH:
+			hci_puts("HCI_LE_READ_SUGGESTED_DEFAULT_DATA_LENGTH\n");
             {
                 struct ll_data_pdu_length *priv;
 
@@ -997,6 +1001,7 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
             
             break;
         case HCI_LE_WRITE_SUGGESTED_DEFAULT_DATA_LENGTH:
+			hci_puts("HCI_LE_WRITE_SUGGESTED_DEFAULT_DATA_LENGTH\n");
             {
                 ll_write_suggested_default_data_length(data);
                 __hci_emit_event_of_cmd_complete(opcode, "1", 0);

@@ -811,7 +811,7 @@ static void hci_initializing_run()
                 hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS;
                 le_hci_send_cmd(&hci_le_set_advertising_parameters,
                     0x0320, 0x0320, 
-                    0x04, 0x00, 
+                    0x00, 0x00, 
                     0x0, rpa[0].peer_identity_address, 
                     0x7, 0x0);
                 break;
@@ -826,30 +826,30 @@ static void hci_initializing_run()
             le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data);
             break;
         //privacy 
-        case HCI_INIT_LE_READ_RESOLVING_LIST_SIZE:
-            puts("HCI_INIT_LE_READ_RESOLVING_LIST_SIZE\n");
-            hci_stack->substate = HCI_INIT_W4_LE_READ_RESOLVING_LIST_SIZE;
-            le_hci_send_cmd(&hci_le_read_resolving_list_size);
-            break;
-        case HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST:
-            puts("HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST\n");
-            hci_stack->substate = HCI_INIT_W4_LE_ADD_DEVICE_TO_RESOLVING_LIST;
-            le_hci_send_cmd(&hci_le_add_device_to_resolving_list, 
-                    rpa[0].peer_identity_address_type,
-                    rpa[0].peer_identity_address,
-                    rpa[0].peer_irk,
-                    rpa[0].local_irk);
-            break;
-        case HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT:
-            puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n");
-            hci_stack->substate = HCI_INIT_W4_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT;
-            le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0x5);
-            break;
-        case HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE:
-            puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n");
-            hci_stack->substate = HCI_INIT_W4_LE_ADDRESS_RESOLUTION_ENABLE;
-            le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1);
-            break;
+        /* case HCI_INIT_LE_READ_RESOLVING_LIST_SIZE: */
+            /* puts("HCI_INIT_LE_READ_RESOLVING_LIST_SIZE\n"); */
+            /* hci_stack->substate = HCI_INIT_W4_LE_READ_RESOLVING_LIST_SIZE; */
+            /* le_hci_send_cmd(&hci_le_read_resolving_list_size); */
+            /* break; */
+        /* case HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST: */
+            /* puts("HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST\n"); */
+            /* hci_stack->substate = HCI_INIT_W4_LE_ADD_DEVICE_TO_RESOLVING_LIST; */
+            /* le_hci_send_cmd(&hci_le_add_device_to_resolving_list,  */
+                    /* rpa[0].peer_identity_address_type, */
+                    /* rpa[0].peer_identity_address, */
+                    /* rpa[0].peer_irk, */
+                    /* rpa[0].local_irk); */
+            /* break; */
+        /* case HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT: */
+            /* puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n"); */
+            /* hci_stack->substate = HCI_INIT_W4_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT; */
+            /* le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0x5); */
+            /* break; */
+        /* case HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE: */
+            /* puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n"); */
+            /* hci_stack->substate = HCI_INIT_W4_LE_ADDRESS_RESOLUTION_ENABLE; */
+            /* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1); */
+            /* break; */
 
         case HCI_INIT_LE_SET_ADV_EN:
 			puts("HCI_INIT_LE_SET_ADV_EN\n");
@@ -918,6 +918,21 @@ static void event_handler(uint8_t *packet, int size)
 			// get num cmd packets
 			hci_stack->num_cmd_packets = packet[2];
 
+            //data length extension begin
+			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_suggested_default_data_length)){
+
+                    printf("suggestedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
+                    printf("suggestedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
+            }
+			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_maximum_data_length)){
+
+                    printf("supportedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
+                    printf("supportedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
+                    printf("supportedMaxRxOctets: %04x\n",  READ_BT_16(packet, 10));
+                    printf("supportedMaxRxTime: %04x\n",    READ_BT_16(packet, 12));
+            }
+            //data length extension end
+            //
 			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_buffer_size)){
 				hci_stack->le_data_packets_length = READ_BT_16(packet, 6);
 				hci_stack->le_acl_packets_total_num  = packet[8];
@@ -1021,6 +1036,13 @@ static void event_handler(uint8_t *packet, int size)
 		case HCI_EVENT_LE_META:
 			switch (packet[2])
 			{
+                case HCI_SUBEVENT_LE_DATA_LENGTH_CHANGE:
+					puts("le_data_length_change\n");
+                    printf("connEffectiveMaxTxOctets: %04x\n",    packet[5]<<8|packet[4]);
+                    printf("connEffectiveMaxTxTime:   %04x\n",    packet[7]<<8|packet[6]);
+                    printf("connEffectiveMaxRxOctets: %04x\n",    packet[9]<<8|packet[8]);
+                    printf("connEffectiveMaxRxTime:   %04x\n",    packet[11]<<8|packet[10]);
+                    break;
 				case HCI_SUBEVENT_LE_ADVERTISING_REPORT:
 					puts("advertising report received");
 					if (hci_stack->le_scanning_state != LE_SCANNING)

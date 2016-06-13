@@ -1217,10 +1217,23 @@ void ble_test(void)
     //
     switch (cnt++)
     {
-    case 0:
+    case 0xff:
         le_hci_send_cmd(&hci_le_read_remote_used_features, 0x01); 
         break;
+    case 0:
+        le_hci_send_cmd(&hci_le_set_data_length , 0x0001, 27, 328); 
+        break;
     case 1:
+        le_hci_send_cmd(&hci_le_read_suggested_default_data_length); 
+        break;
+    case 2:
+        le_hci_send_cmd(&hci_le_write_suggested_default_data_length, 30, 338); 
+        break;
+    case 3:
+        le_hci_send_cmd(&hci_le_read_suggested_default_data_length); 
+        break;
+    case 4:
+        le_hci_send_cmd(&hci_le_read_maximum_data_length); 
         cnt = 0;
         break;
 

@@ -999,6 +999,16 @@ OPCODE(OGF_LE_CONTROLLER, 0x1f), "1"
 // return: status, number of packets (8)
 };
 
+/**
+ * @param connection_handle
+ * @param TxOctets
+ * @param TxTime
+ */
+const hci_cmd_t hci_le_set_data_length = {
+OPCODE(OGF_LE_CONTROLLER, 0x22), "H22"
+// return: status, connection_handle
+};
+
 
 const hci_cmd_t hci_le_read_suggested_default_data_length = {
 OPCODE(OGF_LE_CONTROLLER, 0x23), ""
@@ -1074,6 +1084,14 @@ OPCODE(OGF_LE_CONTROLLER, 0x2d), "1"
 const hci_cmd_t hci_le_set_resolvable_private_address_timeout = {
 OPCODE(OGF_LE_CONTROLLER, 0x2e), "2"
 // return: status
+};
+
+/**
+ * @param rpa_timeout(2 Octets)
+ */
+const hci_cmd_t hci_le_read_maximum_data_length = {
+OPCODE(OGF_LE_CONTROLLER, 0x2f), ""
+// return: status supportedMaxTxOctets supportedMaxTxTime supportedMaxRxOctets supportedMaxRxTime
 };
 
 /**

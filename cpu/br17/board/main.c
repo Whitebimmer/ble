@@ -283,34 +283,34 @@ int main()
             c = getchar();
 
             /* puts("user cmd : ADV\n"); */
-            if (c)
-            {
-                putchar(c);
-
-                stdin_process(c);
-            }
-            /* switch(c) */
+            /* if (c) */
             /* { */
+                /* putchar(c); */
 
-                /* case 'A': */
-                    /* puts("user cmd : ADV\n"); */
-                    /* ble_set_adv(); */
-                    /* break; */
-                /* case 'S': */
-                    /* puts("user cmd : SCAN\n"); */
-                    /* ble_set_scan(); */
-                    /* break; */
-                /* case 'C': */
-                    /* puts("user cmd : CONN\n"); */
-                    /* ble_set_conn(); */
-                    /* break; */
-                /* case 'T': */
-                    /* puts("user cmd : TEST\n"); */
-                    /* ble_test(); */
-                    /* break; */
-                /* default: */
-                    /* break; */
+                /* stdin_process(c); */
             /* } */
+            switch(c)
+            {
+
+                case 'A':
+                    puts("user cmd : ADV\n");
+                    ble_set_adv();
+                    break;
+                case 'S':
+                    puts("user cmd : SCAN\n");
+                    ble_set_scan();
+                    break;
+                case 'C':
+                    puts("user cmd : CONN\n");
+                    ble_set_conn();
+                    break;
+                case 'T':
+                    puts("user cmd : TEST\n");
+                    ble_test();
+                    break;
+                default:
+                    break;
+            }
             if (TASK_IS_AWAKE())
                 break;
         }
