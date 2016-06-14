@@ -102,7 +102,11 @@ static struct link_layer ll sec(.btmem_highly_available);
 #define LL_TRANSMIT_POWER_LEVEL         0x1
 
 #define LL_ACL_PDU_LENGTH               64
-#define LL_TOTAL_NUM_LE_DATA_PACKET     (CONTROLLER_MAX_TX_PAYLOAD/LL_ACL_PDU_LENGTH)
+#define LL_TOTAL_NUM_LE_DATA_PACKET     6
+#if (LL_TOTAL_NUM_LE_DATA_PACKET > CONTROLLER_MAX_TX_PAYLOAD/LL_ACL_PDU_LENGTH)
+        #error LL_TOTAL_NUM_LE_DATA_PACKET OVERFLOW
+#endif
+
 
 #define LL_WHITE_LIST_SIZE              1
 #define LL_RESOLVING_LIST_SIZE          1
@@ -668,22 +672,36 @@ void ll_send_acl_packet(int handle, u8 *packet, int len)
     bc_flag = packet[1];
     bc_flag >>= 6;
 
-    if (len > link->pdu_len.connEffectiveMaxTxOctets)
+    int rf_tx_len;
+    u8 rf_tx_unit;
+    u8 *rf_tx_packet;
+
+    rf_tx_packet = packet + 4;
+    rf_tx_unit = link->pdu_len.connEffectiveMaxTxOctets;
+
+    for (rf_tx_len = 0; rf_tx_len < len;)
     {
-        puts("greater than connEffectiveMaxTxOctets error!\n");
+        /* if (len > link->pdu_len.connEffectiveMaxTxOctets) */
+        /* { */
+            /* puts("greater than connEffectiveMaxTxOctets error!\n"); */
+        /* } */
+        /* if (len > link->pdu_len.connEffectiveMaxTxTime) */
+        /* { */
+            /* puts("greater than connEffectiveMaxTxTime error!\n"); */
+        /* } */
+        //Continuing fragment of Higher Layer Message
+        if (((pb_flag & 0x1) == 0) && (rf_tx_len == 0))
+        {
+            __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, rf_tx_packet, rf_tx_unit);
+        }
+        else{
+            __ble_ops->send_packet(link->hw, LL_DATA_PDU_CONTINUE, rf_tx_packet, rf_tx_unit);
+        }
+
+        rf_tx_len += rf_tx_unit;
+        rf_tx_packet += rf_tx_unit;
     }
-    if (len > link->pdu_len.connEffectiveMaxTxTime)
-    {
-        puts("greater than connEffectiveMaxTxTime error!\n");
-    }
-    //Continuing fragment of Higher Layer Message
-    if ((pb_flag & 0x1) == 0)  
-    {
-        __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, packet+4, len);
-    }
-    else{
-        __ble_ops->send_packet(link->hw, LL_DATA_PDU_CONTINUE, packet+4, len);
-    }
+
 	/* puts("ll_send_acl_exit\n"); */
 }
 /* REGISTER_LLP_ACL_TXCHANNEL(ll_send_acl_packet) */

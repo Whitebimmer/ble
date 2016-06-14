@@ -65,6 +65,13 @@ struct lbuff_head *hci_tx_buf sec(.btmem_highly_available);
 
 static u8 hci_buf[CONTROLLER_MAX_TOTAL_PAYLOAD] __attribute__((aligned(4)));
 
+struct flow_control{
+    u8 free_num_hci_command_packets;
+    u8 free_num_hci_acl_packets;
+};
+
+static struct flow_control ll_flow_control;
+
 //HIC SET/READ LE
 static struct le_parameter *le_param_t;
 
@@ -129,7 +136,7 @@ static void __hci_emit_event_of_cmd_complete(u16 opcode, const char *format, ...
 	event = __alloc_event(3, format);
 	ASSERT(event != NULL);
 	event->event = HCI_EVENT_COMMAND_COMPLETE;
-	event->data[0] = 3; //Num_HCI_Command_Packets
+	event->data[0] = ll_flow_control.free_num_hci_command_packets; //Num_HCI_Command_Packets
 	event->data[1] = opcode;
 	event->data[2] = opcode>>8;
 
@@ -157,7 +164,7 @@ static void __hci_emit_event_of_cmd_status(u8 status, u16 opcode)
 	event->event = HCI_EVENT_COMMAND_STATUS;
     event->len = 4;
 	event->data[0] = status;
-    event->data[1] = 3;//Num_HCI_Command_Packets
+    event->data[1] = ll_flow_control.free_num_hci_command_packets;//Num_HCI_Command_Packets
 	event->data[2] = opcode;
 	event->data[3] = opcode>>8;
 
@@ -1112,7 +1119,7 @@ static int ble_hci_command_process()
 	}
 
 	lbuf_free(cmd);
-
+    ll_flow_control.free_num_hci_command_packets++;
 
     {
         awake = 1;
@@ -1135,6 +1142,7 @@ int le_hci_push_command(u8 *packet, int size)
 	cmd->size = size;
 	memcpy(cmd->data, packet, size);
 
+    ll_flow_control.free_num_hci_command_packets--;
 	lbuf_push(cmd);
 
 	return 0;
@@ -1152,6 +1160,7 @@ int le_hci_push_acl_data(u8 *packet, int len)
     tx->len = len;
     memcpy(tx->head, packet, len);
 
+    ll_flow_control.free_num_hci_acl_packets--;
     lbuf_push(tx);
 
 	return 0;
@@ -1231,6 +1240,7 @@ static int ble_hci_h4_upload_data()
         /* ll_send_acl_packet(link, packet->data, size); */
         //llp_acl_txchannel(handle, tx->data, tx->len - 4);
         lbuf_free(tx);
+        ll_flow_control.free_num_hci_acl_packets++;
     }
 
     return awake;
@@ -1341,7 +1351,10 @@ int hci_firmware_init()
 {
     //host to controller
 	hci_cmd_ptr = lbuf_init(hci_buf + HCI_BUF_CMD_POS, CONTROLLER_MAX_CMD_PAYLOAD);
+    ll_flow_control.free_num_hci_command_packets = 4;
+
 	hci_tx_buf = lbuf_init(hci_buf + HCI_BUF_TX_POS, CONTROLLER_MAX_TX_PAYLOAD);
+    ll_flow_control.free_num_hci_acl_packets = le_param_t->priv->buf_param.total_num_le_data_pkt;
 
     //controller to host
 	hci_event_buf = lbuf_init(hci_buf + HCI_BUF_EVENT_POS, CONTROLLER_MAX_EVENT_PAYLOAD    );

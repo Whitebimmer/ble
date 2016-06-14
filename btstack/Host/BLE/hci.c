@@ -949,6 +949,11 @@ static void event_handler(uint8_t *packet, int size)
 				if (HCI_ACL_PAYLOAD_SIZE < hci_stack->le_data_packets_length){
 					hci_stack->le_data_packets_length = HCI_ACL_PAYLOAD_SIZE;
 				}
+                if (hci_stack->le_data_packets_length < 27)
+                {
+                    //spec 4.2 Vol 2 Part E
+                    puts("Host shall not fragment HCI ACL Data Packets on an LE-U logial link\n");
+                }
 			}
             if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_white_list_size)){
                 hci_stack->le_whitelist_capacity = READ_BT_16(packet, 6);
@@ -981,6 +986,7 @@ static void event_handler(uint8_t *packet, int size)
 					offset += 2;
 					uint16_t num_packets = READ_BT_16(packet, offset);
 					offset += 2;
+                    printf("acl pkt complete\n", num_packets);
 
 					conn = le_hci_connection_for_handle(handle);
 					if (!conn){
@@ -992,6 +998,7 @@ static void event_handler(uint8_t *packet, int size)
 					} else {
 						conn->num_acl_packets_sent = 0;
 					}
+                    printf("acl pkt remain\n", conn->num_acl_packets_sent);
 				}
 			}
 			break;
@@ -1596,7 +1603,10 @@ void le_hci_run(void)
 		}
 	}
 
-	if (!le_hci_can_send_command_packet_now()) return;
+	if (!le_hci_can_send_command_packet_now()) {
+        puts("le_hci_run - le_hci_can_send_command_packet_now\n");
+        return;   
+    }
 
 	// handle le scan
 	if (hci_stack->state == HCI_STATE_WORKING){
@@ -1745,7 +1755,10 @@ void le_hci_run(void)
 			if (connection){
 
 				// send disconnect
-				if (!le_hci_can_send_command_packet_now()) return;
+                if (!le_hci_can_send_command_packet_now()) {
+                    puts("le_hci_run2 - le_hci_can_send_command_packet_now\n");
+                    return;   
+                }
 
 				log_info("HCI_STATE_HALTING, connection %p, handle %u", connection, (uint16_t)connection->con_handle);
 				hci_send_cmd(&hci_disconnect, connection->con_handle, 0x13);  // remote closed connection
@@ -1780,7 +1793,10 @@ void le_hci_run(void)
 					if (connection){
 
 						// send disconnect
-						if (!le_hci_can_send_command_packet_now()) return;
+                        if (!le_hci_can_send_command_packet_now()) {
+                            puts("le_hci_run3 - le_hci_can_send_command_packet_now\n");
+                            return;   
+                        }
 
 						log_info("HCI_STATE_FALLING_ASLEEP, connection %p, handle %u", connection, (uint16_t)connection->con_handle);
 						hci_send_cmd(&hci_disconnect, connection->con_handle, 0x13);  // remote closed connection
@@ -1792,7 +1808,10 @@ void le_hci_run(void)
 
 					if (hci_classic_supported()){
 						// disable page and inquiry scan
-						if (!le_hci_can_send_command_packet_now()) return;
+                        if (!le_hci_can_send_command_packet_now()) {
+                            puts("le_hci_run4 - le_hci_can_send_command_packet_now\n");
+                            return;   
+                        }
 
 						log_info("HCI_STATE_HALTING, disabling inq scans");
 						hci_send_cmd(&hci_write_scan_enable, hci_stack->connectable << 1); // drop inquiry scan but keep page scan

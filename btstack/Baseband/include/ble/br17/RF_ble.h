@@ -168,6 +168,9 @@ struct ble_hw{
 
     void *power_ctrl;
     u32 *regs;
+
+    u16 rx_octets;
+    u16 tx_octets;
 };
 
 #define BLE_HW_NUM    1
