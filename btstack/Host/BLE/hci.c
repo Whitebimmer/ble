@@ -319,7 +319,7 @@ uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
     int free_slots_le = 0;
 
     if (free_slots_classic < 0){
-        log_error("hci_number_free_acl_slots: outgoing classic packets (%u) > total classic packets (%u)", num_packets_sent_classic, hci_stack->acl_packets_total_num);
+        hci_deg("hci_number_free_acl_slots: outgoing classic packets (%u) > total classic packets (%u)", num_packets_sent_classic, hci_stack->acl_packets_total_num);
         return 0;
     }
 
@@ -327,14 +327,14 @@ uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
         // if we have LE slots, they are used
         free_slots_le = hci_stack->le_acl_packets_total_num - num_packets_sent_le;
         if (free_slots_le < 0){
-            log_error("hci_number_free_acl_slots: outgoing le packets (%u) > total le packets (%u)", num_packets_sent_le, hci_stack->le_acl_packets_total_num);
+            hci_deg("hci_number_free_acl_slots: outgoing le packets (%u) > total le packets (%u)", num_packets_sent_le, hci_stack->le_acl_packets_total_num);
             return 0;
         }
     } else {
         // otherwise, classic slots are used for LE, too
         free_slots_classic -= num_packets_sent_le;
         if (free_slots_classic < 0){
-            log_error("hci_number_free_acl_slots: outgoing classic + le packets (%u + %u) > total packets (%u)", num_packets_sent_classic, num_packets_sent_le, hci_stack->acl_packets_total_num);
+            hci_deg("hci_number_free_acl_slots: outgoing classic + le packets (%u + %u) > total packets (%u)", num_packets_sent_classic, num_packets_sent_le, hci_stack->acl_packets_total_num);
             return 0;
         }
     }
@@ -347,6 +347,7 @@ uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
 
         default:
            if (hci_stack->le_acl_packets_total_num){
+               hci_deg("le free slots %x\n", free_slots_le);
                return free_slots_le;
            }
            return free_slots_classic; 
@@ -356,8 +357,11 @@ uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
 // new functions replacing hci_can_send_packet_now[_using_packet_buffer]
 int le_hci_can_send_command_packet_now(void){
 	//TODO
-	return 1;
-    if (hci_stack->hci_packet_buffer_reserved) return 0;
+	/* return 1; */
+    if (hci_stack->hci_packet_buffer_reserved) {
+        puts("le_hci_can_send_command_packet_now\n");
+        return 0;   
+    }
 
     // check for async hci transport implementations
     if (hci_stack->hci_transport->can_send_packet_now){
@@ -371,7 +375,7 @@ int le_hci_can_send_command_packet_now(void){
 
 int le_hci_can_send_prepared_acl_packet_now(hci_con_handle_t con_handle) {
 	//TODO
-	return 1;
+	/* return 1; */
     // check for async hci transport implementations
     if (hci_stack->hci_transport->can_send_packet_now){
         if (!hci_stack->hci_transport->can_send_packet_now(HCI_ACL_DATA_PACKET)){
@@ -383,8 +387,11 @@ int le_hci_can_send_prepared_acl_packet_now(hci_con_handle_t con_handle) {
 
 int le_hci_can_send_acl_packet_now(hci_con_handle_t con_handle){
 	//TODO
-	return 1;
-    if (hci_stack->hci_packet_buffer_reserved) return 0;
+	/* return 1; */
+    if (hci_stack->hci_packet_buffer_reserved) {
+        puts("le_hci_can_send_acl_packet_now\n");
+        return 0;   
+    }
     return le_hci_can_send_prepared_acl_packet_now(con_handle);
 }
 
@@ -936,6 +943,8 @@ static void event_handler(uint8_t *packet, int size)
 			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_buffer_size)){
 				hci_stack->le_data_packets_length = READ_BT_16(packet, 6);
 				hci_stack->le_acl_packets_total_num  = packet[8];
+                printf("acl pkt length %x\n", hci_stack->le_data_packets_length);
+                printf("acl pkt num %x\n", hci_stack->le_acl_packets_total_num);
 				// determine usable ACL payload size
 				if (HCI_ACL_PAYLOAD_SIZE < hci_stack->le_data_packets_length){
 					hci_stack->le_data_packets_length = HCI_ACL_PAYLOAD_SIZE;
@@ -1882,7 +1891,7 @@ void hci_disconnect_security_block(hci_con_handle_t con_handle){
 int le_hci_send_cmd(const hci_cmd_t *cmd, ...)
 {
     if (!le_hci_can_send_command_packet_now()){ 
-        log_error("hci_send_cmd called but cannot send packet now");
+        hci_deg("hci_send_cmd called but cannot send packet now");
         return 0;
     }
 

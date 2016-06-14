@@ -79,6 +79,16 @@ struct le_feature_handler{
 #define READ_BT_16(packet, pos) 		(packet[pos]|(packet[pos+1]<<8))
 
 
+#define CONTROLLER_MAX_CMD_PAYLOAD      0x200
+#define CONTROLLER_MAX_TX_PAYLOAD       0x200
+#define CONTROLLER_MAX_EVENT_PAYLOAD    0x200
+#define CONTROLLER_MAX_RX_PAYLOAD       0x400
+
+#define CONTROLLER_MAX_TOTAL_PAYLOAD    (CONTROLLER_MAX_CMD_PAYLOAD + \
+                                        CONTROLLER_MAX_TX_PAYLOAD + \
+                                        CONTROLLER_MAX_EVENT_PAYLOAD + \
+                                        CONTROLLER_MAX_RX_PAYLOAD)
+
 enum
 {
     /* NO_EVENTS_SPECIFIED                                 = , */

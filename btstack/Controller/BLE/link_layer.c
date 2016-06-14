@@ -98,10 +98,11 @@ static struct link_layer ll sec(.btmem_highly_available);
 /*
  *-------------------LE READ PARAMETER
  */
+
 #define LL_TRANSMIT_POWER_LEVEL         0x1
 
 #define LL_ACL_PDU_LENGTH               64
-#define LL_TOTAL_NUM_LE_DATA_PACKET     8
+#define LL_TOTAL_NUM_LE_DATA_PACKET     (CONTROLLER_MAX_TX_PAYLOAD/LL_ACL_PDU_LENGTH)
 
 #define LL_WHITE_LIST_SIZE              1
 #define LL_RESOLVING_LIST_SIZE          1
@@ -1640,7 +1641,7 @@ static void __set_ll_data_length(struct le_link *link)
 #define LL_TXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxTxTime)
 #define LL_RXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxRxTime)
 
-static void __update_ll_data_length_txoctets(struct le_link *link, u16 octets)
+static void __ll_update_connMaxTxOctets(struct le_link *link, u16 octets)
 {
     if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
     {
@@ -1652,7 +1653,7 @@ static void __update_ll_data_length_txoctets(struct le_link *link, u16 octets)
     }
 }
 
-static void __update_ll_data_length_txtime(struct le_link *link, u16 time)
+static void __ll_update_connMaxTxTime(struct le_link *link, u16 time)
 {
     if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
     {
@@ -1664,7 +1665,7 @@ static void __update_ll_data_length_txtime(struct le_link *link, u16 time)
     }
 }
 
-static void __update_ll_data_length_rxoctets(struct le_link *link, u16 octets)
+static void __ll_update_connMaxRxOctets(struct le_link *link, u16 octets)
 {
     if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
     {
@@ -1676,7 +1677,7 @@ static void __update_ll_data_length_rxoctets(struct le_link *link, u16 octets)
     }
 }
 
-static void __update_ll_data_length_rxtime(struct le_link *link, u16 time)
+static void __ll_update_connMaxRxTime(struct le_link *link, u16 time)
 {
     if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
     {
@@ -1698,28 +1699,34 @@ enum{
 /*
  *      change by Host or Controller
  */
+static const ll_step_extend data_length_update_steps[];
+
 static void __ll_change_data_length_args(struct le_link *link, u8 type, u16 args)
 {
+    //spec 4.2 Vol 6,Part B,4.5.10
     switch(type) 
     {
         case LL_UPDATE_TXOCTETS:       
-            __update_ll_data_length_txoctets(link, args);
+            __ll_update_connMaxTxOctets(link, args);
             break;
         case LL_UPDATE_TXTIMES:       
-            __update_ll_data_length_txtime(link, args);
+            __ll_update_connMaxTxTime(link, args);
             break;
         case LL_UPDATE_RXOCTETS:       
-            __update_ll_data_length_rxoctets(link, args);
+            __ll_update_connMaxRxOctets(link, args);
             break;
         case LL_UPDATE_RXTIMES:       
-            __update_ll_data_length_rxtime(link, args);
+            __ll_update_connMaxRxTime(link, args);
             break;
         default:
             ASSERT(0, "%s\n", __func__);
             break;
     }
 
-    le_data_length_update(param);
+    //The Controller may change values of connMaxTxOctets... at any time after
+    //entering the Connection State. Whenever it dose so,it shall communicate 
+    //these values to the peer device using the Data Lenght Update Procedure.
+    ll_control_data_step_start(data_length_update_steps);
 }
 /********************************************************************************/
 enum{

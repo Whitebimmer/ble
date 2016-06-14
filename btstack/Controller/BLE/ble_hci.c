@@ -63,7 +63,7 @@ struct lbuff_head *hci_event_buf sec(.btmem_highly_available);
 struct lbuff_head *hci_rx_buf sec(.btmem_highly_available);
 struct lbuff_head *hci_tx_buf sec(.btmem_highly_available);
 
-static u8 hci_buf[512+512+1024+512] __attribute__((aligned(4)));
+static u8 hci_buf[CONTROLLER_MAX_TOTAL_PAYLOAD] __attribute__((aligned(4)));
 
 //HIC SET/READ LE
 static struct le_parameter *le_param_t;
@@ -1174,6 +1174,18 @@ static void ble_hci_h4_download_data(int packet_type, u8 *packet, int len)
 }
 REGISTER_H4_CONTROLLER(ble_hci_h4_download_data);
 
+static int ble_hci_h4_can_send_packet_now(u8 packet_type)
+{
+    if (packet_type == HCI_ACL_DATA_PACKET){
+        
+        return 1;
+    }else {
+
+        return 1;
+    }
+}
+REGISTER_H4_CONTROLLER_FLOW_CONTROL(ble_hci_h4_can_send_packet_now);
+
 
 #define READ_ACL_CONNECTION_HANDLE(buffer) (READ_BT_16(buffer,0) & 0x0fff)
 #define READ_ACL_SIZE(buffer)           READ_BT_16(buffer,2)
@@ -1320,12 +1332,20 @@ static void hci_param_init(void)
     /* printf_buf(hci_param.resolvable_private_addr, 6); */
 }
 
+#define HCI_BUF_CMD_POS         0
+#define HCI_BUF_TX_POS          (HCI_BUF_CMD_POS + CONTROLLER_MAX_CMD_PAYLOAD)
+#define HCI_BUF_EVENT_POS       (HCI_BUF_TX_POS + CONTROLLER_MAX_TX_PAYLOAD)
+#define HCI_BUF_RX_POS          (HCI_BUF_EVENT_POS + CONTROLLER_MAX_EVENT_PAYLOAD)
+
 int hci_firmware_init()
 {
-	hci_cmd_ptr = lbuf_init(hci_buf, 512);
-	hci_event_buf = lbuf_init(hci_buf+512, 512);
-	hci_rx_buf = lbuf_init(hci_buf+1024, 1024);
-	hci_tx_buf = lbuf_init(hci_buf+2048, 512);
+    //host to controller
+	hci_cmd_ptr = lbuf_init(hci_buf + HCI_BUF_CMD_POS, CONTROLLER_MAX_CMD_PAYLOAD);
+	hci_tx_buf = lbuf_init(hci_buf + HCI_BUF_TX_POS, CONTROLLER_MAX_TX_PAYLOAD);
+
+    //controller to host
+	hci_event_buf = lbuf_init(hci_buf + HCI_BUF_EVENT_POS, CONTROLLER_MAX_EVENT_PAYLOAD    );
+	hci_rx_buf = lbuf_init(hci_buf + HCI_BUF_RX_POS, CONTROLLER_MAX_RX_PAYLOAD);
 
     hci_param_init();
 

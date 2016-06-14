@@ -71,6 +71,11 @@ static const char * h4_get_transport_name(void)
     return "H4";
 }
 
+static int h4_can_send_packet_now(u8 packet_type)
+{
+    return ble_h4_can_send_packet_now(packet_type);
+}
+
 static const hci_transport_t transport={
     .open                          = h4_open,
     .close                         = h4_close,
@@ -78,7 +83,7 @@ static const hci_transport_t transport={
     .register_packet_handler       = h4_register_packet_handler,
     .get_transport_name            = h4_get_transport_name,
     .set_baudrate                  = NULL,
-    .can_send_packet_now           = NULL,
+    .can_send_packet_now           = NULL,//ble_h4_can_send_packet_now,
 };
 
 
