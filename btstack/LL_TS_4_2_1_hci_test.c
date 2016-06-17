@@ -56,11 +56,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Adv_Param_Nconn_publicAddr_c39_pol3 =
 {
     .message = "Send_HCI_LE_Set_Adv_Param_Nconn_publicAddr_c39_pol0",
     .cmd_str = Send_HCI_LE_Set_Adv_Param_Nconn_publicAddr_c39_pol0,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_PARAM,
 };
 
 ///interval((min:0x20)),non conn,random addr,use channel 39,pol-0
@@ -70,11 +65,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Adv_Param_Nconn_randomAddr_c39_pol3 =
 {
     .message = "Send_HCI_LE_Set_Adv_Param_Nconn_randomAddr_c39_pol0",
     .cmd_str = Send_HCI_LE_Set_Adv_Param_Nconn_randomAddr_c39_pol0,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_PARAM,
 };
 
 ///interval((min:0x20)),non,conn,public addr,pol-3
@@ -84,11 +74,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Adv_Param_Nconn_publicAddr_pol3 =
 {
     .message = "Send_HCI_LE_Set_Adv_Param_Nconn_publicAddr_pol3",
     .cmd_str = Send_HCI_LE_Set_Adv_Param_Nconn_publicAddr_pol3,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_PARAM,
 };
 
 ///interval(min:0x20),conn undir,public addr,pol-3
@@ -98,11 +83,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol3 =
 {
     .message = "Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol3",
     .cmd_str = Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol3,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_PARAM,
 };
 
 ///interval(min:0x20),conn undir,public addr,pol-0
@@ -112,11 +92,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol0 =
 {
     .message = "Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol0",
     .cmd_str = Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol0,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_PARAM,
 };
 
 ///interval(min:0x20),conn undir,public addr,pol-1
@@ -126,11 +101,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol1 =
 {
     .message = "Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol1",
     .cmd_str = Send_HCI_LE_Set_Adv_Param_conn_undir_publicAddr_pol1,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_PARAM,
 };
 
 ///--------------------------------
@@ -140,11 +110,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Advertising_Data_len00 =
 {
     .message = "Send_HCI_LE_Set_Advertising_Data_len00",
     .cmd_str = Send_HCI_LE_Set_Advertising_Data_len00,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_DATA,
 };
 
 const u8 Send_HCI_LE_Set_Advertising_Data_len31[] =
@@ -153,11 +118,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Advertising_Data_len31 =
 {
     .message = "Send_HCI_LE_Set_Advertising_Data_len31",
     .cmd_str = Send_HCI_LE_Set_Advertising_Data_len31,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_DATA,
 };
 
 ///--------------------------------
@@ -167,11 +127,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Advertise_Enable =
 {
     .message = "Send_HCI_LE_Set_Advertise_Enable",
     .cmd_str = Send_HCI_LE_Set_Advertise_Enable,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_ENABLE,
 };
 
 const u8 Send_HCI_LE_Set_Advertise_Disable[] =
@@ -181,11 +136,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Advertise_Disable =
 {
     .message = "Send_HCI_LE_Set_Advertise_Disable",
     .cmd_str = Send_HCI_LE_Set_Advertise_Disable,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_ADV_ENABLE,
 };
 
 ///--------------------------------
@@ -196,11 +146,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Scan_Response_Length_0_Data_IUT =
 {
     .message = "HT_Send_HCI_LE_Set_Scan_Response_Length_0_Data_IUT",
     .cmd_str = Send_HCI_LE_Set_Scan_Response_Length_0_Data_IUT,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_SCAN_RSP_DATA,
 };
 
 ///rsp data length:0x1f, rsp data:"IUT"
@@ -210,11 +155,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_Scan_Response_Length_31_Data_IUT =
 {
     .message = "HT_Send_HCI_LE_Set_Scan_Response_Length_31_Data_IUT",
     .cmd_str = Send_HCI_LE_Set_Scan_Response_Length_31_Data_IUT,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_SET_SCAN_RSP_DATA,
 };
 
 ///--------------------------------
@@ -224,11 +164,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_white_list =
 {
     .message = "Send_HCI_LE_Set_white_list",
     .cmd_str = Send_HCI_LE_Set_white_list,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_ADD_WHITE_LIST,
 };
 
 ///--------------------------------
@@ -238,11 +173,6 @@ const hci_test_cmd_t HT_Send_HCI_LE_Set_random_address =
 {
     .message = "Send_HCI_LE_Set_random_address",
     .cmd_str = Send_HCI_LE_Set_random_address,
-    //.respond_mode = RESP_OSSEM,
-    //.respond_type = HCI_EVENT_PACKET,
-    //.respond_cmd = HCI_COMMAND_COMPLETE_EVENT_CODE,
-    //.wait_timeout = 300,
-    //.cause_event_opcode = HCI_LE_ADD_WHITE_LIST,
 };
 
 
@@ -415,13 +345,13 @@ const test_flow_struct_t test_flow_linklayer_adv[] =
 ///-----------"for privacy"--------
 ///--------------------------------
 ///--------------------------------
-///interval(min:0x20),conn undir,public addr
-const u8 Send_HCI_LE_Set_Adv_Param[] =
+///************************** NORMAL_MODE *********************
+const u8 Send_HCI_LE_Set_Undirect_Adv_Param[] =
 {"01 06 20 0f 20 00 20 00 00 00 00 00 00 00 00 00 00 01 00"};
-const hci_test_cmd_t HCI_LE_Set_Adv_Param=
+const hci_test_cmd_t HCI_LE_Set_Undirect_Adv_Param=
 {
-    .message = "Send_HCI_LE_Set_Adv_Param",
-    .cmd_str = Send_HCI_LE_Set_Adv_Param,
+    .message = "HCI_LE_Set_Undirect_Adv_Param",
+    .cmd_str = Send_HCI_LE_Set_Undirect_Adv_Param,
 };
 
 ///dev_name:"br17-4.2"
@@ -433,7 +363,6 @@ const hci_test_cmd_t HCI_LE_Set_Adv_data=
     .cmd_str = Send_HCI_LE_Set_Adv_data,
 };
 
-///dev_name:"br17-4.2"
 const u8 Send_HCI_LE_Set_Adv_rsp_data[] =
 {"01 09 20 20 1f 1E FF 57 01 00 7C 5B 5D 17 0E 02 BD D7 0C BB 8A CC C3 3C F2 86 0F 00 00 00 88 0F 10 53 49 56"};
 const hci_test_cmd_t HCI_LE_Set_Adv_rsp_data=
@@ -442,15 +371,280 @@ const hci_test_cmd_t HCI_LE_Set_Adv_rsp_data=
     .cmd_str = Send_HCI_LE_Set_Adv_rsp_data,
 };
 
-const int tp_normal_adv[] =
+const int tp_normal_undirect_adv[] =
 {
-    (int)&HCI_LE_Set_Adv_Param,
+    (int)&HCI_LE_Set_Undirect_Adv_Param,
     (int)&HCI_LE_Set_Adv_data,
     (int)&HCI_LE_Set_Adv_rsp_data,
     (int)&HT_Send_HCI_LE_Set_Advertise_Enable,
-    (int)9000,
-    (int)&HT_Send_HCI_LE_Set_Advertise_Disable,
-    (int)200,
+    /* (int)9000, */
+    /* (int)&HT_Send_HCI_LE_Set_Advertise_Disable, */
+    /* (int)200, */
+};
+
+const u8 Send_HCI_LE_Set_Direct_Adv_Param[] =
+{"01 06 20 0f 20 00 20 00 01 00 00 58 51 b4 50 a0 00 07 00"};
+const hci_test_cmd_t HCI_LE_Set_Direct_Adv_Param=
+{
+    .message = "HCI_LE_Set_Direct_Adv_Param",
+    .cmd_str = Send_HCI_LE_Set_Direct_Adv_Param,
+};
+
+const int tp_normal_direct_adv[] =
+{
+    (int)&HCI_LE_Set_Direct_Adv_Param,
+    (int)&HCI_LE_Set_Adv_data,
+    (int)&HCI_LE_Set_Adv_rsp_data,
+    (int)&HT_Send_HCI_LE_Set_Advertise_Enable,
+    /* (int)9000, */
+    /* (int)&HT_Send_HCI_LE_Set_Advertise_Disable, */
+    /* (int)200, */
+};
+
+/* #define IRK_0	{0x74, 0x01, 0x90, 0x4A, 0xF7, 0x35, 0xA4, 0x38, 0xD3, 0x20, 0x9A, 0xCD, 0x48, 0xC0, 0x54, 0x40} */
+/* #define IRK_CYS	{0x6D, 0xC3, 0xBF, 0xB5, 0x39, 0x11, 0x92, 0xF5, 0x17, 0x93, 0x36, 0x77, 0xCC, 0x72, 0x22, 0xAA} */
+/* #define IRK_1	{0xE6, 0xEA, 0xEE, 0x60, 0x31, 0x7B, 0xFC, 0xA2, 0x3F, 0xA5, 0x79, 0x59, 0xE7, 0x41, 0xCF, 0xC7} */
+/* #define IRK_1	{E6:EA:EE:60:31:7B:FC:A2:3F:A5:79:59:E7:41:CF:C7} */
+/* .peer_identity_address_type = 0, */
+/* .peer_identity_address = {0x71, 0x11, 0x98, 0xBA, 0x3A, 0x3E},  //LSB->MSB */
+/* .peer_irk = IRK_0,  */
+/* .local_irk = IRK_1, */
+const u8 Send_HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_br17[] =
+{"01 27 20 27 00 3E 3A BA 98 11 71 74 01 90 4A F7 35 A4 38 D3 20 9A CD 48 C0 54 40 E6 EA EE 60 31 7B FC A2 3F A5 79 59 E7 41 CF C7"};
+const hci_test_cmd_t HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_br17=
+{
+    .message = "HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_br17",
+    .cmd_str = Send_HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_br17,
+};
+
+/* .peer_irk = IRK_CYS,  */
+const u8 Send_HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_cys[] =
+{"01 27 20 27 00 3E 3A BA 98 11 71 0A 2D F4 65 E3 BD 7B 49 1E B4 C0 95 95 13 46 73 E6 EA EE 60 31 7B FC A2 3F A5 79 59 E7 41 CF C7"};
+const hci_test_cmd_t HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_cys=
+{
+    .message = "HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_cys",
+    .cmd_str = Send_HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_cys,
+};
+
+//timeout = 0xa1b8
+const u8 HT_Send_HCI_LE_Set_Random_Private_Address_Timeout[] =
+{"01 2e 20 02 B8 A1"};
+const hci_test_cmd_t HCI_LE_Set_Random_Private_Address_Timeout=
+{
+    .message = "HCI_LE_Set_Random_Private_Address_Timeout",
+    .cmd_str = HT_Send_HCI_LE_Set_Random_Private_Address_Timeout,
+};
+
+const u8 HT_Send_HCI_LE_Set_Address_Resolution_Enable_en[] = 
+{"01 2D 20 01 01"};
+const hci_test_cmd_t HCI_LE_Set_Address_Resolution_Enable_en=
+{
+    .message = "HCI_LE_Set_Address_Resolution_Enable_en",
+    .cmd_str = HT_Send_HCI_LE_Set_Address_Resolution_Enable_en,
+};
+
+const u8 Send_HCI_LE_Set_Undirect_Adv_Param_ownaddr2[] =
+{"01 06 20 0f 20 00 20 00 00 02 00 3E 3A BA 98 11 71 01 00"};
+const hci_test_cmd_t HCI_LE_Set_Undirect_Adv_Param_ownaddr2=
+{
+    .message = "HCI_LE_Set_Undirect_Adv_Param_ownaddr2",
+    .cmd_str = Send_HCI_LE_Set_Undirect_Adv_Param_ownaddr2,
+};
+
+const int tp_normal_undirect_rpa_adv_to_br17[] =
+{
+    (int)&HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_br17,
+    (int)&HCI_LE_Set_Random_Private_Address_Timeout,
+    (int)&HCI_LE_Set_Address_Resolution_Enable_en,
+    (int)&HCI_LE_Set_Undirect_Adv_Param_ownaddr2,
+    (int)&HCI_LE_Set_Adv_data,
+    (int)&HCI_LE_Set_Adv_rsp_data,
+    (int)&HT_Send_HCI_LE_Set_Advertise_Enable,
+    /* (int)9000, */
+    /* (int)&HT_Send_HCI_LE_Set_Advertise_Disable, */
+    /* (int)200, */
+};
+
+const int tp_normal_undirect_rpa_adv_to_cys[] =
+{
+    (int)&HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_cys,
+    (int)&HCI_LE_Set_Random_Private_Address_Timeout,
+    (int)&HCI_LE_Set_Address_Resolution_Enable_en,
+    (int)&HCI_LE_Set_Undirect_Adv_Param_ownaddr2,
+    (int)&HCI_LE_Set_Adv_data,
+    (int)&HCI_LE_Set_Adv_rsp_data,
+    (int)&HT_Send_HCI_LE_Set_Advertise_Enable,
+    /* (int)9000, */
+    /* (int)&HT_Send_HCI_LE_Set_Advertise_Disable, */
+    /* (int)200, */
+};
+
+const u8 Send_HCI_LE_Set_Direct_Adv_Param_ownaddr2[] =
+{"01 06 20 0f 20 00 20 00 04 02 00 3E 3A BA 98 11 71 01 00"};
+const hci_test_cmd_t HCI_LE_Set_Direct_Adv_Param_ownaddr2=
+{
+    .message = "HCI_LE_Set_Direct_Adv_Param_ownaddr2",
+    .cmd_str = Send_HCI_LE_Set_Direct_Adv_Param_ownaddr2,
+};
+
+const int tp_normal_direct_rpa_adv_to_br17[] =
+{
+    (int)&HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_br17,
+    (int)&HCI_LE_Set_Random_Private_Address_Timeout,
+    (int)&HCI_LE_Set_Address_Resolution_Enable_en,
+    (int)&HCI_LE_Set_Direct_Adv_Param_ownaddr2,
+    (int)&HCI_LE_Set_Adv_data,
+    (int)&HCI_LE_Set_Adv_rsp_data,
+    (int)&HT_Send_HCI_LE_Set_Advertise_Enable,
+    /* (int)9000, */
+    /* (int)&HT_Send_HCI_LE_Set_Advertise_Disable, */
+    /* (int)200, */
+};
+
+const int tp_normal_direct_rpa_adv_to_cys[] =
+{
+    (int)&HCI_LE_Slave_Add_Device_To_Resolving_List_irk_to_cys,
+    (int)&HCI_LE_Set_Random_Private_Address_Timeout,
+    (int)&HCI_LE_Set_Address_Resolution_Enable_en,
+    (int)&HCI_LE_Set_Direct_Adv_Param_ownaddr2,
+    (int)&HCI_LE_Set_Adv_data,
+    (int)&HCI_LE_Set_Adv_rsp_data,
+    (int)&HT_Send_HCI_LE_Set_Advertise_Enable,
+    /* (int)9000, */
+    /* (int)&HT_Send_HCI_LE_Set_Advertise_Disable, */
+    /* (int)200, */
+};
+
+/* #define IRK_0	{0x74, 0x01, 0x90, 0x4A, 0xF7, 0x35, 0xA4, 0x38, 0xD3, 0x20, 0x9A, 0xCD, 0x48, 0xC0, 0x54, 0x40} */
+/* #define IRK_1	{0xE6, 0xEA, 0xEE, 0x60, 0x31, 0x7B, 0xFC, 0xA2, 0x3F, 0xA5, 0x79, 0x59, 0xE7, 0x41, 0xCF, 0xC7} */
+/* .peer_identity_address_type = 0, */
+/* .peer_identity_address = {0x6a, 0x82, 0xc1, 0xcd, 0x09, 0x8a},  //LSB->MSB */
+/* .peer_irk = IRK_1,  */
+/* .local_irk = IRK_0, */
+const u8 Send_HCI_LE_Master_Add_Device_To_Resolving_List_irk_to_br17[] =
+{"01 27 20 27 00 8a 09 cd c1 82 6a E6 EA EE 60 31 7B FC A2 3F A5 79 59 E7 41 CF C7 74 01 90 4A F7 35 A4 38 D3 20 9A CD 48 C0 54 40"};
+const hci_test_cmd_t HCI_LE_Master_Add_Device_To_Resolving_List_irk_to_br17=
+{
+    .message = "HCI_LE_Master_Add_Device_To_Resolving_List_irk_to_br17",
+    .cmd_str = Send_HCI_LE_Master_Add_Device_To_Resolving_List_irk_to_br17,
+};
+
+const u8 Send_HCI_LE_Set_Scan_Parameters_active_ownaddr2_pol0[] =
+{"01 0b 20 07 01 50 00 50 00 02 00"};
+const hci_test_cmd_t HCI_LE_Set_Scan_Parameters_active_ownaddr2_pol0=
+{
+    .message = "HCI_LE_Set_Scan_Parameters_active_ownaddr2_pol0",
+    .cmd_str = Send_HCI_LE_Set_Scan_Parameters_active_ownaddr2_pol0,
+};
+
+const u8 Send_HCI_LE_Set_Scan_Enable_en[] =
+{"01 0c 20 02 01 00"};
+const hci_test_cmd_t HCI_LE_Set_Scan_Enable_en=
+{
+    .message = "HCI_LE_Set_Scan_Enable_en",
+    .cmd_str = Send_HCI_LE_Set_Scan_Enable_en,
+};
+
+const int tp_normal_active_rpa_scan_to_br17[] =
+{
+    (int)&HCI_LE_Master_Add_Device_To_Resolving_List_irk_to_br17,
+    (int)&HCI_LE_Set_Random_Private_Address_Timeout,
+    (int)&HCI_LE_Set_Address_Resolution_Enable_en,
+	(int)&HCI_LE_Set_Scan_Parameters_active_ownaddr2_pol0,
+	(int)&HCI_LE_Set_Scan_Enable_en,
+};
+
+const u8 Send_HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2[] =
+{"01 0d 20 19 00 01 50 00 00 02 8a 09 cd c1 82 6a 02 50 00 50 00 00 00 20 03 50 00 50 00"};
+const hci_test_cmd_t HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2=
+{
+    .message = "HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2",
+    .cmd_str = Send_HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2,
+};
+
+const int tp_normal_rpa_conn_to_br17[] =
+{
+    (int)&HCI_LE_Master_Add_Device_To_Resolving_List_irk_to_br17,
+    (int)&HCI_LE_Set_Random_Private_Address_Timeout,
+    (int)&HCI_LE_Set_Address_Resolution_Enable_en,
+    (int)&HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2,
+};
+
+const test_flow_struct_t test_flow_linklayer_normal_debug[] =
+{
+    {///
+#define TP_NORMAL_NAME		tp_normal_direct_adv
+        .message = "tp_normal_direct_adv",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+    {///
+#define TP_NORMAL_NAME		tp_normal_undirect_adv
+        .message = "tp_normal_undirect_adv",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+    {///
+#define TP_NORMAL_NAME		tp_normal_undirect_rpa_adv_to_cys
+        .message = "tp_normal_undirect_rpa_adv_to_cys",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+    {///
+#define TP_NORMAL_NAME		tp_normal_undirect_rpa_adv_to_br17
+        .message = "tp_normal_undirect_rpa_adv_to_br17",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+    {///
+#define TP_NORMAL_NAME		tp_normal_direct_rpa_adv_to_br17
+        .message = "tp_normal_direct_rpa_adv_to_br17",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+    {///
+#define TP_NORMAL_NAME		tp_normal_direct_rpa_adv_to_cys
+        .message = "tp_normal_direct_rpa_adv_to_cys",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+    {///
+#define TP_NORMAL_NAME		tp_normal_active_rpa_scan_to_br17
+        .message = "tp_normal_active_rpa_scan_to_br17",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+    {///
+#define TP_NORMAL_NAME		tp_normal_rpa_conn_to_br17
+        .message = "tp_normal_rpa_conn_to_br17",
+        .table_addr = TP_NORMAL_NAME,
+        .cmd_cnt = sizeof(TP_NORMAL_NAME)/sizeof(int),
+#undef TP_NORMAL_NAME
+    },
+
+};
+
+///************************** BQB_MODE *********************
+/* #define IRK_0	{0x74, 0x01, 0x90, 0x4A, 0xF7, 0x35, 0xA4, 0x38, 0xD3, 0x20, 0x9A, 0xCD, 0x48, 0xC0, 0x54, 0x40} */
+/* #define IRK_CYS	{0xC4, 0xE7, 0x99, 0x29, 0xE1, 0x3B, 0x78, 0xA3, 0x12, 0x4E, 0xC5, 0xF8, 0xBC, 0x77, 0x92, 0xF5} */
+/* #define IRK_1	{0xE6, 0xEA, 0xEE, 0x60, 0x31, 0x7B, 0xFC, 0xA2, 0x3F, 0xA5, 0x79, 0x59, 0xE7, 0x41, 0xCF, 0xC7} */
+/* .peer_identity_address_type = 0, */
+/* .peer_identity_address = {0x71, 0x11, 0x98, 0xBA, 0x3A, 0x3E},  //LSB->MSB */
+/* .peer_irk = IRK_CYS,  */
+/* .local_irk = IRK_1, */
+const u8 HT_Send_HCI_LE_Add_Device_To_Resolving_List_local_irk[] =
+{"01 27 20 27 00 3E 3A BA 98 11 71 74 01 90 4A F7 35 A4 38 D3 20 9A CD 48 C0 54 40 E6 EA EE 60 31 7B FC A2 3F A5 79 59 E7 41 CF C7"};
+const hci_test_cmd_t HCI_LE_Add_Device_To_Resolving_List_local_irk=
+{
+    .message = "HCI_LE_Add_Device_To_Resolving_List_local_irk",
+    .cmd_str = HT_Send_HCI_LE_Add_Device_To_Resolving_List_local_irk,
 };
 
 /* .peer_identity_address_type = 0, */
@@ -466,13 +660,6 @@ const hci_test_cmd_t HCI_LE_Add_Device_To_Resolving_List_local_irk_allzero=
     .cmd_str = HT_Send_HCI_LE_Add_Device_To_Resolving_List_local_irk_allzero,
 };
 
-const u8 HT_Send_HCI_LE_Set_Address_Resolution_Enable_en[] = 
-{"01 2D 20 01 01"};
-const hci_test_cmd_t HCI_LE_Set_Address_Resolution_Enable_en=
-{
-    .message = "HCI_LE_Set_Address_Resolution_Enable_en",
-    .cmd_str = HT_Send_HCI_LE_Set_Address_Resolution_Enable_en,
-};
 
 //ramdom addr= {0x3e, 0x3a, 0xba, 0x98, 0x33, 0x11},
 const u8 HT_Send_HCI_LE_Set_Random_Address_nonresolvable_private[] =
@@ -523,26 +710,6 @@ const hci_test_cmd_t HCI_LE_Add_Device_To_White_List=
     .cmd_str = HT_Send_HCI_LE_Add_Device_To_White_List,
 };
 
-/* .peer_identity_address_type = 0, */
-/* .peer_identity_address = {0x46, 0x01, 0x70, 0xAC, 0xF5, 0xBC},  //LSB->MSB */
-/* .peer_irk = {0x74, 0x01, 0x90, 0x4A, 0xF7, 0x35, 0xA4, 0x38, 0xD3, 0x20, 0x9A, 0xCD, 0x48, 0xC0, 0x54, 0x40}, */
-/* peer_addr = 3E 3A BA 98 11 71 */
-const u8 HT_Send_HCI_LE_Add_Device_To_Resolving_List_local_irk[] =
-{"01 27 20 27 00 3E 3A BA 98 11 71 74 01 90 4A F7 35 A4 38 D3 20 9A CD 48 C0 54 40 E6 EA EE 60 31 7B FC A2 3F A5 79 59 E7 41 CF C7"};
-const hci_test_cmd_t HCI_LE_Add_Device_To_Resolving_List_local_irk=
-{
-    .message = "HCI_LE_Add_Device_To_Resolving_List_local_irk",
-    .cmd_str = HT_Send_HCI_LE_Add_Device_To_Resolving_List_local_irk,
-};
-
-//timeout = 0x0384
-const u8 HT_Send_HCI_LE_Set_Random_Private_Address_Timeout[] =
-{"01 2e 20 02 B8 A1"};
-const hci_test_cmd_t HCI_LE_Set_Random_Private_Address_Timeout=
-{
-    .message = "HCI_LE_Set_Random_Private_Address_Timeout",
-    .cmd_str = HT_Send_HCI_LE_Set_Random_Private_Address_Timeout,
-};
 
 ///interval((min:0x20)),non conn,own address 3,use channel 37,pol-3
 const u8 Send_HCI_LE_Set_Advertising_Parameters_nonconn_ownaddr3_pol3[] =
@@ -738,14 +905,6 @@ const hci_test_cmd_t HCI_LE_Set_Scan_Parameters_passive_pol0=
     .cmd_str = Send_HCI_LE_Set_Scan_Parameters_passive_pol0,
 };
 
-const u8 Send_HCI_LE_Set_Scan_Enable_en[] =
-{"01 0c 20 02 01 00"};
-const hci_test_cmd_t HCI_LE_Set_Scan_Enable_en=
-{
-    .message = "HCI_LE_Set_Scan_Enable_en",
-    .cmd_str = Send_HCI_LE_Set_Scan_Enable_en,
-};
-
 const int tp_ddi_scn_bv13c[] =
 {
     (int)&HCI_LE_Add_Device_To_Resolving_List_local_irk_allzero,
@@ -754,14 +913,6 @@ const int tp_ddi_scn_bv13c[] =
     (int)&HCI_LE_Set_Scan_Parameters_passive_pol0,
     (int)&HCI_LE_Set_Scan_Enable_en,
     (int)9000,
-};
-
-const u8 Send_HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2[] =
-{"01 0d 20 19 20 00 20 00 00 02 3e 3a ba 98 22 71 02 f0 00 f0 00 00 00 20 03 50 00 50 00"};
-const hci_test_cmd_t HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2=
-{
-    .message = "HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2",
-    .cmd_str = Send_HCI_LE_Create_Connection_pol0_ownaddr2_peeraddr2,
 };
 
 const int tp_con_ini_bv09c[] =
@@ -804,11 +955,6 @@ const int tp_con_ini_bv12c[] =
 
 const test_flow_struct_t test_flow_linklayer_privacy[] =
 {
-    {///
-        .message = "tp_normal_adv",
-        .table_addr = tp_normal_adv,
-        .cmd_cnt = sizeof(tp_normal_adv)/sizeof(int),
-    },
     {///
         .message = "tp_sec_adv_bv02c",
         .table_addr = tp_sec_adv_bv02c,
@@ -876,10 +1022,13 @@ static void hhy_hci_cmd_send(void *buf)
     pc_h4_send_hci_cmd(hhy_hci_buf, len); //·¢ËÍhciÃüÁî
 }
 
+#define TP_NAME						test_flow_linklayer_normal_debug
 #define TP_DDI_ADV_STEPS			(sizeof(test_flow_linklayer_adv) / sizeof(test_flow_struct_t))
-#define TP_PRIVACY_STEPS			(sizeof(test_flow_linklayer_privacy) / sizeof(test_flow_struct_t))
+#define TP_PRIVACY_STEPS			(sizeof(TP_NAME) / sizeof(test_flow_struct_t))
+
 #define CUR_TP_TYPE_STEPS			TP_PRIVACY_STEPS
-#define CUR_TP_TYPE                 test_flow_linklayer_privacy
+#define CUR_TP_TYPE                 TP_NAME
+
 #define TYPE_DDI			('2')
 	#define DDI_ADV				'2'
 	#define DDI_SCN				'3'
@@ -1028,11 +1177,17 @@ __clear_rx_buf:
 static void ll_rx_buf_change(char *rx_buf, u8 len, char c)
 {
 	int cnt_temp = CUR_TP_TYPE_STEPS;
+	static u8 cnt = 0;
 
 	switch(c)
 	{
 	case '+':
 		g_steps_cnt += 2;
+		if(cnt == 0)
+		{
+			cnt = 1;	
+			g_steps_cnt--;
+		}
 	case '-':
 		g_steps_cnt--;
 		if(g_steps_cnt == cnt_temp)
@@ -1070,7 +1225,7 @@ void API_uart_debug(void)
 
     cnt++;
 
-	printf("\n--func=%s\n", __FUNCTION__);
+	/* printf("\n--func=%s\n", __FUNCTION__); */
     //1.change test option
     c = getchar();
     if((c >= '0') && (c <= '9'))

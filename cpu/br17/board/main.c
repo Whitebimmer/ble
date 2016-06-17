@@ -3,7 +3,6 @@
 #include "thread.h"
 #include "bt_power.h"
 
-
 #define CONNEST_TYPE    1   // 0 MASTER  1SLAVE
 
 /*const u8 local_address[6] = {0x2e, 0x2a, 0xba, 0x98, 0x76, 0x54};
@@ -52,7 +51,7 @@ void os_suspend_thread(u8 priority, u8 timeout)
     THREAD_SUSPEND(priority);
     if (TASK_IS_SLEEP())
     {
-        putchar(')');
+        /* putchar(')'); */
         bt_power_off_unlock();
     }
 }
@@ -60,7 +59,7 @@ void os_suspend_thread(u8 priority, u8 timeout)
 void os_resume_thread(u8 priority)
 {
     bt_power_off_lock();
-    putchar('(');
+    /* putchar('('); */
     THREAD_RESUME(priority);
 }
 
@@ -70,6 +69,7 @@ const struct thread_interface os_thread_ins = {
 	.os_suspend = os_suspend_thread,
 	.os_resume = os_resume_thread,
 }; 
+
 
 void task_run_loop(void)
 {
@@ -253,7 +253,7 @@ int main()
 
     if(bt_power_is_poweroff_post())
     {
-        ble_main();
+		ble_main();
         bt_poweroff_recover();
     }
     else
@@ -282,6 +282,7 @@ int main()
         while(1)
         {
             //asm("idle");
+#ifndef BLE_BQB_PROCESS_EN
             c = getchar();
 
             /* puts("user cmd : ADV\n"); */
@@ -296,7 +297,7 @@ int main()
 
                 case 'A':
                     puts("user cmd : ADV\n");
-#ifndef BLE_BQB_PROCESS_EN
+#ifndef BLE_PRIVACY_EN
                     ble_set_adv();
 #else
 					ble_set_direct_RPA_adv();
@@ -317,6 +318,7 @@ int main()
                 default:
                     break;
             }
+#endif
             if (TASK_IS_AWAKE())
                 break;
         }

@@ -517,6 +517,8 @@ static void __set_local_addr_ram(struct ble_hw *hw, u8 addr_type, const u8 *addr
     hw->local.addr_type = (addr_type) ? 1 : 0;
 
 	memcpy(hw->local.addr, addr, 6);
+	printf("\n--func=%s\n", __FUNCTION__);
+	printf_buf(hw->local.addr, 6);
 
     //next tx buf to be send
     u16 *ptr;
@@ -550,6 +552,8 @@ static void __set_peer_addr(struct ble_hw *hw, u8 addr_type, const u8 *addr)
 
 #define get_pll_param_for_frq(x)    get_bta_pll_bank(x)
 
+
+unsigned long bt_pll_config_ram[80 * 2];
 static void __set_channel_map(struct ble_hw *hw, u8 *channel)
 {
 	int i;
@@ -557,24 +561,38 @@ static void __set_channel_map(struct ble_hw *hw, u8 *channel)
 	int frq_mid;   // 89 mid 2402  2M MID_FREQ_UP;
 	struct ble_param *ble_fp = &hw->ble_fp;
 	u8 pll_param = 0;
-	u8 m[3]={0, 12, 39};
+	u8 m[3]={0, 24, 78};
 	//	u8 *channel = hw->conn_param.channel;
 
+	printf("\n--func=%s\n", __FUNCTION__);
+	BT_PLLCONFIG_ADR = bt_pll_config_ram;
+	frq_mid = 81 - 2;
+	for(i = 0; i < 79; i++)
+	{
+		bt_pll_config_ram[i * 2] = (frq_mid + i);
+		bt_pll_config_ram[i * 2 + 1] = 0;//(pll_param<<8)|(frq_mid + i);
+	}
+	int k = 0;
 	for(i=0; i<=36; i++)
 	{
-		if(i==0) { //2404
+		if(i==0) 
+		{ //2404
 			frq_mid = 81;
-		} else if(i==11)  { //2428
+			k=0;
+		} 
+		else if(i==11)  
+		{ //2428
 			frq_mid =  83;
+			k=2;
 		}
 #ifndef FPGA
 		pll_param = get_pll_param_for_frq(frq_mid+i*2);
 #endif
 		ble_fp->FRQ_IDX0[i] = i;
-		ble_fp->FRQ_TBL0[i] = (pll_param<<8)|(frq_mid + i*2);
+		ble_fp->FRQ_TBL0[i] = (i + 1) * 2 + k;
 		if (channel[i>>3] & BIT(i&0x7)){
 			ble_fp->FRQ_IDX1[num] = i;
-			ble_fp->FRQ_TBL1[num++] = (pll_param<<8)|(frq_mid + i*2);
+			ble_fp->FRQ_TBL1[num++] = (i + 1) * 2 + k; 
 		}
 	}
     for (i=0; i<3; i++)
@@ -584,9 +602,9 @@ static void __set_channel_map(struct ble_hw *hw, u8 *channel)
         pll_param = get_pll_param_for_frq(81-2+j*2);
 #endif
         ble_fp->FRQ_IDX0[37+i] = 37+i;
-        ble_fp->FRQ_TBL0[37+i] = (pll_param<<8)| (81-2 + j*2);
+        ble_fp->FRQ_TBL0[37+i] = j;
         ble_fp->FRQ_IDX1[37+i] = 37+i;
-        ble_fp->FRQ_TBL1[37+i] = (pll_param<<8)| (81-2 + j*2);
+        ble_fp->FRQ_TBL1[37+i] = j;
     }
 
 	ble_fp->CHMAP0 = (channel[1]<<8) | channel[0];
@@ -600,7 +618,7 @@ static void __set_adv_channel_map_patch(struct ble_hw *hw, u8 channel_map)
 
 	int i;
 	u8 pll_param = 0;
-	u8 m[3]={0, 12, 39};
+	u8 m[3]={0, 24, 78};
 
     if (channel_map != 0x5)
         return;
@@ -614,15 +632,15 @@ static void __set_adv_channel_map_patch(struct ble_hw *hw, u8 channel_map)
         if (i == 0)
         {
             ble_fp->FRQ_IDX0[37] = 37;
-            ble_fp->FRQ_TBL0[37] = (pll_param<<8)| (81-2 + m[0]*2);
+            ble_fp->FRQ_TBL0[37] = j;
         }
         else if (i == 2)
         {
             ble_fp->FRQ_IDX0[38] = 39;
-            ble_fp->FRQ_TBL0[38] = (pll_param<<8)| (81-2 + m[2]*2);
+            ble_fp->FRQ_TBL0[38] = j;
         }
         ble_fp->FRQ_IDX1[37+i] = 37+i;
-        ble_fp->FRQ_TBL1[37+i] = (pll_param<<8)| (81-2 + j*2);
+        ble_fp->FRQ_TBL1[37+i] = j;
     }
 }
 
@@ -1820,6 +1838,7 @@ static void __hw_rx_process(struct ble_hw *hw)
 #endif
 	ble_hw_encrypt_check(hw);
 
+	putchar('r');
     //data buf loop
 	if (rx->llid!=1 || rx->len!=0){
 		putchar('R');
@@ -1926,7 +1945,7 @@ static void ble_irq_handler()
         DEBUG_IO_0(0);
 
         /* printf("fine_cnt : %04d\n",__this->fine_cnt); */
-		/* BT_LP_CON |= BIT(1); */
+        BT_LP_CON |= BIT(1);
 		BLE_DEEPSL_CON |= BIT(2);
 
         DEBUG_IO_0(1);

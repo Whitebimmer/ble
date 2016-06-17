@@ -39,9 +39,8 @@
 // {SFLAG[7:0]}
 
 
-#define RD_PWR_SCON         (0x03)
-#define WR_PWR_SCON         (RD_PWR_SCON | 0x80)
-// {reserved[7:2], WLDO12_EN, WFM30_EN}
+#define RD_PWR_SCON0        (0x03)
+#define WR_PWR_SCON0        (RD_PWR_SCON0 | 0x80)
 
 
 #define RD_STB10_SET        (0x04)
@@ -111,17 +110,28 @@
 
 
 #define RD_MD_CON           (0x1c)
-#define WR_MD_CON           (RD_MD_CON | 0x80)
-// {reserved[7:1], LVDIS}
 
 
 #define RD_IVS_READ         (0x1d)
-// {PWVLD, M12VLD, M33VLD, SWVLD, ALLVLD, ANALVD, CLKVLD, NONVO}
 #define WR_IVS_SET1         (0x1e | 0x80)
-// {PWVLD, M12VLD, M33VLD, SWVLD, ALLVLD, ANALVD, CLKVLD, NONVO}
 #define WR_IVS_SET0         (0x1f | 0x80)
-// {PWVLD, M12VLD, M33VLD, SWVLD, ALLVLD, ANALVD, CLKVLD, NONVO}
 //
+
+#define RD_PLVD_CON         (0x03)
+#define WR_PLVD_CON         (RD_PWR_SCON | 0x80)
+
+#define RD_PWR_SCON1        (0x21)
+#define WR_PWR_SCON1        (RD_PWR_SCON1 | 0x80)
+
+
+#define RD_PWR_SCON2        (0x22)
+#define WR_PWR_SCON2        (RD_PWR_SCON2 | 0x80)
+
+#define RD_WLDO_CON        (0x23)
+#define WR_WLDO_CON        (RD_WLDO_CON | 0x80)
+
+#define RD_PWR_CON0_KEEP   (0x24)
+#define WR_PWR_CON0_KEEP   (RD_PWR_CON0_KEEP | 0x80)
 ////////////////////////////////////////////////////////////
 //
 //  low power mode defines
@@ -217,25 +227,41 @@
         /* PD MD        1bit RW  */ ( 0<<1 )  | \
         /* PD_EN        1bit RW  */ ( 1<<0 )
 
-#define pd_con1_init_rtc                            \
+#define pd_con1_init_rtcl                            \
         /* POR FLAG     1bit RO  */ ( 0<<7 )  | \
         /* CLR POR PND  1bit RW  */ ( 1<<6 )  | \
         /* CK DIV       2bit RW  */ ( 0<<4 )  /* 0:div0 1:div4 2:div16 3:div64 */  | \
         /* PU SLOW      1bit RW  */ ( 0<<3 )  | \
-        /* CK SEL       3bit RW  */ ( 0<<0 )  /* 0:RTC 1:BT 2:RC 3:HTC >3:NOCLK */
+        /* CK SEL       3bit RW  */ ( 3<<0 )  /* 0:RC 1:BT 2:RTCH 3:RTCL */ 
+
+
+#define pd_con1_init_rtch                            \
+        /* POR FLAG     1bit RO  */ ( 0<<7 )  | \
+        /* CLR POR PND  1bit RW  */ ( 1<<6 )  | \
+        /* CK DIV       2bit RW  */ ( 3<<4 )  /* 0:div0 1:div4 2:div16 3:div64 */  | \
+        /* PU SLOW      1bit RW  */ ( 0<<3 )  | \
+        /* CK SEL       3bit RW  */ ( 2<<0 )  /* 0:RC 1:BT 2:RTCH 3:RTCL */ 
 
 #define pd_con1_init_bt                            \
         /* POR FLAG     1bit RO  */ ( 0<<7 )  | \
         /* CLR POR PND  1bit RW  */ ( 1<<6 )  | \
         /* CK DIV       2bit RW  */ ( 3<<4 )  /* 0:div0 1:div4 2:div16 3:div64 */  | \
         /* PU SLOW      1bit RW  */ ( 0<<3 )  | \
-        /* CK SEL       3bit RW  */ ( 1<<0 )  /* 0:RTC 1:BT 2:RC 3:HTC >3:NOCLK */
+        /* CK SEL       3bit RW  */ ( 1<<0 )  /* 0:RC 1:BT 2:RTCH 3:RTCL */ 
+
 #define pd_con2_init                            \
         /* SOFT USE     8bit RW  */ ( 1<<0 )
 
 #define pd_con3_init                            \
-        /* WLD012_EN    1bit RW  */ ( 0<<1 )  | \
-        /* WFM30_EN     1bit RW  */ ( (1) <<0 )
+        /* RC EN        1bit RW  */ ( 0<<7 )  | \
+        /* MRTC33       1bit RW  */ ( 1<<6 )  | \
+        /* PW GATE      1bit RW  */ ( 1<<5 )  | \
+        /* MLDO33       1bit RW  */ ( 1<<4 )  | \
+        /* DCDC 15      1bit RW  */ ( 1<<3 )  | \
+        /* LDO 15       1bit RW  */ ( 0<<2 )  | \
+        /* LDO 3312     1bit RW  */ ( 0<<1 )  | \
+        /* LDO 1512     1bit RW  */ ( 1<<0 )
+
 #define pd_con4_init(x,y)                            \
         /* STB1 SET     4bit RW  */ ( x <<4 )  | \
         /* STB0 SET     4bit RW  */ ( y <<0 )
@@ -300,27 +326,68 @@
         /* LVC[07:0]    8bit RO  */ ( 0<<0 )
 
 #define pd_con1c_init                           \
-        /* LV DIS       1bit RW  */ ( 0<<0 )
+        /* RTC RST SRC  3bit RO  */ ( 0<<5 )  | \
+        /*              1bit RW  */ ( 0<<0 )
 
-//#define pd_con1e_init                           \
-//        /* PWR GATE EN  1bit WO  */ ( 1<<7 )  | \
-//        /* MLD012 EN    1bit WO  */ ( 1<<6 )  | \
-//        /* MLD033 EN    1bit WO  */ ( 1<<5 )  | \
-//        /* MLD012 SW ON 1bit WO  */ ( 1<<4 )  | \
-//        /* ALL VLD EN   1bit WO  */ ( 1<<3 )  | \
-//        /* ANA VLD EN   1bit WO  */ ( 1<<2 )  | \
-//        /* CLK VLD EN   1bit WO  */ ( 1<<1 )  | \
-//        /* MVRAM PWR EN 1bit WO  */ ( 1<<0 )
-//
-//#define pd_con1f_init                           \
-//        /* PWR GATE DIS 1bit WO  */ ( 1<<7 )  | \
-//        /* MLD012 DIS   1bit WO  */ ( 1<<6 )  | \
-//        /* MLD033 DIS   1bit WO  */ ( 1<<5 )  | \
-//        /* MLD012 SW OFF1bit WO  */ ( 1<<4 )  | \
-//        /* ALL VLD DIS  1bit WO  */ ( 1<<3 )  | \
-//        /* ANA VLD DIS  1bit WO  */ ( 1<<2 )  | \
-//        /* CLK VLD DIS  1bit WO  */ ( 1<<1 )  | \
-//        /* MVRAM PWR DIS1bit WO  */ ( 1<<0 )
+#if 0
+#define pd_con1e_init                           \
+        /* PWR VLD  EN  1bit WO  */ ( 0<<7 )  | \
+        /* PW DIS EN    1bit WO  */ ( 0<<6 )  | \
+        /* RST MASK     1bit WO  */ ( 0<<5 )  | \
+        /* MLD012 SW ON 1bit WO  */ ( 0<<4 )  | \
+        /* ALL VLD EN   1bit WO  */ ( 0<<3 )  | \
+        /* ANA VLD EN   1bit WO  */ ( 0<<2 )  | \
+        /* CLK VLD EN   1bit WO  */ ( 0<<1 )  | \
+        /* MVRAM PWR EN 1bit WO  */ ( 0<<0 )
+
+#define pd_con1f_init                           \
+        /* PWR VLD  DIS 1bit WO  */ ( 0<<7 )  | \
+        /* PW DIS DIS   1bit WO  */ ( 0<<6 )  | \
+        /* RST MASK     1bit WO  */ ( 0<<5 )  | \
+        /* MLD012 SW OFF1bit WO  */ ( 0<<4 )  | \
+        /* ALL VLD DIS  1bit WO  */ ( 0<<3 )  | \
+        /* ANA VLD DIS  1bit WO  */ ( 0<<2 )  | \
+        /* CLK VLD DIS  1bit WO  */ ( 0<<1 )  | \
+        /* MVRAM PWR DIS1bit WO  */ ( 0<<0 )
+#endif
+
+#define pd_con20_init                            \
+        /* PLVD LOAD    1bit RW  */ ( 0<<4 )  | \
+        /* PLVD EN      1bit RW  */ ( 0<<3 )  | \
+        /* PLVD OE      1bit RW  */ ( 0<<2 )  | \
+        /* PLVD_LEVEL   2bit RW  */ ( 1<<0 )   
+
+#define pd_con21_init                           \
+        /* DVDDA SW     1bit RW  */ ( 1<<7 )  | \
+        /* FAST CAG     1bit RW  */ ( 0<<6 )  | \
+        /* S1 VBAT      1bit RW  */ ( 0<<5 )  | \
+        /* S0 VBAT      1bit RW  */ ( 1<<4 )  | \
+        /* BTAVDD EN    1bit RW  */ ( 0<<3 )  | \
+        /* DVDDA 1512 EN1bit RW  */ ( 0<<2 )  | \
+        /* WLDO12 EN    1bit RW  */ ( 0<<1 )  | \
+        /* WFM30 EN     1bit RW  */ ( 1<<0 )
+
+#define pd_con22_init                           \
+        /*              1bit RW  */ ( 0<<5 )  | \
+        /*              1bit RW  */ ( 0<<4 )  | \
+        /* VCM DET      1bit RW  */ ( 0<<3 )  | \
+        /* RTC33 LEVEL  3bit RW  */ ( 7<<0 )
+
+#define pd_con23_init                           \
+        /* WLDO EN      1bit RW  */ ( 1<<4 )  | \
+        /* WLDO LVL LOW 2bit RW  */ ( 0<<2 )  | \
+        /* WLDO LEVEL   2bit RW  */ ( 3<<0 )
+
+#define pd_con24_init                           \
+        /* RC EN KEEP   1bit RW  */ ( 0<<7 )  | \
+        /* MRTC33 KEEP  1bit RW  */ ( 0<<6 )  | \
+        /* PW GATE KEEP 1bit RW  */ ( 0<<5 )  | \
+        /* MLDO33 KEEP  1bit RW  */ ( 0<<4 )  | \
+        /* DCDC 15 KEEP 1bit RW  */ ( 0<<3 )  | \
+        /* LDO 15 KEEP  1bit RW  */ ( 0<<2 )  | \
+        /* MLDO12 KEEP  1bit RW  */ ( 0<<1 )  | \
+        /* LDO 1512 KEEP1bit RW  */ ( 0<<0 )
+
 
 
 #endif

@@ -388,12 +388,12 @@ static void __ldo12_disable(void)
     u8 pd_tmp;
 
     pmu_csen();               //wldo12_en
-    pwr_buf(RD_PWR_SCON);
+    pwr_buf(RD_PWR_SCON1);
     pd_tmp = pwr_buf(0);
     pmu_csdis();
 
     pmu_csen();
-    pwr_buf(WR_PWR_SCON);
+    pwr_buf(WR_PWR_SCON1);
     pd_tmp &= ~BIT(1);
     pwr_buf(pd_tmp);
     pmu_csdis();
@@ -404,12 +404,12 @@ static void __ldo12_enable(void)
     u8 pd_tmp;
 
     pmu_csen();               //WLDO12_EN
-    pwr_buf(RD_PWR_SCON);
+    pwr_buf(RD_PWR_SCON1);
     pd_tmp = pwr_buf(0);
     pmu_csdis();
 
     pmu_csen();
-    pwr_buf(WR_PWR_SCON);
+    pwr_buf(WR_PWR_SCON1);
     pwr_buf(pd_tmp | BIT(1));
     pmu_csdis(); 
 }
@@ -508,23 +508,33 @@ static void __hw_power_init(u8 osc_type)
     pwr_buf(WR_PMU_CON0);
     pwr_buf(pd_con0_init);
    // pwr_buf(pd_con1_init);
-    if(osc_type == BT_OSC)
+    switch(osc_type)
     {
-       // pdn_buf(0x31);
-       pwr_buf(pd_con1_init_bt);
-    }
-    else
-    {
-       // pdn_buf(0);
-       pwr_buf(pd_con1_init_rtc);
+    case BT_OSC:
+        pwr_buf(pd_con1_init_bt);
+        break;
+    case RTC_OSCL:
+        pwr_buf(pd_con1_init_rtcl);
+        break;
+    case RTC_OSCH:
+        pwr_buf(pd_con1_init_rtch);
+        break;
     }
 
     pwr_buf(pd_con2_init);
-    pwr_buf(pd_con3_init);
-//    pwr_buf(pd_con4_init);
-//    pwr_buf(pd_con5_init);
-//    pwr_buf(pd_con6_init);
-//    pwr_buf(pd_con7_init);
+    pmu_csdis();
+
+    /* u8 tmp; */
+    /* pmu_csen(); */
+    /* pwr_buf(RD_PWR_SCON0); */
+    /* tmp = pwr_buf(0); */
+    /* pmu_csdis(); */
+    /* printf("RD_PWR_SCON0: %02x \n", tmp); */
+
+    /* pmu_csen(); */
+    /* pwr_buf(WR_PWR_SCON0); */
+    /* pwr_buf(tmp | BIT(7)); */
+    /* pmu_csdis(); */
 
   // bt_printf("pd_con4_init=%")
 
@@ -533,15 +543,20 @@ static void __hw_power_init(u8 osc_type)
     pd_printf("stab : %02x - %02x\n", __this->kstb5, __this->kstb4);
     pd_printf("stab : %02x\n", __this->kstb6);
 
+    pmu_csen();
+    pwr_buf(WR_STB10_SET);
     pwr_buf(pd_con4_init(__this->kstb1,__this->kstb0));
     pwr_buf(pd_con5_init(__this->kstb3,__this->kstb2));
     pwr_buf(pd_con6_init(__this->kstb5,__this->kstb4));
     pwr_buf(pd_con7_init(__this->kstb6));
     pmu_csdis();
 
+
     pmu_csen();
-    pwr_buf(WR_MD_CON);
-    pwr_buf(pd_con1c_init);
+    pwr_buf(RD_PWR_SCON1);
+    pwr_buf(pd_con21_init);
+    pwr_buf(pd_con22_init);
+    pwr_buf(pd_con23_init);
     pmu_csdis();
 
 
@@ -917,14 +932,12 @@ static void __hw_cache_run()
 static void __hw_ldo_sw30(void) sec(.poweroff_text);
 static void __hw_ldo_sw30(void)
 {
-    LDO_CON |= BIT(3);          // DVDDA VDD short enable
     SFR(LDO_CON, 8, 2, 0x3);    // VDDIO set to 3.0v 
 }
 
 static void __hw_ldo_sw33(void) sec(.poweroff_text);
 static void __hw_ldo_sw33(void)
 {
-    LDO_CON &= ~BIT(3);         // DVDDA VDD short disable
     SFR(LDO_CON, 8, 2, 0x1);    // VDDIO set to 3.3v
 }
 

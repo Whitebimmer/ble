@@ -57,7 +57,8 @@ export FLAGS += -target pi32 -integrated-as \
 								-c -g \
 								-Wall \
 								-nostrictpi32 \
-								-Oz
+								-Oz \
+								-w
 
 endif
 
@@ -69,7 +70,8 @@ export DEFINS = \
 -DEMBEDDED \
 -DBR17\
 -DFPGA\
-# -DBLE_BQB_PROCESS_EN\
+-DBLE_PRIVACY_EN\
+-DBLE_BQB_PROCESS_EN\
 
 #DEFINS += -DSH60
 

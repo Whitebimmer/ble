@@ -248,7 +248,7 @@ int main()
     puts("-----4\n");
 	thread_init(&os_thread_ins);
 
-    puts("-----5\n");
+	puts("-----5\n");
 	sys_timer_init();
 
     bd_ram1_memory_init();
@@ -318,7 +318,7 @@ int main()
                     ble_set_conn();
                     break;
                 case 'T':
-                    puts("user cmd : TEST\n");
+                    /* puts("user cmd : TEST\n"); */
                     ble_test();
                     break;
                 default:
