@@ -371,7 +371,7 @@ static void __power_suspend_post(void *priv, u32 usec)
 	BLE_ANCHOR_CON0 = (0<<12) | (HW_ID(hw)<<8) | BIT(1);
 	clkn_cnt = (BLE_ANCHOR_CON2 & 0x7fff)*625;
 
-    /* printf("clk_cnt : %08d / fine_cnt - %08d\n", clkn_cnt, __this->fine_cnt); */
+    /* printf("clk_cnt : %08d / fine_cnt - %08d / usec - %08d\n", clkn_cnt, __this->fine_cnt, usec); */
 
     ASSERT((clkn_cnt > __this->fine_cnt), "%s\n", __func__);
 
@@ -1932,7 +1932,7 @@ static void ble_irq_handler()
 			BLE_INT_CON1 = BIT(i);
 			BLE_INT_CON1 = BIT(i);     ///  !!! must be clear twice
 
-            /* ble_power_off(hw); */
+            ble_power_off(hw);
 		}
 	}
 

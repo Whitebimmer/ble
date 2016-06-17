@@ -6,7 +6,7 @@
 #include "bt_power_driver.h"
 #include "bt_power.h"
 
-/* #define PD_DEBUG_EN */
+#define PD_DEBUG_EN
 
 #ifdef PD_DEBUG_EN
 #define pd_putchar(x)        putchar(x)
@@ -619,7 +619,7 @@ static u8 __hw_power_is_poweroff(void)
 #define t_printf(...)
 #endif
 /* static  */
-u32 __tcnt_us(u32 x)
+__attribute__((noinline)) u32 __tcnt_us(u32 x)
 {
     u64 y;
 
@@ -679,8 +679,8 @@ u32 __hw_poweroff_time(u32 usec, u8 mode)
     }
     else
     {
-        Tprp = __tcnt_ms(30);      ///保存时间
-        Tcke = __tcnt_ms(30);      ///恢复时间6000L;// ms
+        Tprp = __tcnt_ms(3);      ///保存时间
+        Tcke = __tcnt_ms(3);      ///恢复时间6000L;// ms
         /* pd_puts("Tprp : "); */
         /* put_u32hex(Tprp); */
         /* pd_puts("Tcke : "); */
@@ -1073,6 +1073,10 @@ static u32 __do_power_off(u32 usec, int mode)
         __hw_power_down_enter();    
     }
 
+    /* usec = 0x7A120; */
+    /* usec = 0x8A120; */
+    /* usec = 0x5A120; */
+    /* usec = 0x9A120; */
 	return __hw_poweroff_time(usec, mode);
 }
 
@@ -1176,7 +1180,8 @@ static void __power_ioctrl(int ctrl, ...)
             __this->kstb4 = Kstb0(__this->osc_hz);
             __this->kstb5 = Kstb0(__this->osc_hz);
             __this->kstb6 = Kstb0(__this->osc_hz);
-            if (__this->osc_type == BT_OSC)
+            if ((__this->osc_type == BT_OSC) || \
+                (__this->osc_type == RTC_OSCH))
             {
                 __this->osc_hz >>= 6;
             }

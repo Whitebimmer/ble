@@ -162,7 +162,7 @@ void disable_wtd(void)
 }
 
 const struct bt_low_power_param bt_power_param = {
-    .osc_type = BT_OSC,
+    .osc_type = RTC_OSCH,
     .osc_hz = 12000000L,
     .is_use_PR = 0,
     .delay_us = 64000000/1000000L,
