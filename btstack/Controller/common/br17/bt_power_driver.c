@@ -619,7 +619,8 @@ static u8 __hw_power_is_poweroff(void)
 #define t_printf(...)
 #endif
 /* static  */
-__attribute__((noinline)) u32 __tcnt_us(u32 x)
+/* __attribute__((noinline))  */
+u32 __tcnt_us(u32 x)
 {
     u64 y;
 
