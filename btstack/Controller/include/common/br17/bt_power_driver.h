@@ -250,7 +250,7 @@
         /* CK SEL       3bit RW  */ ( 1<<0 )  /* 0:RC 1:BT 2:RTCH 3:RTCL */ 
 
 #define pd_con2_init                            \
-        /* SOFT USE     8bit RW  */ ( 1<<0 )
+        /* SOFT USE     8bit RW  */ ( 2<<0 )
 
 #define pd_con3_init                            \
         /* RC EN        1bit RW  */ ( 0<<7 )  | \

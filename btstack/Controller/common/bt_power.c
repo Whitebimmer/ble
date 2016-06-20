@@ -30,6 +30,7 @@ static void __power_on()
 {
 	struct bt_power *p, *n;
 
+    /* puts("__power_on\n"); */
 	__this->pending = 0;
 	list_for_each_entry_safe(p, n, &__this->head_off, entry){
 		if (p->ops){
@@ -71,7 +72,7 @@ static void __power_off()
         CPU_INT_EN();
         return;
     }
-	//printf("timeout: %d\n", timeout);
+    printf("timeout: %d\n", timeout);
     /* put_u32hex(timeout); */
 
 	if (timeout < 800*1000){
@@ -126,9 +127,12 @@ static void __power_off()
 			}
 		}
 
+        DEBUG_IO_1(0);
         __this->driver->off_enter();
 		/* RFI_CON &= ~BIT(1); */
-        while(1);
+        while(1){
+            /* puts("a\n");     */
+        };
 	}
     CPU_INT_EN();
 }

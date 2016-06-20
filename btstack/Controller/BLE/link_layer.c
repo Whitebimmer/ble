@@ -1652,6 +1652,8 @@ static void __set_ll_adv_state(struct le_link *link)
     /* Time Range: 20 ms to 10.24 sec */
     min = le_param.adv_param.Advertising_Interval_Max;
     max = le_param.adv_param.Advertising_Interval_Min;
+    printf("interval min : %x\n", min);
+    printf("interval max : %x\n", max);
 
     adv->filter_policy = le_param.adv_param.Advertising_Filter_Policy;
 

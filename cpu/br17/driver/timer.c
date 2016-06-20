@@ -27,7 +27,7 @@ static void timer0_isr()
     if (cnt1 == 250)
     {
        cnt1 = 0;
-       puts(".");
+       puts("*");
     }
 }
 REG_INIT_HANDLE(timer0_isr);

@@ -407,6 +407,7 @@ static void __power_off_post(void *priv, u32 usec)
 
 static void __power_on(void *priv)
 {
+    /* puts("__power_on\n"); */
 	struct ble_hw *hw = (struct ble_hw *)priv;
 
 	BLE_DEEPSL_CON = BIT(5)|BIT(0);
@@ -553,7 +554,7 @@ static void __set_peer_addr(struct ble_hw *hw, u8 addr_type, const u8 *addr)
 #define get_pll_param_for_frq(x)    get_bta_pll_bank(x)
 
 
-unsigned long bt_pll_config_ram[80 * 2];
+
 static void __set_channel_map(struct ble_hw *hw, u8 *channel)
 {
 	int i;
@@ -564,14 +565,6 @@ static void __set_channel_map(struct ble_hw *hw, u8 *channel)
 	u8 m[3]={0, 24, 78};
 	//	u8 *channel = hw->conn_param.channel;
 
-	printf("\n--func=%s\n", __FUNCTION__);
-	BT_PLLCONFIG_ADR = bt_pll_config_ram;
-	frq_mid = 81 - 2;
-	for(i = 0; i < 79; i++)
-	{
-		bt_pll_config_ram[i * 2] = (frq_mid + i);
-		bt_pll_config_ram[i * 2 + 1] = 0;//(pll_param<<8)|(frq_mid + i);
-	}
 	int k = 0;
 	for(i=0; i<=36; i++)
 	{
@@ -2338,11 +2331,29 @@ static void le_hw_handler_register(struct ble_hw *hw, void *priv,
 	hw->handler = handler;
 }
 
+void ble_rf_init(void)
+{
+	puts("ble_RF_init\n");
+    BT_BLE_CON |= BIT(0);
+
+	/* SFR(BLE_RADIO_CON0, 0 , 10 , 150);    //TXPWRUP_OPEN_PLL */
+	/* SFR(BLE_RADIO_CON0, 12 , 4 , 12);     //TXPWRPD_CLOSE_LOD */
+	/* SFR(BLE_RADIO_CON1, 0 , 10 , 145);    //RXPWRUP_OPEN_PLL */
+	/* SFR(BLE_RADIO_CON2, 0 , 8 ,  50);     //TXCNT_OPEN_LDO */
+	/* SFR(BLE_RADIO_CON2, 8 , 8 ,  60);     //RXCNT_OPEN_LDO */
+	/* SFR(BLE_RADIO_CON3, 0 , 8 ,  30);     //wait read data */
+
+	BLE_CON0  = BIT(0);          //ble_en
+	/* BLE_CON1  = 3;               //sync_err */
+    //debug
+    BLE_DBG_CON = BIT(0) | (10 << 8);
+}
+
 static void le_hw_init()
 {
 	puts("le_hw_init\n");
 
-
+    ble_rf_init();
 	BT_BLEEXM_ADR = (u32)&ble_base;
 	BT_BLEEXM_LIM = ((u32)&ble_base) + sizeof(ble_base);
 
@@ -2392,21 +2403,4 @@ static const struct ble_operation ble_ops = {
 REGISTER_BLE_OPERATION(ble_ops);
 
 
-void ble_rf_init(void)
-{
-	puts("ble_RF_init\n");
-    BT_BLE_CON |= BIT(0);
-
-	/* SFR(BLE_RADIO_CON0, 0 , 10 , 150);    //TXPWRUP_OPEN_PLL */
-	/* SFR(BLE_RADIO_CON0, 12 , 4 , 12);     //TXPWRPD_CLOSE_LOD */
-	/* SFR(BLE_RADIO_CON1, 0 , 10 , 145);    //RXPWRUP_OPEN_PLL */
-	/* SFR(BLE_RADIO_CON2, 0 , 8 ,  50);     //TXCNT_OPEN_LDO */
-	/* SFR(BLE_RADIO_CON2, 8 , 8 ,  60);     //RXCNT_OPEN_LDO */
-	/* SFR(BLE_RADIO_CON3, 0 , 8 ,  30);     //wait read data */
-
-	BLE_CON0  = BIT(0);          //ble_en
-	/* BLE_CON1  = 3;               //sync_err */
-    //debug
-    BLE_DBG_CON = BIT(0) | (10 << 8);
-}
 

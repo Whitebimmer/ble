@@ -177,9 +177,11 @@ int main()
     /* printf("CLK_CON1 : %x\n", CLK_CON1); */
     /* printf("CLK_CON2 : %x\n", CLK_CON2); */
     /* printf("SYS_DIV : %x\n", SYS_DIV); */
+    /* {PORTA_DIR &= ~BIT(1); PORTA_OUT |= BIT(1);} */
 #ifdef FPGA 
 	pll_init();
-    uart_init((48000000/ 460800));  // pa8
+    /* uart_init((48000000/ 460800));  // pa8 */
+    uart_init((48000000/ 115200));  // pa8
     puts("...fpga br17 setup ok.......\n");
 #else
 	br16_pll_init();
@@ -190,32 +192,39 @@ int main()
     FMA_CON1 |= BIT(8);
     LDO_CON |= BIT(5);
 #endif
-    delay(500000);
 
-    puts(pubDate);
-    printf("PWR_CON : %x\n", PWR_CON);
+    puts("\nbt_power_is_poweroff_post : ");
+    put_u8hex(bt_power_is_poweroff_post());
+    /* puts("\nbt_power_is_poweroff_probe : "); */
+    /* put_u8hex(bt_power_is_poweroff_probe()); */
 
-    /* printf("bss_begin : %x\n", &bss_begin); */
-    printf("bss_size : %x\n",  &bss_size);
-    printf("bss_end: %x\n",    &bss_end);
-    /* printf("data_addr: %x\n",  &data_addr); */
-    printf("data_begin: %x\n", &data_begin);
-    printf("data_size: %x\n",  &data1_size);
-    printf("data_size: %x\n",  &data_size);
+    if ((PWR_CON & 0xe0) != 0x80)
+    {
+        delay(500000);
 
-    printf("ram1_begin: %x\n", &ram1_begin);
-    printf("ram1_size: %x\n",  &ram1_size);
+        puts(pubDate);
+        printf("PWR_CON : %x\n", PWR_CON);
+
+        /* printf("bss_begin : %x\n", &bss_begin); */
+        printf("bss_size : %x\n",  &bss_size);
+        printf("bss_end: %x\n",    &bss_end);
+        /* printf("data_addr: %x\n",  &data_addr); */
+        printf("data_begin: %x\n", &data_begin);
+        printf("data_size: %x\n",  &data1_size);
+        printf("data_size: %x\n",  &data_size);
+
+        printf("ram1_begin: %x\n", &ram1_begin);
+        printf("ram1_size: %x\n",  &ram1_size);
+    }
     /* pmalloc_init(RAM_S, RAM_E); */
-    bt_power_is_poweroff_post();
-    put_u8hex(bt_power_is_poweroff_probe());
 
-    puts("-----1\n");
+    /* puts("-----1\n"); */
 	system_init();
 
-    puts("-----2\n");
+    /* puts("-----2\n"); */
 	timer0_start();
 
-    puts("-----3\n");
+    /* puts("-----3\n"); */
 	RF_init();
 
     //----------debug
@@ -242,10 +251,10 @@ int main()
 
 
 	ENABLE_INT();
-    puts("-----4\n");
+    /* puts("-----4\n"); */
 	thread_init(&os_thread_ins);
 
-    puts("-----5\n");
+    /* puts("-----5\n"); */
 	sys_timer_init();
 
     bd_ram1_memory_init();

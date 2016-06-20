@@ -562,13 +562,13 @@ static void __hw_power_init(u8 osc_type)
 
     LDO_CON = LDO_CON & (~(0X7 << 18) | (0X0 << 18));     //WVDD min
     pd_printf("osc type: %04d\n", osc_type);
-    __pmu_debug();
+    /* __pmu_debug(); */
 }
 
 static u8 __hw_power_is_poweroff(void)sec(.poweroff_flash);
 static u8 __hw_power_is_poweroff(void)
 {
-    u32 pwr_down_wkup;
+    u8 pwr_down_wkup;
 
     pmu_csen();
     pwr_buf(RD_PMU_CON0);
@@ -675,8 +675,8 @@ u32 __hw_poweroff_time(u32 usec, u8 mode)
 
     if(mode)
     {
-        Tprp = __tcnt_ms(60);     ///保存时间
-        Tcke = __tcnt_ms(700);    ///恢复时间6000L;// ms
+        Tprp = __tcnt_ms(30);     ///保存时间
+        Tcke = __tcnt_ms(200);    ///恢复时间6000L;// ms
     }
     else
     {
@@ -1005,11 +1005,19 @@ static u8 __hw_power_is_wakeup(void)
 
     return (pd_tmp & BIT(7)) ? 1 : 0;
 }
+
+static void __hw_pmu_reset_mask(void)
+{
+    pmu_csen();
+    pwr_buf(WR_IVS_SET0);
+    pwr_buf(0x20);
+    pmu_csdis();
+}
 /********************************************************************************/
 /*
  *                   HW Abstract Layer
  */
-#if 0
+#if 1
 typedef enum
 {
     RUN_RAM = 0,
@@ -1023,7 +1031,7 @@ const u8 maskrom_ins[MAX_INS][8]  = {
 };
 
 #define RAM1_START      0x40000L
-#define RAM1_SIZE       (16*1024L)
+#define RAM1_SIZE       (24*1024L)
 #define RAM1_END        (RAM1_START + RAM1_SIZE)
 
 
@@ -1065,8 +1073,21 @@ void maskrom_clear(void)
 
 static u32 __do_power_off(u32 usec, int mode)
 {
-    //maskrom_clear();
-    //maskrom_call(RUN_RAM);
+    maskrom_clear();
+    /* maskrom_call(RUN_RAM); */
+    /* u8 tmp; */
+    /* pmu_csen(); */
+    /* pwr_buf(RD_PMU_CON1); */
+    /* tmp = pwr_buf(0); */
+    /* pmu_csdis(); */
+    /* printf("PMU CON1 %x\n", tmp); */
+
+    /* pmu_csen(); */
+    /* pwr_buf(RD_PWR_SCON0); */
+    /* tmp = pwr_buf(0); */
+    /* pmu_csdis(); */
+    /* printf("PMU CON3 %x\n", tmp); */
+
     if (mode){
         __hw_power_off_enter();    
     }
@@ -1208,6 +1229,7 @@ static void __power_ioctrl(int ctrl, ...)
 u8 __power_is_poweroff()sec(.poweroff_flash);
 u8 __power_is_poweroff()
 {
+    /* __hw_pmu_reset_mask(); */
     return __hw_power_is_poweroff();
 }
 
