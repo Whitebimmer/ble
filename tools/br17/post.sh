@@ -10,4 +10,4 @@ ${OBJDUMP} -section-headers  main.or32
 # cat br17.bin data.bin data1.bin > flash.app  
 cat br17.bin data.bin data1.bin > sdram.app  
 
-host-client -f uboot.boot sdram.app -tonorflash -dev br17 -boot 0x2000 -div6 -wait 300
+host-client -project ble_br17 -f uboot.boot sdram.app -tonorflash -dev br17 -boot 0x2000 -div6 -wait 300

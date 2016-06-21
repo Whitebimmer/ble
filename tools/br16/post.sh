@@ -12,6 +12,6 @@ cat br16.bin data.bin data1.bin > sdram.app
 
 rm br16.bin data.bin data1.bin main.or32
 
-host-client -f uboot.boot sdram.app -tonorflash -dev br16 -boot 0x2000 -div6 -wait 300
+host-client -project ble_br16 -f uboot.boot sdram.app -tonorflash -dev br16 -boot 0x2000 -div6 -wait 300
 
 rm sdram.app

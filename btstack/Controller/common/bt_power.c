@@ -72,7 +72,7 @@ static void __power_off()
         CPU_INT_EN();
         return;
     }
-    printf("timeout: %d\n", timeout);
+	//printf("timeout: %d\n", timeout);
     /* put_u32hex(timeout); */
 
 	if (timeout < 800*1000){
@@ -127,12 +127,9 @@ static void __power_off()
 			}
 		}
 
-        DEBUG_IO_1(0);
         __this->driver->off_enter();
-		/* RFI_CON &= ~BIT(1); */
-        while(1){
-            /* puts("a\n");     */
-        };
+		RFI_CON &= ~BIT(1);
+		/* while(1); */
 	}
     CPU_INT_EN();
 }

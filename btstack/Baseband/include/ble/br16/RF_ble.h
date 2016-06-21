@@ -14,7 +14,6 @@ struct ble_param
     volatile unsigned short BITOFF; 
     volatile unsigned short ADVIDX; 
     volatile unsigned short FORMAT; 
-    volatile unsigned short OPTCNTL; 
     volatile unsigned short BDADDR0; 
     volatile unsigned short BDADDR1; 
     volatile unsigned short TXTOG; 
@@ -59,7 +58,6 @@ struct ble_param
     volatile unsigned short IFSCNT;
     volatile unsigned short RFPRIOSTAT; 
     volatile unsigned short RFPRIOCNTL;
-    volatile unsigned short UNDEF1; 
 
     volatile unsigned char  FRQ_IDX0[40];
     volatile unsigned char  FRQ_IDX1[40];
@@ -75,7 +73,7 @@ struct ble_param
     volatile unsigned long  MDM_SET     ; //16'd204     //len:132 [31:0]
     volatile unsigned short RSSI2        ; //16'd176     //len:104 [31:0] read only RSSI 
     volatile unsigned short RSSI3        ; //16'd176     //len:104 [31:0] read only RSSI 
-    volatile unsigned long  UNDEF[3];     // 208 212 216  
+    volatile unsigned long  UNDEF[2];     // 208 212 216  
     volatile unsigned short FRQ_TBL0[40]; //16'd220
     volatile unsigned short FRQ_TBL1[40];
 };

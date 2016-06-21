@@ -728,7 +728,7 @@ static const u8 adv_ind_data[] = {
 #ifdef BR16
 static const u8 adv_ind_data[] = {
 	0x02, 0x01, 0x06,
-	0x09, 0x09, 'b','r', '1', '7', '-','4', '.', '2',
+	0x09, 0x09, 'b','r', '1', '6', '-','4', '.', '1',
 	//0x05, 0x12, 0x80, 0x02, 0x80, 0x02,
 	0x04, 0x0d, 0x00, 0x05, 0x10,
 	0x03, 0x03, 0x0d, 0x18,
@@ -810,7 +810,7 @@ static void hci_initializing_run()
                 puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n");
                 hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS;
                 le_hci_send_cmd(&hci_le_set_advertising_parameters,
-                    0x0620, 0x0620, 
+                    0x0320, 0x0320, 
                     0x0, 0x00, 
                     0x0, NULL,
                     0x7, 0x0);
