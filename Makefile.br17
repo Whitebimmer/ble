@@ -106,7 +106,7 @@ all:
 	@if [ -f tools/$(CPU)/main.or32 ]; then rm tools/$(CPU)/main.or32; fi 
 	@for i in $(subdir); do \
 		if [ $$i != "." ] && [ -f $$i/Makefile ]; then \
-			make -C $$i; \
+			make -C $$i || exit 1; \
 		fi \
 	done
 	@x=`find ./ -name "*.o"`; \
