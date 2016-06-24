@@ -92,6 +92,7 @@ void RF_mdm_init(void)
         // BT_MDM_CON6[11:0]:          // fsk carrier frequency deviation value
     SFR(BT_MDM_CON7, 16, 10, 0);       // psk carrier frequency deviation setting
         // BT_MDM_CON7[9:0]:           // psk carrier frequency deviation value
+    SFR(BT_MDM_CON8, 8, 8, 80);        // fsk v4.x rx syncword timeout setting
 
     SFR(BT_MDM_CON1, 0, 8, 120);        // fsk preamble block time select, time = (n)uS
     SFR(BT_MDM_CON6, 16, 12, 0);
@@ -124,26 +125,26 @@ void RF_init()
 	delay(1000);
     BT_BSB_CON |= BIT(10);
 
-	bt_puts("rf_pll_init 1\n");
+	/* bt_puts("rf_pll_init 1\n"); */
 
     BT_BSB_CON |= BIT(14)|BIT(15)|BIT(13)|(1<<9)|(1<<6)|(1<<3)|BIT(8)|BIT(2)|BIT(1)|BIT(0);
 
     /* BT_LP_CON |= BIT(0);	//[>Dual mode<] */
 
-	bt_puts("rf_pll_init 2\n");
+	/* bt_puts("rf_pll_init 2\n"); */
 	RF_mdm_init();
     //rf_debug();
-
-	bt_puts("rf_pll_init 3\n");
+    bt_rf_freq_init();
+	/* bt_puts("rf_pll_init 3\n"); */
 	//bt_puts("rf_pll_init\n");
 	if(bt_power_is_poweroff_post()) {
 		return;
 	}
-	bt_puts("rf_pll_init 4\n");
+	/* bt_puts("rf_pll_init 4\n"); */
 
     //map to fpga or chip
     bt_rf_analog_init();
-	bt_puts("rf_pll_init 5\n");
+	/* bt_puts("rf_pll_init 5\n"); */
 
     ble_rf_init();
 }

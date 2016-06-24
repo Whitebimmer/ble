@@ -524,22 +524,37 @@ void bta_check_pll_back(u8 mode)
 
 }
 
+unsigned long bt_pll_config_ram[80 * 2];
+void bt_rf_freq_init(void) 
+{
+    u8 i;
+	int frq_mid;   // 89 mid 2402  2M MID_FREQ_UP;
+	printf("\n--func=%s\n", __FUNCTION__);
+	BT_PLLCONFIG_ADR = bt_pll_config_ram;
+	frq_mid = 81 - 2;
+	for(i = 0; i < 79; i++)
+	{
+		bt_pll_config_ram[i * 2] = (frq_mid + i);
+		bt_pll_config_ram[i * 2 + 1] = 0;//(pll_param<<8)|(frq_mid + i);
+	}
+}
+
 void bt_rf_analog_init(void)
 {
 
-    puts("-1\n");
+    /* puts("-1\n"); */
     spi_int();
     /* bt_printf("BTPORTC_DIR %x\n", PORTC_DIR); */
     /* bt_printf("BTPORTC_OUT %x\n", PORTC_OUT); */
-    puts("-2\n");
+    /* puts("-2\n"); */
     delay(3000);
-    puts("-3\n");
+    /* puts("-3\n"); */
 	RF_pll_init();
-    puts("-4\n");
+    /* puts("-4\n"); */
 	RF_rxtx_init();
-    puts("-5\n");
+    /* puts("-5\n"); */
 	RF_analog_init(1);
-    puts("-6\n");
+    /* puts("-6\n"); */
     /* ENABLE_INT(); */
 }
 

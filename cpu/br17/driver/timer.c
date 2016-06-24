@@ -4,6 +4,7 @@
 
 extern volatile u32 g_rand_seed ;
 
+
 static void timer0_isr() 
 {
     static u32 cnt1;
@@ -14,6 +15,10 @@ static void timer0_isr()
     cnt1++;
 	g_rand_seed++;
 
+#ifdef BLE_BQB_PROCESS_EN
+    API_uart_debug();
+#endif
+
     if((cnt1 % 5) == 0)
     {
 		sys_timer_schedule();
@@ -22,7 +27,7 @@ static void timer0_isr()
     if (cnt1 == 250)
     {
        cnt1 = 0;
-       puts(".");
+       puts("*");
     }
 }
 REG_INIT_HANDLE(timer0_isr);

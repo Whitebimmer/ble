@@ -59,3 +59,4 @@ echo -include $(TOOLS)/rule.mk>>Makefile
 echo. >>Makefile
 
 goto :EOF
+

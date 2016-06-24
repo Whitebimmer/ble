@@ -58,7 +58,8 @@ export FLAGS += -target pi32 -integrated-as \
 								-c -g \
 								-Wall \
 								-nostrictpi32 \
-								-Oz
+								-Oz \
+								-w
 
 endif
 
@@ -69,9 +70,10 @@ export DEFINS = \
 -DNOFLOAT \
 -DEMBEDDED \
 -DBR16\
--DFPGA\
+-DBLE_BQB_PROCESS_EN\
 
 #DEFINS += -DSH60
+# -DFPGA\
 
 
 

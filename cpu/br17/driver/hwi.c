@@ -45,7 +45,7 @@ void HWI_Install(unsigned int index, unsigned int isr, unsigned int Priority)
     unsigned int *israddr = (unsigned int *)ISR_ENTRY;
     a =  index / 16;
     b = (index % 16) * 2;
-    printf("HWI Install : %x-%x\n", index, Priority);
+    /* printf("HWI Install : %x-%x\n", index, Priority); */
     israddr[index] = isr;
     if (index == 64)
         return;

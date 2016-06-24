@@ -735,7 +735,7 @@ static const u8 adv_ind_data[] = {
 #ifdef BR16
 static const u8 adv_ind_data[] = {
 	0x02, 0x01, 0x06,
-	0x09, 0x09, 'b','r', '1', '6', '-','4', '.', '2',
+	0x09, 0x09, 'b','r', '1', '6', '-','4', '.', '1',
 	//0x05, 0x12, 0x80, 0x02, 0x80, 0x02,
 	0x04, 0x0d, 0x00, 0x05, 0x10,
 	0x03, 0x03, 0x0d, 0x18,
@@ -745,7 +745,7 @@ static const u8 adv_ind_data[] = {
 #ifdef BR17
 static const u8 adv_ind_data[] = {
 	0x02, 0x01, 0x06,
-	0x09, 0x09, 'b','r', '1', '7', '-','4', '.', '2',
+	0x09, 0x09, 'b','r', '1', '7', '-','b', 'l', 'e',
 	//0x05, 0x12, 0x80, 0x02, 0x80, 0x02,
 	0x04, 0x0d, 0x00, 0x05, 0x10,
 	0x03, 0x03, 0x0d, 0x18,
@@ -808,7 +808,7 @@ static void hci_initializing_run()
             le_hci_send_cmd(&hci_write_le_host_supported, 1, 0);
             break;
         case HCI_INIT_READ_WHITE_LIST_SIZE:
-			puts("HCI_INIT_LE_SET_SCAN_PARAMETERS\n");
+			puts("HCI_INIT_READ_WHITE_LIST_SIZE\n");
             hci_stack->substate = HCI_INIT_W4_READ_WHITE_LIST_SIZE;
             le_hci_send_cmd(&hci_le_read_white_list_size);
             break;
@@ -825,7 +825,7 @@ static void hci_initializing_run()
         case HCI_INIT_LE_SET_ADV_DATA:
             puts("HCI_INIT_LE_SET_ADV_DATA\n");
             hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_DATA;
-            le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data),sizeof(adv_ind_data),  adv_ind_data);
+            le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data), sizeof(adv_ind_data), adv_ind_data);
                 break;
         case HCI_INIT_LE_SET_RSP_DATA:
             puts("HCI_INIT_LE_SET_RSP_DATA\n");
@@ -850,7 +850,7 @@ static void hci_initializing_run()
         /* case HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT: */
             /* puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT; */
-            /* le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0x5); */
+            /* le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0x384); */
             /* break; */
         /* case HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE: */
             /* puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n"); */
@@ -859,7 +859,7 @@ static void hci_initializing_run()
             /* break; */
 
         case HCI_INIT_LE_SET_ADV_EN:
-			puts("HCI_INIT_LE_SET_ADV_EN\n");
+            puts("HCI_INIT_LE_SET_ADV_EN\n");
             hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_EN;
             le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
             break;
@@ -1071,13 +1071,12 @@ static void event_handler(uint8_t *packet, int size)
                     printf("interval: %04x\n",    packet[27]<<8|packet[26]);
                     printf("latency : %04x\n",    packet[29]<<8|packet[28]);
                     printf("timeout : %04x\n",    packet[31]<<8|packet[30]);
-                    puts("local RPA : "); printf_buf(&packet[14], 6);
-                    bt_flip_addr(hci_stack->adv_address, &packet[14]);
+                    puts("local RPA : "); printf_buf(&packet[14], 6); bt_flip_addr(hci_stack->adv_address, &packet[14]);
                     puts("peer RPA : "); printf_buf(&packet[20], 6);
                     puts("\n");
 				case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
-                    //Status error
 					// Connection management
+					puts("le_connection_complete\n");
 					bt_flip_addr(addr, &packet[8]);
 					addr_type = (bd_addr_type_t)packet[7];
 
@@ -1927,6 +1926,18 @@ int le_hci_send_cmd(const hci_cmd_t *cmd, ...)
     va_start(argptr, cmd);
     uint16_t size = le_hci_create_cmd_internal(packet, cmd, argptr);
     va_end(argptr);
+
+    return le_hci_send_cmd_packet(packet, size);
+}
+
+
+/**********************************huayue add************************/
+int pc_h4_send_hci_cmd(void *data, u16 size)
+{
+    le_hci_reserve_packet_buffer();
+    uint8_t * packet = hci_stack->hci_packet_buffer;
+
+    memcpy(packet, data, size);
 
     return le_hci_send_cmd_packet(packet, size);
 }

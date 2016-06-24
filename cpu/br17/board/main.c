@@ -3,7 +3,6 @@
 #include "thread.h"
 #include "bt_power.h"
 
-
 #define CONNEST_TYPE    1   // 0 MASTER  1SLAVE
 
 /*const u8 local_address[6] = {0x2e, 0x2a, 0xba, 0x98, 0x76, 0x54};
@@ -52,7 +51,7 @@ void os_suspend_thread(u8 priority, u8 timeout)
     THREAD_SUSPEND(priority);
     if (TASK_IS_SLEEP())
     {
-        putchar(')');
+        /* putchar(')'); */
         bt_power_off_unlock();
     }
 }
@@ -60,7 +59,7 @@ void os_suspend_thread(u8 priority, u8 timeout)
 void os_resume_thread(u8 priority)
 {
     bt_power_off_lock();
-    putchar('(');
+    /* putchar('('); */
     THREAD_RESUME(priority);
 }
 
@@ -70,6 +69,7 @@ const struct thread_interface os_thread_ins = {
 	.os_suspend = os_suspend_thread,
 	.os_resume = os_resume_thread,
 }; 
+
 
 void task_run_loop(void)
 {
@@ -162,7 +162,7 @@ void disable_wtd(void)
 }
 
 const struct bt_low_power_param bt_power_param = {
-    .osc_type = BT_OSC,
+    .osc_type = RTC_OSCH,
     .osc_hz = 12000000L,
     .is_use_PR = 0,
     .delay_us = 64000000/1000000L,
@@ -177,9 +177,11 @@ int main()
     /* printf("CLK_CON1 : %x\n", CLK_CON1); */
     /* printf("CLK_CON2 : %x\n", CLK_CON2); */
     /* printf("SYS_DIV : %x\n", SYS_DIV); */
+    /* {PORTA_DIR &= ~BIT(1); PORTA_OUT |= BIT(1);} */
 #ifdef FPGA 
 	pll_init();
     uart_init((48000000/ 460800));  // pa8
+    /* uart_init((48000000/ 115200));  // pa8 */
     puts("...fpga br17 setup ok.......\n");
 #else
 	br16_pll_init();
@@ -190,32 +192,39 @@ int main()
     FMA_CON1 |= BIT(8);
     LDO_CON |= BIT(5);
 #endif
-    delay(500000);
 
-    puts(pubDate);
-    printf("PWR_CON : %x\n", PWR_CON);
+    puts("\nbt_power_is_poweroff_post : ");
+    put_u8hex(bt_power_is_poweroff_post());
+    /* puts("\nbt_power_is_poweroff_probe : "); */
+    /* put_u8hex(bt_power_is_poweroff_probe()); */
 
-    /* printf("bss_begin : %x\n", &bss_begin); */
-    printf("bss_size : %x\n",  &bss_size);
-    printf("bss_end: %x\n",    &bss_end);
-    /* printf("data_addr: %x\n",  &data_addr); */
-    printf("data_begin: %x\n", &data_begin);
-    printf("data_size: %x\n",  &data1_size);
-    printf("data_size: %x\n",  &data_size);
+    if ((PWR_CON & 0xe0) != 0x80)
+    {
+        delay(500000);
 
-    printf("ram1_begin: %x\n", &ram1_begin);
-    printf("ram1_size: %x\n",  &ram1_size);
+        puts(pubDate);
+        printf("PWR_CON : %x\n", PWR_CON);
+
+        /* printf("bss_begin : %x\n", &bss_begin); */
+        printf("bss_size : %x\n",  &bss_size);
+        printf("bss_end: %x\n",    &bss_end);
+        /* printf("data_addr: %x\n",  &data_addr); */
+        printf("data_begin: %x\n", &data_begin);
+        printf("data_size: %x\n",  &data1_size);
+        printf("data_size: %x\n",  &data_size);
+
+        printf("ram1_begin: %x\n", &ram1_begin);
+        printf("ram1_size: %x\n",  &ram1_size);
+    }
     /* pmalloc_init(RAM_S, RAM_E); */
-    bt_power_is_poweroff_post();
-    put_u8hex(bt_power_is_poweroff_probe());
 
-    puts("-----1\n");
+    /* puts("-----1\n"); */
 	system_init();
 
-    puts("-----2\n");
+    /* puts("-----2\n"); */
 	timer0_start();
 
-    puts("-----3\n");
+    /* puts("-----3\n"); */
 	RF_init();
 
     //----------debug
@@ -242,10 +251,10 @@ int main()
 
 
 	ENABLE_INT();
-    puts("-----4\n");
+    /* puts("-----4\n"); */
 	thread_init(&os_thread_ins);
 
-    puts("-----5\n");
+    /* puts("-----5\n"); */
 	sys_timer_init();
 
     bd_ram1_memory_init();
@@ -253,7 +262,7 @@ int main()
 
     if(bt_power_is_poweroff_post())
     {
-        ble_main();
+		ble_main();
         bt_poweroff_recover();
     }
     else
@@ -267,8 +276,10 @@ int main()
     /* zstack_main(); */
 
 
+	/*INTALL_HWI(BT_BLE_INT, le_hw_isr, 0);
+	INTALL_HWI(18, le_test_uart_isr, 0);*/
 
-    puts("------------BLE 4.2  start run loop-----------\n");
+    puts("------------BLE 4.2 1 start run loop-----------\n");
     while(1)
     {
 		int c;
@@ -280,6 +291,7 @@ int main()
         while(1)
         {
             //asm("idle");
+#ifndef BLE_BQB_PROCESS_EN
             c = getchar();
 
             /* puts("user cmd : ADV\n"); */
@@ -294,7 +306,11 @@ int main()
 
                 case 'A':
                     puts("user cmd : ADV\n");
+#ifndef BLE_PRIVACY_EN
                     ble_set_adv();
+#else
+					ble_set_direct_RPA_adv();
+#endif
                     break;
                 case 'S':
                     puts("user cmd : SCAN\n");
@@ -311,6 +327,7 @@ int main()
                 default:
                     break;
             }
+#endif
             if (TASK_IS_AWAKE())
                 break;
         }

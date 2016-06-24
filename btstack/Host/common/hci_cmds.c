@@ -65,6 +65,8 @@
  *   P: 16 byte Pairing code
  *   A: 31 bytes advertising data
  *   S: Service Record (Data Element Sequence)
+ *   L: user define length
+ *   V: use 'L' define len copy buffer
  */
 uint16_t le_hci_create_cmd_internal(uint8_t *hci_cmd_buffer, const hci_cmd_t *cmd, va_list argptr){
     

@@ -12,7 +12,7 @@
 //sel: 0    set agc = inc (0~15)
 //return: 0 set ok  1: req_dec  2: req_inc
 //==================================//
-#if 1
+#ifdef FPGA 
 char ble_agc_normal_set(void *fp, char sel , char inc){}
 #else
 char ble_agc_normal_set(void *fp, char sel , char inc)
@@ -131,7 +131,7 @@ char ble_agc_normal_set(void *fp, char sel , char inc)
 }
 #endif
 
-#if 1
+#ifdef FPGA 
 char ble_agc_lowpw_set(void *fp, char sel , char inc){}
 #else
 char ble_agc_lowpw_set(void *fp, char sel , char inc)
@@ -256,7 +256,7 @@ char ble_agc_lowpw_set(void *fp, char sel , char inc)
 //sel 1:  set tx_pwr as inc (0 ~15)
 //return: 0 set ok  1: min  2: max
 //==================================//
-#if 1
+#ifdef FPGA 
 char ble_txpwr_normal_set(void *fp, char sel , char inc){}
 #else
 char ble_txpwr_normal_set(void *fp, char sel , char inc)
@@ -311,7 +311,7 @@ char ble_txpwr_normal_set(void *fp, char sel , char inc)
 }
 #endif
 
-#if 1
+#ifdef FPGA 
 char ble_txpwr_lowpw_set(void *fp, char sel , char inc){}
 #else
 char ble_txpwr_lowpw_set(void *fp, char sel , char inc)

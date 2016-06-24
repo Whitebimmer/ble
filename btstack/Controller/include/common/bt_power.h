@@ -47,7 +47,8 @@ struct bt_power_driver{
 
 typedef enum{
     BT_OSC = 0,
-    RTC_OSC,
+    RTC_OSCH,
+    RTC_OSCL,
 }OSC_TYPE;
 
 struct bt_low_power_param{

@@ -160,19 +160,12 @@ static void ble_hw_tx(struct ble_hw *hw, struct ble_tx *tx, int index)
 /*
  *                   HW Baisc Sfr Setting 
  */
-static void __set_init_end(struct ble_hw *hw)
-{
-	//不再接收adv包
-	BLE_ANCHOR_CON1 = (1<<5);      
-	BLE_ANCHOR_CON0 = (9<<12)|(HW_ID(hw)<<8)|(1<<2)|1; 
-}
-
 static void __set_anchor_cnt(struct ble_hw *hw, int slot)
 {
 	BLE_ANCHOR_CON1 = 0;
 	BLE_ANCHOR_CON0 = (0<<12)|(HW_ID(hw)<<8)|(1<<2)|1; 
 
-	BLE_ANCHOR_CON1 = (1<<15)|(slot);       /*anchor_en/anchor_cnt N*625us*/ 
+	BLE_ANCHOR_CON1 = (1<<15)|slot;       /*anchor_en/anchor_cnt N*625us*/ 
 	BLE_ANCHOR_CON0 = (0<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
 }
 
@@ -321,7 +314,7 @@ static void __restore_ble_regs(struct ble_hw *hw)
 	BLE_ANCHOR_CON1 = (hw->regs[9]>>7);
 	BLE_ANCHOR_CON0 = (1<<12) | (HW_ID(hw)<<8) | BIT(0);
 
-	BLE_ANCHOR_CON1 = BIT(6)| (hw->regs[9]&0x37);
+	BLE_ANCHOR_CON1 = BIT(6)| (hw->regs[9]&0x07);
 	BLE_ANCHOR_CON0 = (9<<12) | (HW_ID(hw)<<8) | BIT(0);
 
 	for (i=1; i<9; i++)
@@ -502,9 +495,6 @@ static void __set_widen(struct ble_hw *hw, int widen)
 
 static void __set_local_addr(struct ble_hw *hw, u8 addr_type, const u8 *addr)
 {
-    puts(__func__);printf_buf(addr, 6);
-    hw->ble_fp.FORMAT |= BIT(3);    //set AdvA/ScanA/InitA from LOCALADR
-
     hw->local.addr_type = (addr_type) ? 1 : 0;
 
 	memcpy(hw->local.addr, addr, 6);
@@ -512,27 +502,6 @@ static void __set_local_addr(struct ble_hw *hw, u8 addr_type, const u8 *addr)
 	hw->ble_fp.LOCALADRL = (addr[1] << 8) + addr[0];
 	hw->ble_fp.LOCALADRM = (addr[3] << 8) + addr[2];
 	hw->ble_fp.LOCALADRU = (addr[5] << 8) + addr[4];
-}
-
-static void __set_local_addr_ram(struct ble_hw *hw, u8 addr_type, const u8 *addr)
-{
-    hw->ble_fp.FORMAT &= ~BIT(3);       //set AdvA/ScanA/InitA from RAM
-    hw->local.addr_type = (addr_type) ? 1 : 0;
-
-	memcpy(hw->local.addr, addr, 6);
-
-    //next tx buf to be send
-    u16 *ptr;
-
-    if (!(hw->ble_fp.TXTOG & BIT(0))) {
-        ptr = BLE_TO_PHY(hw->ble_fp.TXPTR0);
-    }
-    else{
-        ptr = BLE_TO_PHY(hw->ble_fp.TXPTR1);
-    }
-    *ptr++ = (addr[1] << 8) + addr[0];
-    *ptr++ = (addr[3] << 8) + addr[2];
-    *ptr++ = (addr[5] << 8) + addr[4];
 }
 
 static void __show_remote_addr(struct ble_hw *hw)
@@ -631,21 +600,22 @@ static void __set_adv_channel_map_patch(struct ble_hw *hw, u8 channel_map)
     }
 }
 
-static void __set_scan_req_enable(struct ble_param *ble_fp);
-static void __set_scan_req_disable(struct ble_param *ble_fp);
 static void __set_scan_active(struct ble_hw *hw, u8 active)
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
 
-    if ((active) && (hw->privacy_enable == 0)){
-        __set_scan_req_enable(ble_fp);
+    if (active)
+    {
+        //active scan
+        ble_fp->FORMAT &= ~(1<<8);
     }
     else{
-        __set_scan_req_disable(ble_fp);
+        //passive scan
+        ble_fp->FORMAT |= (1<<8);
     }
 }
 
-static void __set_connection_param(struct ble_hw *hw, 
+static void __set_connection_param(struct ble_hw *hw,
 		struct ble_conn_param *conn_param)
 {
 	int role;
@@ -684,7 +654,7 @@ static void __set_connection_param(struct ble_hw *hw,
         //----Winoffset
         __set_winoffset(hw, (conn_param->winoffset) ? conn_param->winoffset*2-1 : 0);
         /* puts("winoffset : ");put_u8hex(winoffset); */
-        //----HW state 
+        //----HW state
 		__set_hw_state(hw, SLAVE_CONN_ST, !!conn_param->latency, conn_param->latency);
         //----Channel map
         __set_widen(hw, conn_param->widening);
@@ -728,7 +698,6 @@ static void __set_white_list_addr(struct ble_hw *hw, u8 addr_type, const u8 *add
 
     addr_type = (addr_type) ? 1 : 0;
     ble_fp->FILTERCNTL = ble_fp->FILTERCNTL & 0x7f | (addr_type&0x1)<<8 | 1;
-    ble_fp->FILTERCNTL |= BIT(4);
 
 	ble_fp->WHITELIST0L = (addr[1] << 8) | addr[0];
 	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
@@ -751,222 +720,10 @@ static void __set_send_encrypted(struct ble_hw *hw, u8 tx_enable)
     hw->encrypt.tx_enable = tx_enable;
 }
 
-//--------------Privacy
-
-static void __set_hw_tx_enable(struct ble_param *ble_fp)
-{
-    ble_fp->FORMAT &= ~BIT(1);                
-}
-
-static void __set_hw_tx_disable(struct ble_param *ble_fp)
-{
-    ble_fp->FORMAT |= BIT(1);                
-}
-
-
-#define __set_scan_rsp_enable(fp)   __set_hw_tx_enable(fp)
-#define __set_scan_rsp_disable(fp)  __set_hw_tx_disable(fp)
-
-#define __set_conn_req_enable(fp)   __set_hw_tx_enable(fp)
-#define __set_conn_req_disable(fp)  __set_hw_tx_disable(fp)
-
-#define __set_tx_data_enable(fp)   __set_hw_tx_enable(fp)
-#define __set_tx_data_disable(fp)  __set_hw_tx_disable(fp)
-
-static void __set_scan_req_enable(struct ble_param *ble_fp)
-{
-    //active scan
-    ble_fp->FORMAT &= ~(1<<8);
-}
-
-static void __set_scan_req_disable(struct ble_param *ble_fp)
-{
-    //passive scan
-    ble_fp->FORMAT |= (1<<8);
-}
-
 static void __set_privacy_enable(struct ble_hw *hw, u8 enable)
 {
     hw->privacy_enable = enable;
-    
-    //disable auto tx scan_rsp/conn_req/data
-    puts("lock scan_rsp\n");
-    __set_hw_tx_disable(&hw->ble_fp);
-
-    //disable auto tx scan_req
-    puts("lock scan_req\n");
-    __set_scan_req_disable(&hw->ble_fp);
 }
-
-static void __set_hw_adv_expect_scan_rpa(struct ble_hw *hw, struct ble_rx *rx)
-{
-	struct ble_param *ble_fp = &hw->ble_fp;
-    const u8 *addr;
-    puts(__func__);
-    printf_buf(addr, 6);
-
-    //ScanA
-    addr = rx->data;
-
-	ble_fp->WHITELIST0L = (addr[1] << 8) | addr[0];
-	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
-	ble_fp->WHITELIST0U = (addr[5] << 8) | addr[4];
-    ble_fp->FILTERCNTL |= BIT(8);             //rxadd = random
-    ble_fp->FILTERCNTL |= (BIT(3));          //white list enable scan_en
-
-    puts("unlock scan_rsp\n");
-    __set_scan_rsp_enable(ble_fp);
-}
-
-
-static void __adv_state_handler(struct ble_hw *hw, struct ble_rx *rx)
-{
-    switch(rx->type)
-    {
-    case SCAN_REQ:
-        __set_hw_adv_expect_scan_rpa(hw, rx);
-        break;
-    default:
-        break;
-    }
-}
-
-static void __set_hw_scan_expect_adv_rpa(struct ble_hw *hw, struct ble_rx *rx)
-{
-	struct ble_param *ble_fp = &hw->ble_fp;
-    const u8 *addr;
-
-    //passive scan
-    if (hw->backoff.active == 0)
-        return;
-
-    puts(__func__);
-    //AdvA
-    addr = rx->data;
-    printf_buf(addr, 6);
-
-	ble_fp->WHITELIST0L = (addr[1] << 8) | addr[0];
-	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
-	ble_fp->WHITELIST0U = (addr[5] << 8) | addr[4];
-    ble_fp->FILTERCNTL |= BIT(8);            //rxadd = random
-    ble_fp->FILTERCNTL |= BIT(3);            //white list enable scan_en
-
-    __set_scan_req_enable(ble_fp);
-}
-
-
-static void __scan_state_handler(struct ble_hw *hw, struct ble_rx *rx)
-{
-    switch(rx->type)
-    {
-    case ADV_IND:
-    case ADV_SCAN_IND:
-        __set_hw_scan_expect_adv_rpa(hw, rx);
-        break;
-    default:
-        break;
-    }
-}
-
-
-static void __set_hw_init_expect_adv_rpa(struct ble_hw *hw, struct ble_rx *rx)
-{
-	struct ble_param *ble_fp = &hw->ble_fp;
-    const u8 *addr;
-
-    puts(__func__);
-    //AdvA
-    addr = rx->data;
-    printf_buf(addr, 6);
-
-	hw->is_init_enter_conn_pass = 1;
-
-	ble_fp->WHITELIST0L = (addr[1] << 8) | addr[0];
-	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
-	ble_fp->WHITELIST0U = (addr[5] << 8) | addr[4];
-    ble_fp->FILTERCNTL |= BIT(8);            //rxadd = random
-    ble_fp->FILTERCNTL |= BIT(4);            //white list enable conn_en
-
-    __set_conn_req_enable(ble_fp);
-}
-
-static void __init_state_handler(struct ble_hw *hw, struct ble_rx *rx)
-{
-    switch(rx->type)
-    {
-    case ADV_DIRECT_IND:
-    case ADV_IND:
-        __set_hw_init_expect_adv_rpa(hw, rx);
-        break;
-    default:
-        break;
-    }
-}
-
-static void __set_hw_adv_tx_data(struct ble_hw *hw, struct ble_rx *rx)
-{
-	struct ble_param *ble_fp = &hw->ble_fp;
-
-    __set_tx_data_enable(ble_fp);
-}
-
-static void __slave_conn_state_handler(struct ble_hw *hw, struct ble_rx *rx)
-{
-    switch(rx->type)
-    {
-    case CONNECT_REQ:
-        __set_hw_adv_tx_data(hw, rx);
-        break;
-    default:
-        break;
-    }
-}
-
-static void __set_rpa_resolve_result(struct ble_hw *hw, struct ble_rx *rx, u8 res)
-{
-    if (hw->privacy_enable == 0)
-        return;
-
-    //RPA resolve fail
-    if (res)
-        return;
-
-    switch(hw->state)
-    {
-    case ADV_ST:
-        /* puts("ADV_ST\n"); */
-        __adv_state_handler(hw, rx);
-        break;
-    case SCAN_ST:
-        puts("SCAN_ST\n");
-        __scan_state_handler(hw, rx);
-        break;
-    case INIT_ST:
-        puts("INIT_ST\n");
-        __init_state_handler(hw, rx);
-        break;
-    case MASTER_CONN_ST:
-        puts("MASTER_CONN_ST\n");
-        break;
-    case SLAVE_CONN_ST:
-        /* puts("SLAVE_CONN_ST\n"); */
-        __slave_conn_state_handler(hw, rx);
-        break;
-    }
-}
-
-//Match public AdvA/InitA
-static void __set_addr_match_enable(struct ble_param *ble_fp)
-{
-    ble_fp->OPTCNTL &= ~BIT(4);
-}
-
-static void __set_addr_match_disable(struct ble_param *ble_fp)
-{
-    ble_fp->OPTCNTL |= BIT(4);
-}
-
-
 //===================================//
 //sel: 1    auto_set agc
 //sel: 0    set agc = inc (0~15)
@@ -1093,8 +850,7 @@ static void __set_hw_frame_init(struct ble_hw *hw)
 
 	ble_fp->CRCWORD0 = 0x5555;
 	ble_fp->CRCWORD1 = 0x55;
-    ble_fp->FORMAT = BIT(5);
-    ble_fp->OPTCNTL = BIT(3);
+    ble_fp->FORMAT &= ~BIT(5);//modify  in 160422  ori:BIT(5)
 
     ble_fp->ANLCNT0 = ((RXLDO_T-RXEN_T-3)<<24) | ((TXLDO_T-TXEN_T)<<16) | ((PLL_T-RXLDO_T-5)<<8) | (PLL_T-TXLDO_T-5); 
     ble_fp->ANLCNT1 = (PLL_RST << 0); 
@@ -1310,42 +1066,6 @@ static void ble_hw_encrpty(struct ble_hw *hw, struct ble_tx *tx)
 	tx->len += 4;
 }
 
-static void ble_hw_txdecrypt(struct ble_hw *hw, struct ble_tx *tx)
-{
-    struct ble_encrypt *encrypt = &hw->encrypt;
-
-	if (encrypt->tx_enable && tx->len!=0)
-	{
-		u8 tag[4] = {0};
-		u8 nonce[16];
-		u8 pt[40] = {0};
-		u8 head = tx->llid;
-		u8 skd[16];
-
-		nonce[0] = encrypt->rx_counter_l;
-		nonce[1] = encrypt->rx_counter_l>>8;
-		nonce[2] = encrypt->rx_counter_l>>16;
-		nonce[3] = encrypt->rx_counter_l>>24;
-		nonce[4] = encrypt->rx_counter_h;
-        if (hw->state == SLAVE_CONN_ST)
-        {
-            nonce[4] |= BIT(7);
-        }
-		memcpy(nonce+5, encrypt->iv, 8);
-
-		if (tx->llid != 1){
-			encrypt->tx_counter_l++;
-		}
-
-		tx->len -= 4;
-		rijndael_setup(encrypt->skd);
-		ccm_memory(nonce, &head, 1, pt, tx->len, tx->data,  tag, 1);
-		memcpy(tx->data, pt, tx->len);
-		if (memcmp(tag, tx->data+tx->len, 4)){
-			printf("no_match: %d\n", tx->llid);
-		}
-	}
-}
 
 static void ble_hw_decrypt(struct ble_hw *hw, struct ble_rx *rx)
 {
@@ -1461,9 +1181,9 @@ static bool ble_rx_pdus_filter(struct ble_hw *hw, struct ble_rx *rx)
             case ADV_NONCONN_IND:
             case SCAN_RSP:
                 //verify AdvA
-                /* if (hw->privacy_enable == 0) */
-                /* { */
-                    if ((hw->peer.addr_type != rx->txadd) 
+                if (hw->privacy_enable == 0)
+                {
+                    if ((hw->peer.addr_type != rx->txadd)
                         || (memcmp(hw->peer.addr, rx->data, 6)))
                     {
                         /* put_u8hex(hw->peer.addr_type); */
@@ -1476,7 +1196,7 @@ static bool ble_rx_pdus_filter(struct ble_hw *hw, struct ble_rx *rx)
                         return FALSE;
                     }
                     //privacy RPA bypass
-                /* } */
+                }
                 break;
 
             case SCAN_REQ:
@@ -1610,26 +1330,26 @@ static void ble_rx_init_process(struct ble_hw *hw, struct ble_rx *rx)
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
 
-    if((rx->type == ADV_IND) || (rx->type == ADV_DIRECT_IND)) 
-    {
-        struct ble_tx *tx;
+	if((rx->type == ADV_IND) || (rx->type == ADV_DIRECT_IND)) 
+	{
+		struct ble_tx *tx;
 
-        ble_tx_init(hw);
+		ble_tx_init(hw);
 
-        hw->tx_seqn = 0;
+		hw->tx_seqn = 0;
 
-        if (!(ble_fp->TXTOG & BIT(0))) {
-            ble_fp->TXAHDR0 = rx->rxadd<<4;
-            ble_fp->TXDHDR0 = (0<<8)|(0<<2)|1;
-            ble_fp->TXAHDR1 = rx->rxadd<<4;
-            ble_fp->TXDHDR1 = (0<<8)|(1<<2)|1;
-        } else {
-            ble_fp->TXAHDR0 = rx->rxadd<<4;
-            ble_fp->TXDHDR0 = (0<<8)|(1<<2)|1;
-            ble_fp->TXAHDR1 = rx->rxadd<<4;
-            ble_fp->TXDHDR1 = (0<<8)|(0<<2)|1;
-        }
-    }
+		if (!(ble_fp->TXTOG & BIT(0))) {
+			ble_fp->TXAHDR0 = rx->rxadd<<4;
+			ble_fp->TXDHDR0 = (0<<8)|(0<<2)|1;
+			ble_fp->TXAHDR1 = rx->rxadd<<4;
+			ble_fp->TXDHDR1 = (0<<8)|(1<<2)|1;
+		} else {
+			ble_fp->TXAHDR0 = rx->rxadd<<4;
+			ble_fp->TXDHDR0 = (0<<8)|(1<<2)|1;
+			ble_fp->TXAHDR1 = rx->rxadd<<4;
+			ble_fp->TXDHDR1 = (0<<8)|(0<<2)|1;
+		}
+	}
 }
 
 static void ble_rx_pdus_process(struct ble_hw *hw, struct ble_rx *rx)
@@ -1643,13 +1363,6 @@ static void ble_rx_pdus_process(struct ble_hw *hw, struct ble_rx *rx)
             ble_rx_scan_process(hw, rx);
 			break;
 		case INIT_ST:
-			if(hw->privacy_enable)
-			{
-				if(!hw->is_init_enter_conn_pass) 	
-				{
-					return;
-				}
-			}
             ble_rx_init_process(hw, rx);
 			break;
 		case SLAVE_CONN_ST:
@@ -1724,7 +1437,6 @@ static void __hw_tx_process(struct ble_hw *hw)
 	struct ble_tx *tx;
 	struct ble_tx empty;
 	struct ble_param *ble_fp = &hw->ble_fp;
-    static u8 opcode;
 
 	if (hw->state == SLAVE_CONN_ST || hw->state == MASTER_CONN_ST)
 	{
@@ -1734,13 +1446,11 @@ static void __hw_tx_process(struct ble_hw *hw)
 		}
 
 		i = !(ble_fp->TXTOG & BIT(0));
-        /* putchar('0'+i); */
+		/* putchar('0'+i); */
 
 		if (hw->tx[i]){
             if (hw->handler && hw->handler->tx_probe_handler){
-
-                /* ble_hw_txdecrypt(hw, hw->tx[i]); */
-                hw->handler->tx_probe_handler(hw->priv, hw->tx[i]);
+               hw->handler->tx_probe_handler(hw->priv, hw->tx[i]);
             }
 			lbuf_free(hw->tx[i]);
 		}
@@ -1752,17 +1462,14 @@ static void __hw_tx_process(struct ble_hw *hw)
 			hw->tx[i] = NULL;
             /* printf_buf(&empty, sizeof(empty)); */
 		} else {
-			hw->tx[i] = tx;
 			putchar('$');
-			put_u8hex(hw->tx[i]->data[0]);
-            opcode = tx->data[0];
-            ble_hw_encrpty(hw, tx);
-            /* printf_buf(tx, tx->len + sizeof(*tx)); */
-
+			put_u8hex(tx->data[0]);
+			hw->tx[i] = tx;
+			ble_hw_encrpty(hw, tx);
 		}
-        tx->sn = hw->tx_seqn;
-        hw->tx_seqn = !hw->tx_seqn;
-        ble_hw_tx(hw, tx, i);
+		tx->sn = hw->tx_seqn;
+		hw->tx_seqn = !hw->tx_seqn;
+		ble_hw_tx(hw, tx, i);
 	}
 }
 
@@ -2095,8 +1802,7 @@ static void le_hw_advertising(struct ble_hw *hw, struct ble_adv *adv)
 
     __set_adv_device_filter_param(hw, adv->filter_policy); 
 
-    hw->ble_fp.ADVIDX=(adv->pkt_cnt<<14)|adv->pdu_interval*625; 	//pkt_cnt:interval N*us
-    /* hw->ble_fp.ADVIDX=(2<<14)|625; 	//pkt_cnt:interval N*us */
+	hw->ble_fp.ADVIDX=(adv->pkt_cnt<<14)|adv->pdu_interval*625; 	//pkt_cnt:interval N*us
     /* __debug_interval(hw); */
 
     //The advDelay is a pseudo-random value with a range of 0 ms to 10 ms generated by the Link Layer for each advertising event.
@@ -2119,12 +1825,8 @@ static void le_hw_advertising(struct ble_hw *hw, struct ble_adv *adv)
     hw->tx[1] = __scan_rsp_pdu(hw, adv);
 
 	/* __hw_event_process(hw); */
-    //new feature 
-    __set_addr_match_enable(ble_fp);
 
 	ble_hw_enable(hw, 10);
-
-	hw->ble_fp.FORMAT |= BIT(2);
 }
 
 
@@ -2177,7 +1879,7 @@ void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
 	__set_interval(hw, conn->scan_interval*625, 0);
 	__set_hw_state(hw, INIT_ST, 0, 0);
 
-    /* __set_init_device_filter_param(hw, conn->filter_policy); */
+    __set_init_device_filter_param(hw, conn->filter_policy);
 
 	hw->adv_channel = 37;
 	/* __hw_event_process(hw); */
@@ -2188,21 +1890,8 @@ void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
     /* printf_buf(hw->local.addr, 6); */
     puts("conn req : ");
     printf_buf(hw->peer.addr, 6);
-	/* ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0))); */
-	ble_hw_tx(hw, tx, 0);
-	ble_hw_tx(hw, tx, 1);
-
-    //new feature 
-    if (hw->privacy_enable){
-        __set_addr_match_disable(&hw->ble_fp);
-		hw->is_init_enter_conn_pass = 0; 
-    }
-    else{
-        __set_addr_match_enable(&hw->ble_fp);
-    }
-
+	ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0)));
 	ble_hw_enable(hw, 10);
-	__set_init_end(hw);
 }
 
 
@@ -2296,18 +1985,8 @@ static void le_hw_ioctrl(struct ble_hw *hw, int ctrl, ...)
         case BLE_SET_RECEIVE_ENCRYPT:
             __set_receive_encrypted(hw, va_arg(argptr, int));
             break;
-        //privacy
-        case BLE_SET_LOCAL_ADDR_RAM:
-			__set_local_addr_ram(hw, va_arg(argptr, int), va_arg(argptr, int));
-			break;
         case BLE_SET_PRIVACY_ENABLE:
-            /* puts("BLE_SET_PRIVACY_ENABLE\n"); */
             __set_privacy_enable(hw, va_arg(argptr, int));
-            break;
-        case BLE_SET_RPA_RESOLVE_RESULT:
-            /* puts("BLE_SET_RPA_RESOLVE_RESULT\n");  */
-            __set_rpa_resolve_result(hw, va_arg(argptr, int), va_arg(argptr, int));
-            break;
 		default:
 			break;
 	}
@@ -2380,7 +2059,7 @@ REGISTER_BLE_OPERATION(ble_ops);
 
 void ble_rf_init(void)
 {
-	puts("ble_RF_init\n");
+	puts("huayue_ble_RF_init\n");
     BT_BLE_CON |= BIT(0);
 
 	/* SFR(BLE_RADIO_CON0, 0 , 10 , 150);    //TXPWRUP_OPEN_PLL */
@@ -2393,6 +2072,6 @@ void ble_rf_init(void)
 	BLE_CON0  = BIT(0);          //ble_en
 	/* BLE_CON1  = 3;               //sync_err */
     //debug
-    BLE_DBG_CON = BIT(0) | (10 << 8);
+    BLE_DBG_CON = BIT(0) | (11 << 8);
 }
 
