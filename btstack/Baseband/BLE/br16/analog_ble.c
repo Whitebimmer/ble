@@ -26,10 +26,10 @@ char ble_agc_normal_set(void *fp, char sel , char inc)
 	}
 	else
 	{
-        if(packet_ptr->RSSI1  < 500){
+        if(BT_RSSIDAT1  < 500){
 			agc_set += 1;
 		}
-		else if(packet_ptr->RSSI1 > 1100){
+		else if(BT_RSSIDAT1 > 1100){
 			agc_set -= 1;
 		}
 	}
@@ -285,19 +285,17 @@ char ble_txpwr_normal_set(void *fp, char sel , char inc)
                          //tx  pll_ivco lan_gsel1  pa_csel
     packet_ptr->RXTXSET |=(4<<8) | (1<<7) | (0x1f);
     switch(pwr_set)
-    {                        //       PA_GSEL MIXSR_LCSEL|mix_gisel|BIAS_SET|GAIN_SET
-        case 0 : packet_ptr->TXPWER = 0x1 | (0x7<<4) | (0<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-30.4 dBm
-        case 1 : packet_ptr->TXPWER = 0x1 | (0x7<<4) | (1<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-26.1 dBm
-        case 2 : packet_ptr->TXPWER = 0x1 | (0x7<<4) | (2<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-23.9 dBm
-        case 3 : packet_ptr->TXPWER = 0x3 | (0x7<<4) | (0<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-20.7 dBm
-        case 4 : packet_ptr->TXPWER = 0x2 | (0x7<<4) | (2<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-17.6 dBm
-        case 5 : packet_ptr->TXPWER = 0x7 | (0x7<<4) | (0<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-13.7 dBm
-        case 6 : packet_ptr->TXPWER = 0x4 | (0x7<<4) | (3<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-10.4 dBm
-        case 7 : packet_ptr->TXPWER = 0x6 | (0x7<<4) | (3<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-7.2  dBm
-        case 8 : packet_ptr->TXPWER = 0x0f | (0x7<<4) | (2<<9) | (0<<11) | (4<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //-3.5  dBm
-        //   case 9 : packet_ptr->TX_PWER = 0x1f | (0x7<<4) | (3<<9) | (0<<11) | (6<<14) | (0X4f<<16)|(0<<22)|(4<<23); break; //0.7  dBm
-        default : packet_ptr->TXPWER = 0x0f | (0x7<<4) | (2<<9) | (0<<11) | (4<<14) | (0X1f<<16)|(0<<22)|(4<<23); //
-    }
+   {                        //       PA_GSEL MIXSR_LCSEL|mix_gisel|BIAS_SET|GAIN_SET
+       case 0 : packet_ptr->TXPWER = 0x1 | (0x7<<4) | (0<<9) | (0<<11) | (6<<14); break; //-30.4 dBm
+       case 1 : packet_ptr->TXPWER = 0x1 | (0x7<<4) | (1<<9) | (0<<11) | (6<<14); break; //-26.1   dBm
+       case 2 : packet_ptr->TXPWER = 0x1 | (0x7<<4) | (2<<9) | (0<<11) | (6<<14); break; //-23.9   dBm
+       case 3 : packet_ptr->TXPWER = 0x3 | (0x7<<4) | (0<<9) | (0<<11) | (6<<14); break; //-20.7  dBm
+       case 4 : packet_ptr->TXPWER = 0x2 | (0x7<<4) | (2<<9) | (0<<11) | (6<<14); break; //-17.6  dBm
+       case 5 : packet_ptr->TXPWER = 0x4 | (0x7<<4) | (3<<9) | (0<<11) | (6<<14); break; //-10.4  dBm
+       case 6 : packet_ptr->TXPWER = 0x6 | (0x7<<4) | (3<<9) | (0<<11) | (6<<14); break; //-7.2  dBm
+       case 7 : packet_ptr->TXPWER = 0x1f | (0x7<<4) | (3<<9) | (0<<11) | (6<<14); break; //0.7 dBm
+      default : packet_ptr->TXPWER = 0x1f | (0x7<<4) | (3<<9) | (0<<11) | (6<<14); //
+   }
 
    return dat0;
 }

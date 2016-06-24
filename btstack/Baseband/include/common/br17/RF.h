@@ -42,6 +42,7 @@
 #define    BT_RSSIDAT2             (*(volatile unsigned long *)(BT_SFR_ADR + 0x0a*4))
 #define    BT_RSSIDAT3             (*(volatile unsigned long *)(BT_SFR_ADR + 0x0b*4))
 #define    BT_FC_CNT               (*(volatile unsigned long *)(BT_SFR_ADR + 0x0c*4))
+#define    BT_MDM_CON8             (*(volatile unsigned long *)(BT_SFR_ADR + 0x0d*4))
 
 #define    BT_BSB_CON              (*(volatile unsigned long *)(BT_SFR_ADR + 0x10*4))
 #define    BT_BREDREXM_ADR         (*(volatile unsigned long *)(BT_SFR_ADR + 0x11*4))
@@ -55,11 +56,11 @@
 #define    BT_LOFC_RES             (*(volatile unsigned long *)(BT_SFR_ADR + 0x19*4))
 #define    BT_ANL_RXPRD            (*(volatile unsigned long *)(BT_SFR_ADR + 0x1a*4))
 #define    BT_PHCOM_CNT            (*(volatile unsigned long *)(BT_SFR_ADR + 0x1b*4))
-
-// #define    BT_LP_CON               (*(volatile unsigned long *)(BT_SFR_ADR + 0x1c*4))
+#define    BT_LP_CON               (*(volatile unsigned long *)(BT_SFR_ADR + 0x1c*4))
 
 #define    BT_BLE_CON              (*(volatile unsigned long *)(BT_SFR_ADR + 0x20*4))
 #define    BT_BLEEXM_ADR           (*(volatile unsigned long *)(BT_SFR_ADR + 0x21*4))
+#define    BT_PLLCONFIG_ADR        (*(volatile unsigned long *)(BT_SFR_ADR + 0x22*4))
 #define    BT_BLEEXM_LIM           (*(volatile unsigned long *)(BT_SFR_ADR + 0x2f*4))
 
 

@@ -1,8 +1,10 @@
 obj_S = \
  
 objs = \
-   Baseband/common/$(CPU)/RF.o \
    Baseband/common/$(CPU)/fpga_analog.o \
+
+objs += \
+   Baseband/common/$(CPU)/RF.o \
    Baseband/BLE/$(CPU)/RF_ble.o \
    Baseband/BLE/$(CPU)/analog_ble.o \
    Controller/BLE/ble_hci.o \
@@ -25,6 +27,8 @@ objs = \
    Protocol/BLE/att_dispatch.o \
    Protocol/BLE/att_server.o \
    Protocol/BLE/sm.o \
+   LL_TS_4_2_1_hci_test.o \
+   hcitest_uart.o
 
 includes += \
 -IBaseband/include/ble/$(CPU)/ \
@@ -36,6 +40,7 @@ includes += \
 -IHost/include/common/ \
 -IProtocol/include/ \
 -IProfile/include/ \
+-I./
  
 DEFINS +=
 CONFIG_LIB=n

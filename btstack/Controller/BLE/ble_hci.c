@@ -66,9 +66,9 @@ struct lbuff_head *hci_tx_buf sec(.btmem_highly_available);
 static u8 hci_buf[512+512+1024+512] __attribute__((aligned(4)));
 
 //HIC SET/READ LE
-static struct le_parameter *le_param_t;
+static struct le_parameter *le_param_t sec(.btmem_highly_available);
 
-static struct hci_parameter hci_param;
+static struct hci_parameter hci_param sec(.btmem_highly_available);
 
 #define   ROLE_MASTER   0  /* 0:slave 1:Master */ 
 
@@ -735,7 +735,12 @@ void ctrl_baseband_cmd_handler(u16 opcode, u8 *data, int len)
 static const struct hci_read_parameter hci_read_param = {
     .features = {HOLD_MODE|SNIFF_MODE|POWER_CONTROL_REQUESTS},
 #ifdef BR16
-    .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x36, 0x54},
+    /* .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x36, 0x54}, */
+    .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x22, 0x71},
+#endif
+#ifdef BR17
+    /* .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x36, 0x54}, */
+    .public_addr = {0xff, 0x3a, 0xba, 0x98, 0x22, 0x71},
 #endif
 #ifdef BT16
     .public_addr = {0x4e, 0x3a, 0xba, 0x98, 0x36, 0x54},
@@ -1301,7 +1306,7 @@ int hci_firmware_init()
         __ll_api->init(&hci_param);
     }
     /* aes128_test(); */
-    debug_ll_privacy();
+    /* debug_ll_privacy(); */
 }
 
 

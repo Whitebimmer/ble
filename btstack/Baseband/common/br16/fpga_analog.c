@@ -303,6 +303,8 @@ void rf_debug()
     PORTB_DIR&=~0x0ff0;
     PORTB_DIR&=~BIT(0);
     PORTB_OUT&=~BIT(0);
+	PORTB_DIR&=~BIT(1);
+	PORTB_OUT &= ~BIT(1);
 }
 
 unsigned char get_bta_pll_bank(unsigned char set_freq)

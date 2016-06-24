@@ -6,7 +6,7 @@
 #include "bt_power_driver.h"
 #include "bt_power.h"
 
-/* #define PD_DEBUG_EN */
+#define PD_DEBUG_EN
 
 #ifdef PD_DEBUG_EN
 #define pd_putchar(x)        putchar(x)
@@ -388,12 +388,12 @@ static void __ldo12_disable(void)
     u8 pd_tmp;
 
     pmu_csen();               //wldo12_en
-    pwr_buf(RD_PWR_SCON);
+    pwr_buf(RD_PWR_SCON1);
     pd_tmp = pwr_buf(0);
     pmu_csdis();
 
     pmu_csen();
-    pwr_buf(WR_PWR_SCON);
+    pwr_buf(WR_PWR_SCON1);
     pd_tmp &= ~BIT(1);
     pwr_buf(pd_tmp);
     pmu_csdis();
@@ -404,12 +404,12 @@ static void __ldo12_enable(void)
     u8 pd_tmp;
 
     pmu_csen();               //WLDO12_EN
-    pwr_buf(RD_PWR_SCON);
+    pwr_buf(RD_PWR_SCON1);
     pd_tmp = pwr_buf(0);
     pmu_csdis();
 
     pmu_csen();
-    pwr_buf(WR_PWR_SCON);
+    pwr_buf(WR_PWR_SCON1);
     pwr_buf(pd_tmp | BIT(1));
     pmu_csdis(); 
 }
@@ -508,23 +508,33 @@ static void __hw_power_init(u8 osc_type)
     pwr_buf(WR_PMU_CON0);
     pwr_buf(pd_con0_init);
    // pwr_buf(pd_con1_init);
-    if(osc_type == BT_OSC)
+    switch(osc_type)
     {
-       // pdn_buf(0x31);
-       pwr_buf(pd_con1_init_bt);
-    }
-    else
-    {
-       // pdn_buf(0);
-       pwr_buf(pd_con1_init_rtc);
+    case BT_OSC:
+        pwr_buf(pd_con1_init_bt);
+        break;
+    case RTC_OSCL:
+        pwr_buf(pd_con1_init_rtcl);
+        break;
+    case RTC_OSCH:
+        pwr_buf(pd_con1_init_rtch);
+        break;
     }
 
     pwr_buf(pd_con2_init);
-    pwr_buf(pd_con3_init);
-//    pwr_buf(pd_con4_init);
-//    pwr_buf(pd_con5_init);
-//    pwr_buf(pd_con6_init);
-//    pwr_buf(pd_con7_init);
+    pmu_csdis();
+
+    /* u8 tmp; */
+    /* pmu_csen(); */
+    /* pwr_buf(RD_PWR_SCON0); */
+    /* tmp = pwr_buf(0); */
+    /* pmu_csdis(); */
+    /* printf("RD_PWR_SCON0: %02x \n", tmp); */
+
+    /* pmu_csen(); */
+    /* pwr_buf(WR_PWR_SCON0); */
+    /* pwr_buf(tmp | BIT(7)); */
+    /* pmu_csdis(); */
 
   // bt_printf("pd_con4_init=%")
 
@@ -533,27 +543,32 @@ static void __hw_power_init(u8 osc_type)
     pd_printf("stab : %02x - %02x\n", __this->kstb5, __this->kstb4);
     pd_printf("stab : %02x\n", __this->kstb6);
 
+    pmu_csen();
+    pwr_buf(WR_STB10_SET);
     pwr_buf(pd_con4_init(__this->kstb1,__this->kstb0));
     pwr_buf(pd_con5_init(__this->kstb3,__this->kstb2));
     pwr_buf(pd_con6_init(__this->kstb5,__this->kstb4));
     pwr_buf(pd_con7_init(__this->kstb6));
     pmu_csdis();
 
+
     pmu_csen();
-    pwr_buf(WR_MD_CON);
-    pwr_buf(pd_con1c_init);
+    pwr_buf(RD_PWR_SCON1);
+    pwr_buf(pd_con21_init);
+    pwr_buf(pd_con22_init);
+    pwr_buf(pd_con23_init);
     pmu_csdis();
 
 
     LDO_CON = LDO_CON & (~(0X7 << 18) | (0X0 << 18));     //WVDD min
     pd_printf("osc type: %04d\n", osc_type);
-    __pmu_debug();
+    /* __pmu_debug(); */
 }
 
 static u8 __hw_power_is_poweroff(void)sec(.poweroff_flash);
 static u8 __hw_power_is_poweroff(void)
 {
-    u32 pwr_down_wkup;
+    u8 pwr_down_wkup;
 
     pmu_csen();
     pwr_buf(RD_PMU_CON0);
@@ -604,6 +619,7 @@ static u8 __hw_power_is_poweroff(void)
 #define t_printf(...)
 #endif
 /* static  */
+/* __attribute__((noinline))  */
 u32 __tcnt_us(u32 x)
 {
     u64 y;
@@ -659,13 +675,13 @@ u32 __hw_poweroff_time(u32 usec, u8 mode)
 
     if(mode)
     {
-        Tprp = __tcnt_ms(60);     ///保存时间
-        Tcke = __tcnt_ms(700);    ///恢复时间6000L;// ms
+        Tprp = __tcnt_ms(30);     ///保存时间
+        Tcke = __tcnt_ms(200);    ///恢复时间6000L;// ms
     }
     else
     {
-        Tprp = __tcnt_ms(30);      ///保存时间
-        Tcke = __tcnt_ms(30);      ///恢复时间6000L;// ms
+        Tprp = __tcnt_ms(3);      ///保存时间
+        Tcke = __tcnt_ms(3);      ///恢复时间6000L;// ms
         /* pd_puts("Tprp : "); */
         /* put_u32hex(Tprp); */
         /* pd_puts("Tcke : "); */
@@ -917,14 +933,12 @@ static void __hw_cache_run()
 static void __hw_ldo_sw30(void) sec(.poweroff_text);
 static void __hw_ldo_sw30(void)
 {
-    LDO_CON |= BIT(3);          // DVDDA VDD short enable
     SFR(LDO_CON, 8, 2, 0x3);    // VDDIO set to 3.0v 
 }
 
 static void __hw_ldo_sw33(void) sec(.poweroff_text);
 static void __hw_ldo_sw33(void)
 {
-    LDO_CON &= ~BIT(3);         // DVDDA VDD short disable
     SFR(LDO_CON, 8, 2, 0x1);    // VDDIO set to 3.3v
 }
 
@@ -991,11 +1005,19 @@ static u8 __hw_power_is_wakeup(void)
 
     return (pd_tmp & BIT(7)) ? 1 : 0;
 }
+
+static void __hw_pmu_reset_mask(void)
+{
+    pmu_csen();
+    pwr_buf(WR_IVS_SET0);
+    pwr_buf(0x20);
+    pmu_csdis();
+}
 /********************************************************************************/
 /*
  *                   HW Abstract Layer
  */
-#if 0
+#if 1
 typedef enum
 {
     RUN_RAM = 0,
@@ -1009,7 +1031,7 @@ const u8 maskrom_ins[MAX_INS][8]  = {
 };
 
 #define RAM1_START      0x40000L
-#define RAM1_SIZE       (16*1024L)
+#define RAM1_SIZE       (24*1024L)
 #define RAM1_END        (RAM1_START + RAM1_SIZE)
 
 
@@ -1051,8 +1073,21 @@ void maskrom_clear(void)
 
 static u32 __do_power_off(u32 usec, int mode)
 {
-    //maskrom_clear();
-    //maskrom_call(RUN_RAM);
+    maskrom_clear();
+    /* maskrom_call(RUN_RAM); */
+    /* u8 tmp; */
+    /* pmu_csen(); */
+    /* pwr_buf(RD_PMU_CON1); */
+    /* tmp = pwr_buf(0); */
+    /* pmu_csdis(); */
+    /* printf("PMU CON1 %x\n", tmp); */
+
+    /* pmu_csen(); */
+    /* pwr_buf(RD_PWR_SCON0); */
+    /* tmp = pwr_buf(0); */
+    /* pmu_csdis(); */
+    /* printf("PMU CON3 %x\n", tmp); */
+
     if (mode){
         __hw_power_off_enter();    
     }
@@ -1060,6 +1095,10 @@ static u32 __do_power_off(u32 usec, int mode)
         __hw_power_down_enter();    
     }
 
+    /* usec = 0x7A120; */
+    /* usec = 0x8A120; */
+    /* usec = 0x5A120; */
+    /* usec = 0x9A120; */
 	return __hw_poweroff_time(usec, mode);
 }
 
@@ -1138,7 +1177,6 @@ static u32 __power_off(u32 usec, void (*on)())
 
 static void __power_off_enter(void)
 {
-    
 }
 
 static void __power_off_exit(void)
@@ -1163,7 +1201,8 @@ static void __power_ioctrl(int ctrl, ...)
             __this->kstb4 = Kstb0(__this->osc_hz);
             __this->kstb5 = Kstb0(__this->osc_hz);
             __this->kstb6 = Kstb0(__this->osc_hz);
-            if (__this->osc_type == BT_OSC)
+            if ((__this->osc_type == BT_OSC) || \
+                (__this->osc_type == RTC_OSCH))
             {
                 __this->osc_hz >>= 6;
             }
@@ -1189,6 +1228,7 @@ static void __power_ioctrl(int ctrl, ...)
 u8 __power_is_poweroff()sec(.poweroff_flash);
 u8 __power_is_poweroff()
 {
+    /* __hw_pmu_reset_mask(); */
     return __hw_power_is_poweroff();
 }
 

@@ -3,7 +3,7 @@ MEMORY
 	flash(x)            : ORIGIN = 0x1000000,   LENGTH = 8M      /*0x5000 -- 0x10000 16k*/
     ram(rw)             : ORIGIN = 0x300000,     LENGTH = 64k
     ram2(rw)            : ORIGIN = 0x310000,     LENGTH = 40k
-    ram1                : ORIGIN = 0x340000,    LENGTH = 16k-16
+    ram1                : ORIGIN = 0x340000,    LENGTH = 24k-16
 
     zebra_ram           : ORIGIN = 0xf0000,    LENGTH = 12k-256
 }
@@ -84,9 +84,15 @@ SECTIONS
     . = ORIGIN(ram1);
     .data1 :SUBALIGN(4)
     {
+		_ble_ram1_begin = .;
         *(.btmem_highly_available)
+		_ble_ram1_end = .;
+
+		_bredr_ram1_begin = .;
         *(.reg_buf)
         *(.ram1_data)
+		_bredr_ram1_begin = .;
+
         poweroff_text_begin = . ;
         *(.poweroff_text)
         poweroff_text_end = . ;

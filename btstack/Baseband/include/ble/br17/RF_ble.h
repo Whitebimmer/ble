@@ -76,8 +76,9 @@ struct ble_param
     volatile unsigned short RSSI2        ; //16'd176     //len:104 [31:0] read only RSSI 
     volatile unsigned short RSSI3        ; //16'd176     //len:104 [31:0] read only RSSI 
     volatile unsigned long  UNDEF[3];     // 208 212 216  
-    volatile unsigned short FRQ_TBL0[40]; //16'd220
-    volatile unsigned short FRQ_TBL1[40];
+
+    volatile unsigned char FRQ_TBL0[40]; //16'd220
+    volatile unsigned char FRQ_TBL1[40];
 };
 
 
