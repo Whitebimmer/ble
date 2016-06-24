@@ -1925,7 +1925,7 @@ static void ble_irq_handler()
 			BLE_INT_CON1 = BIT(i);
 			BLE_INT_CON1 = BIT(i);     ///  !!! must be clear twice
 
-            ble_power_off(hw);
+            /* ble_power_off(hw); */
 		}
 	}
 

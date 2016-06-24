@@ -1,8 +1,10 @@
 obj_S = \
  
 objs = \
+   Baseband/common/$(CPU)/fpga_analog.o \
+
+objs += \
    Baseband/common/$(CPU)/RF.o \
-   Baseband/common/$(CPU)/analog.o \
    Baseband/BLE/$(CPU)/RF_ble.o \
    Baseband/BLE/$(CPU)/analog_ble.o \
    Controller/BLE/ble_hci.o \

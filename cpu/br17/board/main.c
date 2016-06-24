@@ -180,8 +180,8 @@ int main()
     /* {PORTA_DIR &= ~BIT(1); PORTA_OUT |= BIT(1);} */
 #ifdef FPGA 
 	pll_init();
-    /* uart_init((48000000/ 460800));  // pa8 */
-    uart_init((48000000/ 115200));  // pa8
+    uart_init((48000000/ 460800));  // pa8
+    /* uart_init((48000000/ 115200));  // pa8 */
     puts("...fpga br17 setup ok.......\n");
 #else
 	br16_pll_init();

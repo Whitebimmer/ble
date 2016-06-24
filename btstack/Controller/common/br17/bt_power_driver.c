@@ -1177,7 +1177,6 @@ static u32 __power_off(u32 usec, void (*on)())
 
 static void __power_off_enter(void)
 {
-    
 }
 
 static void __power_off_exit(void)
