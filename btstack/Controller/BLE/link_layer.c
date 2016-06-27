@@ -1829,6 +1829,7 @@ static void __set_link_state(struct le_link *link, int state)
         {
             ll_RPA_timeout_stop();
         }
+        thread_resume(&ll.ll_thread);
         break;
 	}
 
@@ -4721,6 +4722,7 @@ static const struct ble_handler ll_handler={
 };
 
 
+static int ll_open(int state);
 static void ll_thread_process(struct thread *th)
 {
 	/* u8 local_addr[6]; */
@@ -4746,6 +4748,8 @@ static void ll_thread_process(struct thread *th)
             ll.handle &= ~(link->handle);
             
             __free_link(link);
+
+            goto __re_adv;
 		}
 	}
 
@@ -4759,6 +4763,10 @@ static void ll_thread_process(struct thread *th)
     }
     
 	return;
+
+__re_adv:
+    ll_open(LL_ADVERTISING);
+    return;
 }
 
 /*-------------------------------------------------------------------------

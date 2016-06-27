@@ -1,7 +1,10 @@
 obj_S = \
  
+# objs = \
+   # Baseband/common/$(CPU)/fpga_analog.o \
+
 objs = \
-   Baseband/common/$(CPU)/fpga_analog.o \
+   Baseband/common/$(CPU)/analog.o \
 
 objs += \
    Baseband/common/$(CPU)/RF.o \

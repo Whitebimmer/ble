@@ -1831,7 +1831,7 @@ static void __hw_rx_process(struct ble_hw *hw)
 #endif
 	ble_hw_encrypt_check(hw);
 
-	putchar('r');
+	/* putchar('r'); */
     //data buf loop
 	if (rx->llid!=1 || rx->len!=0){
 		putchar('R');
