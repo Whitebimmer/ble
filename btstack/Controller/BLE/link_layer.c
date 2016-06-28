@@ -119,9 +119,9 @@ static struct link_layer ll sec(.btmem_highly_available);
 
 static const struct le_read_parameter le_read_param = {
 #ifndef	BLE_PRIVACY_EN
-    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
-#else
     .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE|LE_DATA_PACKET_LENGTH_EXTENSION, 0, 0, 0, 0, 0, 0, 0},
+#else
+    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
 #endif
     .version = {0x06, 0x0f, 0x00, 0x09, 0x61},
     .versnr = VERSNR,
@@ -661,7 +661,9 @@ static void ll_send_control_data(struct le_link *link, int opcode,
  *                  Link Layer ACL Data (for Upper layer used)
  */
 
-void ll_send_acl_packet(int handle, u8 *packet, int len)
+u8 g_pkt_idx;
+
+void ll_send_acl_packet(int handle, u8 *packet, int total_len)
 {
     struct le_link *link;
 
@@ -676,37 +678,56 @@ void ll_send_acl_packet(int handle, u8 *packet, int len)
     bc_flag = packet[1];
     bc_flag >>= 6;
 
-    int rf_tx_len;
-    u8 rf_tx_unit;
+    int rf_tx_idx;
+    u8 rf_tx_len;
     u8 *rf_tx_packet;
 
+    //packet payload begin
     rf_tx_packet = packet + 4;
-    rf_tx_unit = link->pdu_len.connEffectiveMaxTxOctets;
+    rf_tx_idx = 0;
 
-    for (rf_tx_len = 0; rf_tx_len < len;)
+    //flow control
+    //create node
+    struct fragment_pkt *pkt;
+    
+    //fill in node info 1 fragment N RF packets
+    pkt =  __malloc(sizeof(struct fragment_pkt));
+    ASSERT(pkt != NULL);
+    pkt->cnt = 0;
+
+    do
     {
-        /* if (len > link->pdu_len.connEffectiveMaxTxOctets) */
+        /* if (total_len > link->pdu_total_len.connEffectiveMaxTxOctets) */
         /* { */
             /* puts("greater than connEffectiveMaxTxOctets error!\n"); */
         /* } */
-        /* if (len > link->pdu_len.connEffectiveMaxTxTime) */
+        /* if (total_len > link->pdu_total_len.connEffectiveMaxTxTime) */
         /* { */
             /* puts("greater than connEffectiveMaxTxTime error!\n"); */
         /* } */
         //Continuing fragment of Higher Layer Message
-        if (((pb_flag & 0x1) == 0) && (rf_tx_len == 0))
+        rf_tx_len = (total_len > link->pdu_len.connEffectiveMaxTxOctets) ? 
+            link->pdu_len.connEffectiveMaxTxOctets : total_len;
+        puts("\nTX : DATA");
+        printf_buf(rf_tx_packet, rf_tx_len);
+        if (((pb_flag & 0x1) == 0) && (rf_tx_idx == 0))
         {
-            __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, rf_tx_packet, rf_tx_unit);
+            __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, rf_tx_packet, rf_tx_len);
         }
         else{
-            __ble_ops->send_packet(link->hw, LL_DATA_PDU_CONTINUE, rf_tx_packet, rf_tx_unit);
+            __ble_ops->send_packet(link->hw, LL_DATA_PDU_CONTINUE, rf_tx_packet, rf_tx_len);
         }
 
-        rf_tx_len += rf_tx_unit;
-        rf_tx_packet += rf_tx_unit;
-    }
+        rf_tx_idx += rf_tx_len;
+        rf_tx_packet += rf_tx_len;
+        total_len -= rf_tx_len; 
 
-	/* puts("ll_send_acl_exit\n"); */
+        pkt->cnt++;
+    }while(total_len);
+
+    g_pkt_idx++;
+    list_add_tail(&pkt->entry, &pkt_list_head);
+    puts("ll_send_acl_exit\n");
 }
 /* REGISTER_LLP_ACL_TXCHANNEL(ll_send_acl_packet) */
 
@@ -5146,6 +5167,7 @@ static void *ll_init(struct hci_parameter *hci_param)
         //privacy
         ll_resolving_list_init();
     }
+    INIT_LIST_HEAD(&pkt_list_head);
 
     ll_data_length_init();
     
@@ -5212,6 +5234,23 @@ void ll_write_suggested_default_data_length(const u8 *data)
     printf("suggestedMaxTxOctets : %x\n", le_data_length.suggestedMaxTxTime);
 }
 
+u8 ll_is_packet_send(void)
+{
+    struct fragment_pkt *p, *n;
+
+	list_for_each_entry_safe(p, n, &pkt_list_head, entry){
+        /* printf("ll_is_packet_send pkt cnt %x\n", p->cnt); */
+        p->cnt--;
+        if (!p->cnt)
+        {
+            g_pkt_idx--;
+            list_del(&p->entry);
+            __free(p);
+            return 1;
+        }
+        return 0;
+    }
+}
 /* static const struct le_link_control_interface le_link_control_api */
 /* { */
     /* .phy_link_init      = ; */

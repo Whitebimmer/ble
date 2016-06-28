@@ -220,6 +220,13 @@ struct white_list{
     u16 cnt;
 };
 
+struct fragment_pkt{
+	struct list_head entry;
+    u8 cnt;
+};
+
+struct list_head pkt_list_head;
+
 // The Resolving List IRK pairs shall be
 // associated with a public or static device address known as the Identity
 // Address.

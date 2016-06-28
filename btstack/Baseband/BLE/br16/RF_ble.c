@@ -113,7 +113,7 @@ static struct ble_tx * le_hw_alloc_tx(struct ble_hw *hw,
 
 	tx = lbuf_alloc(hw->lbuf_tx, sizeof(*tx)+len+4);
 
-	ASSERT(tx != NULL, "%s\n", "tx alloc err\n");
+	ASSERT(tx != NULL, "%s\n", "RF tx alloc err\n");
 	memset(tx, 0, sizeof(*tx));
 	tx->type = type;
 	tx->llid = llid;
@@ -723,6 +723,18 @@ static void __set_send_encrypted(struct ble_hw *hw, u8 tx_enable)
 static void __set_privacy_enable(struct ble_hw *hw, u8 enable)
 {
     hw->privacy_enable = enable;
+}
+static void __set_rx_length(struct ble_hw *hw, u16 len)
+{
+	struct ble_param *ble_fp = &hw->ble_fp;
+	/* ble_fp->RXMAXBUF = len; */
+
+    hw->rx_octets = len;
+}
+
+static void __set_tx_length(struct ble_hw *hw, u16 len)
+{
+    hw->tx_octets = len;
 }
 //===================================//
 //sel: 1    auto_set agc
@@ -1461,12 +1473,17 @@ static void __hw_tx_process(struct ble_hw *hw)
 			tx = &empty;
 			hw->tx[i] = NULL;
             /* printf_buf(&empty, sizeof(empty)); */
+            tx->md = 0;
 		} else {
-			putchar('$');
+			/* putchar('$'); */
 			put_u8hex(tx->data[0]);
 			hw->tx[i] = tx;
 			ble_hw_encrpty(hw, tx);
+            tx->md = 1;
 		}
+        //if more data 
+        /* tx->md = (lbuf_empty(hw->lbuf_tx)) ? 0 : 1; */
+
 		tx->sn = hw->tx_seqn;
 		hw->tx_seqn = !hw->tx_seqn;
 		ble_hw_tx(hw, tx, i);
@@ -1539,6 +1556,7 @@ static void __hw_rx_process(struct ble_hw *hw)
         //TO*DO
 	}
     hw->rx[ind] = ble_hw_alloc_rx(hw, 40);
+    /* hw->rx[ind] = ble_hw_alloc_rx(hw, hw->rx_octets); */
     *rxptr = PHY_TO_BLE(hw->rx[ind]->data);
 
     ble_rx_probe(hw, rx);
@@ -1890,7 +1908,9 @@ void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
     /* printf_buf(hw->local.addr, 6); */
     puts("conn req : ");
     printf_buf(hw->peer.addr, 6);
-	ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0)));
+	/* ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0))); */
+	ble_hw_tx(hw, tx, 0);
+	ble_hw_tx(hw, tx, 1);
 	ble_hw_enable(hw, 10);
 }
 
@@ -1930,6 +1950,8 @@ static void le_hw_close(struct ble_hw *hw)
 
 static void le_hw_send_packet(struct ble_hw *hw, u8 llid, u8 *packet, int len)
 {
+    ASSERT(len <= hw->tx_octets, "%s\n", __func__);
+
 	struct ble_tx *tx = le_hw_alloc_tx(hw, 0, llid, len);
 
 	ASSERT(tx != NULL);
@@ -1987,6 +2009,12 @@ static void le_hw_ioctrl(struct ble_hw *hw, int ctrl, ...)
             break;
         case BLE_SET_PRIVACY_ENABLE:
             __set_privacy_enable(hw, va_arg(argptr, int));
+        case BLE_SET_RX_LENGTH:
+            __set_rx_length(hw, va_arg(argptr, u16));
+            break;
+        case BLE_SET_TX_LENGTH:
+            __set_tx_length(hw, va_arg(argptr, u16));
+            break;
 		default:
 			break;
 	}

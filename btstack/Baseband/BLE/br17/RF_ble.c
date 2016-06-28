@@ -2265,7 +2265,7 @@ static void le_hw_close(struct ble_hw *hw)
 
 static void le_hw_send_packet(struct ble_hw *hw, u8 llid, u8 *packet, int len)
 {
-    ASSERT(len == hw->tx_octets, "%s\n", __func__);
+    ASSERT(len <= hw->tx_octets, "%s\n", __func__);
 
 	struct ble_tx *tx = le_hw_alloc_tx(hw, 0, llid, len);
 	/* struct ble_tx *tx = le_hw_alloc_tx(hw, 0, llid, hw->tx_octets); */
@@ -2336,9 +2336,11 @@ static void le_hw_ioctrl(struct ble_hw *hw, int ctrl, ...)
             __set_rpa_resolve_result(hw, va_arg(argptr, int), va_arg(argptr, int));
             break;
         case BLE_SET_RX_LENGTH:
+            puts("BLE_SET_RX_LENGTH\n");
             __set_rx_length(hw, va_arg(argptr, u16));
             break;
         case BLE_SET_TX_LENGTH:
+            puts("BLE_SET_TX_LENGTH\n");
             __set_tx_length(hw, va_arg(argptr, u16));
             break;
 		default:

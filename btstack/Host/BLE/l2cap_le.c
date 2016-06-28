@@ -54,7 +54,7 @@
 
 #include <stdio.h>
 
-/* #define L2CAP_DEBUG_EN*/
+#define L2CAP_DEBUG_EN
 
 #ifdef L2CAP_DEBUG_EN
 #define l2cap_putchar(x)        putchar(x)
@@ -214,6 +214,11 @@ static void l2cap_acl_handler( uint8_t *packet, uint16_t size ){
                 (*security_protocol_packet_handler)(SM_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
             }
             break;
+        case 0xff:
+            l2cap_puts("********my_acl_packet********\n");
+            l2cap_buf(packet, size);
+            break;
+            
             
         default: {
             break;

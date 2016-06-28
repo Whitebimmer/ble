@@ -431,7 +431,9 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
     uint16_t max_acl_data_packet_length = hci_stack->acl_data_packet_length;
     if (/*hci_is_le_connection(connection) && */hci_stack->le_data_packets_length > 0){
         max_acl_data_packet_length = hci_stack->le_data_packets_length;
+        /* printf("max_acl_data_packet_length use le: %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
     }
+    /* printf("max_acl_data_packet_length : %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
 	/* puts("hci_send_acl\n"); */
 
     // testing: reduce buffer to minimum
@@ -470,7 +472,7 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         const int size = current_acl_data_packet_length + 4;
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);
 
-        puts("acl more ");
+        puts("acl more ...");
         // done yet?
         if (!more_fragments) break;
 
@@ -579,6 +581,7 @@ static void acl_handler(uint8_t *packet, int size)
 			//        conn->acl_recombination_pos, conn->acl_recombination_length);  
 
 			// forward complete L2CAP packet if complete. 
+            printf("acl pos : %x / acl length : %x\n",conn->acl_recombination_pos, conn->acl_recombination_length);
 			if (conn->acl_recombination_pos >= conn->acl_recombination_length + 4 + 4){ // pos already incl. ACL header
 
 				hci_stack->packet_handler(HCI_ACL_DATA_PACKET,
@@ -602,6 +605,8 @@ static void acl_handler(uint8_t *packet, int size)
 				uint16_t l2cap_length = READ_L2CAP_LENGTH( packet );
 
 				// log_info( "ACL First Fragment: acl_len %u, l2cap_len %u", acl_length, l2cap_length);
+                hci_deg( "ACL First Fragment: acl_len %x, l2cap_len %x", acl_length, l2cap_length);
+                printf("acl pos : %x\n", conn->acl_recombination_pos);
 
 				// compare fragment size to L2CAP packet size
 				if (acl_length >= l2cap_length + 4){
@@ -797,25 +802,25 @@ static void hci_initializing_run()
             le_hci_send_cmd(&hci_le_read_white_list_size);
             break;
 
-        case HCI_INIT_LE_SET_ADV_PARAMETERS:
-                puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n");
-                hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS;
-                le_hci_send_cmd(&hci_le_set_advertising_parameters,
-                    0x0320, 0x0320, 
-                    0x00, 0x00, 
-                    0x0, rpa[0].peer_identity_address, 
-                    0x7, 0x0);
-                break;
-        case HCI_INIT_LE_SET_ADV_DATA:
-            puts("HCI_INIT_LE_SET_ADV_DATA\n");
-            hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_DATA;
-            le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data), sizeof(adv_ind_data), adv_ind_data);
-                break;
-        case HCI_INIT_LE_SET_RSP_DATA:
-            puts("HCI_INIT_LE_SET_RSP_DATA\n");
-            hci_stack->substate = HCI_INIT_W4_LE_SET_RSP_DATA;
-            le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data);
-            break;
+        /* case HCI_INIT_LE_SET_ADV_PARAMETERS: */
+                /* puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n"); */
+                /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS; */
+                /* le_hci_send_cmd(&hci_le_set_advertising_parameters, */
+                    /* 0x0320, 0x0320,  */
+                    /* 0x00, 0x00,  */
+                    /* 0x0, rpa[0].peer_identity_address,  */
+                    /* 0x7, 0x0); */
+                /* break; */
+        /* case HCI_INIT_LE_SET_ADV_DATA: */
+            /* puts("HCI_INIT_LE_SET_ADV_DATA\n"); */
+            /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_DATA; */
+            /* le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data), sizeof(adv_ind_data), adv_ind_data); */
+                /* break; */
+        /* case HCI_INIT_LE_SET_RSP_DATA: */
+            /* puts("HCI_INIT_LE_SET_RSP_DATA\n"); */
+            /* hci_stack->substate = HCI_INIT_W4_LE_SET_RSP_DATA; */
+            /* le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data); */
+            /* break; */
         //privacy 
         /* case HCI_INIT_LE_READ_RESOLVING_LIST_SIZE: */
             /* puts("HCI_INIT_LE_READ_RESOLVING_LIST_SIZE\n"); */
@@ -842,11 +847,11 @@ static void hci_initializing_run()
             /* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1); */
             /* break; */
 
-        case HCI_INIT_LE_SET_ADV_EN:
-            puts("HCI_INIT_LE_SET_ADV_EN\n");
-            hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_EN;
-            le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
-            break;
+        /* case HCI_INIT_LE_SET_ADV_EN: */
+            /* puts("HCI_INIT_LE_SET_ADV_EN\n"); */
+            /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_EN; */
+            /* le_hci_send_cmd(&hci_le_set_advertise_enable, 1); */
+            /* break; */
         // DONE
         case HCI_INIT_DONE:
             // done.
@@ -927,8 +932,6 @@ static void event_handler(uint8_t *packet, int size)
 			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_buffer_size)){
 				hci_stack->le_data_packets_length = READ_BT_16(packet, 6);
 				hci_stack->le_acl_packets_total_num  = packet[8];
-                printf("acl pkt length %x\n", hci_stack->le_data_packets_length);
-                printf("acl pkt num %x\n", hci_stack->le_acl_packets_total_num);
 				// determine usable ACL payload size
 				if (HCI_ACL_PAYLOAD_SIZE < hci_stack->le_data_packets_length){
 					hci_stack->le_data_packets_length = HCI_ACL_PAYLOAD_SIZE;
@@ -938,6 +941,8 @@ static void event_handler(uint8_t *packet, int size)
                     //spec 4.2 Vol 2 Part E
                     puts("Host shall not fragment HCI ACL Data Packets on an LE-U logial link\n");
                 }
+                printf("le_data_packets_length : %x\n", hci_stack->le_data_packets_length);
+                printf("le_acl_packets_total_num : %x\n", hci_stack->le_acl_packets_total_num);
 			}
             if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_white_list_size)){
                 hci_stack->le_whitelist_capacity = READ_BT_16(packet, 6);
@@ -961,6 +966,7 @@ static void event_handler(uint8_t *packet, int size)
 			break;
 
 		case HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS:
+            puts("HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS\n");
 			{
 				int offset = 3;
 
@@ -970,7 +976,7 @@ static void event_handler(uint8_t *packet, int size)
 					offset += 2;
 					uint16_t num_packets = READ_BT_16(packet, offset);
 					offset += 2;
-                    printf("acl pkt complete\n", num_packets);
+                    printf("acl pkt complete : %x\n", num_packets);
 
 					conn = le_hci_connection_for_handle(handle);
 					if (!conn){
@@ -982,7 +988,7 @@ static void event_handler(uint8_t *packet, int size)
 					} else {
 						conn->num_acl_packets_sent = 0;
 					}
-                    printf("acl pkt remain\n", conn->num_acl_packets_sent);
+                    printf("acl pkt remain : %x\n", conn->num_acl_packets_sent);
 				}
 			}
 			break;
@@ -1182,7 +1188,7 @@ static void packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size)
             event_handler(packet, size);
             break;
         case HCI_ACL_DATA_PACKET:
-            /* puts("HCI_ACL_DATA_PACKET\n"); */
+            puts("HCI_ACL_DATA_PACKET\n");
             acl_handler(packet, size);
             break;
         default:
