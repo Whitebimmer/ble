@@ -169,6 +169,9 @@ struct ble_hw{
 
     u16 rx_octets;
     u16 tx_octets;
+
+    //4.2 0x1b-0xfb
+	u8 tx_buf[2][256];
 };
 
 #define BLE_HW_NUM    1

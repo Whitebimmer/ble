@@ -727,7 +727,7 @@ static void __set_privacy_enable(struct ble_hw *hw, u8 enable)
 static void __set_rx_length(struct ble_hw *hw, u16 len)
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
-	/* ble_fp->RXMAXBUF = len; */
+    ble_fp->RXMAXBUF = len + sizeof(struct ble_rx);
 
     hw->rx_octets = len;
 }
@@ -1446,7 +1446,7 @@ static int le_hw_upload_is_empty()
 static void __hw_tx_process(struct ble_hw *hw)
 {
 	int i;
-	struct ble_tx *tx;
+	struct ble_tx *tx, *tx_buf;
 	struct ble_tx empty;
 	struct ble_param *ble_fp = &hw->ble_fp;
 
@@ -1473,20 +1473,21 @@ static void __hw_tx_process(struct ble_hw *hw)
 			tx = &empty;
 			hw->tx[i] = NULL;
             /* printf_buf(&empty, sizeof(empty)); */
-            tx->md = 0;
+            tx_buf = tx;
 		} else {
 			/* putchar('$'); */
 			put_u8hex(tx->data[0]);
+            tx_buf = hw->tx_buf[i];
 			hw->tx[i] = tx;
-			ble_hw_encrpty(hw, tx);
-            tx->md = 1;
+            memcpy(tx_buf, tx, sizeof(*tx)+tx->len+4);
+			ble_hw_encrpty(hw, tx_buf);
 		}
         //if more data 
-        /* tx->md = (lbuf_empty(hw->lbuf_tx)) ? 0 : 1; */
+        tx_buf->md = lbuf_have_next(hw->lbuf_tx);
 
-		tx->sn = hw->tx_seqn;
+        tx_buf->sn = hw->tx_seqn;
 		hw->tx_seqn = !hw->tx_seqn;
-		ble_hw_tx(hw, tx, i);
+		ble_hw_tx(hw, tx_buf, i);
 	}
 }
 
@@ -1555,8 +1556,8 @@ static void __hw_rx_process(struct ble_hw *hw)
         //baseband loop buf switch
         //TO*DO
 	}
-    hw->rx[ind] = ble_hw_alloc_rx(hw, 40);
-    /* hw->rx[ind] = ble_hw_alloc_rx(hw, hw->rx_octets); */
+    /* hw->rx[ind] = ble_hw_alloc_rx(hw, 40); */
+    hw->rx[ind] = ble_hw_alloc_rx(hw, sizeof(*rx)+hw->rx_octets);
     *rxptr = PHY_TO_BLE(hw->rx[ind]->data);
 
     ble_rx_probe(hw, rx);

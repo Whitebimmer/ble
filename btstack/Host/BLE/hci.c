@@ -61,7 +61,8 @@
 #include "bt_memory.h"
 
 /************************HCI DEBUG CONTROL**************************/
-#define HCI_DEBUG
+/* #define HCI_DEBUG */
+
 #ifdef HCI_DEBUG
 #define hci_puts     puts
 #define hci_deg      printf
@@ -359,7 +360,7 @@ int le_hci_can_send_command_packet_now(void){
 	//TODO
 	/* return 1; */
     if (hci_stack->hci_packet_buffer_reserved) {
-        puts("le_hci_can_send_command_packet_now\n");
+        hci_puts("le_hci_can_send_command_packet_now\n");
         return 0;   
     }
 
@@ -389,7 +390,7 @@ int le_hci_can_send_acl_packet_now(hci_con_handle_t con_handle){
 	//TODO
 	/* return 1; */
     if (hci_stack->hci_packet_buffer_reserved) {
-        puts("le_hci_can_send_acl_packet_now\n");
+        hci_puts("le_hci_can_send_acl_packet_now\n");
         return 0;   
     }
     return le_hci_can_send_prepared_acl_packet_now(con_handle);
@@ -431,9 +432,9 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
     uint16_t max_acl_data_packet_length = hci_stack->acl_data_packet_length;
     if (/*hci_is_le_connection(connection) && */hci_stack->le_data_packets_length > 0){
         max_acl_data_packet_length = hci_stack->le_data_packets_length;
-        /* printf("max_acl_data_packet_length use le: %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
+        /* hci_deg("max_acl_data_packet_length use le: %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
     }
-    /* printf("max_acl_data_packet_length : %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
+    /* hci_deg("max_acl_data_packet_length : %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
 	/* puts("hci_send_acl\n"); */
 
     // testing: reduce buffer to minimum
@@ -472,7 +473,7 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         const int size = current_acl_data_packet_length + 4;
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);
 
-        puts("acl more ...");
+        hci_puts("acl more ...");
         // done yet?
         if (!more_fragments) break;
 
@@ -484,7 +485,7 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
 		   	return err;
     }
 
-    puts("done!\n");
+    hci_puts("done!\n");
     // done    
     hci_stack->acl_fragmentation_pos = 0;
     hci_stack->acl_fragmentation_total_size = 0;
@@ -581,7 +582,7 @@ static void acl_handler(uint8_t *packet, int size)
 			//        conn->acl_recombination_pos, conn->acl_recombination_length);  
 
 			// forward complete L2CAP packet if complete. 
-            printf("acl pos : %x / acl length : %x\n",conn->acl_recombination_pos, conn->acl_recombination_length);
+            hci_deg("acl pos : %x / acl length : %x\n",conn->acl_recombination_pos, conn->acl_recombination_length);
 			if (conn->acl_recombination_pos >= conn->acl_recombination_length + 4 + 4){ // pos already incl. ACL header
 
 				hci_stack->packet_handler(HCI_ACL_DATA_PACKET,
@@ -606,7 +607,7 @@ static void acl_handler(uint8_t *packet, int size)
 
 				// log_info( "ACL First Fragment: acl_len %u, l2cap_len %u", acl_length, l2cap_length);
                 hci_deg( "ACL First Fragment: acl_len %x, l2cap_len %x", acl_length, l2cap_length);
-                printf("acl pos : %x\n", conn->acl_recombination_pos);
+                hci_deg("acl pos : %x\n", conn->acl_recombination_pos);
 
 				// compare fragment size to L2CAP packet size
 				if (acl_length >= l2cap_length + 4){
@@ -640,8 +641,8 @@ static void acl_handler(uint8_t *packet, int size)
 static void hci_shutdown_connection(hci_connection_t *conn){
     
     /* printf_buf(0x0, 0x10); */
-    /* printf("conn->timeout %x\n", &conn->timeout); */
-    /* printf("conn->timeout.entry %x\n", &conn->timeout.entry); */
+    /* hci_deg("conn->timeout %x\n", &conn->timeout); */
+    /* hci_deg("conn->timeout.entry %x\n", &conn->timeout.entry); */
     //bug fix : no match register
     /* sys_timer_remove(&conn->timeout); */
     
@@ -769,41 +770,41 @@ struct resolving_list_parameter rpa[] = {
 // assumption: hci_can_send_command_packet_now() == true
 static void hci_initializing_run()
 {
-    puts("hci init run : ");
+    hci_puts("hci init run : ");
     switch (hci_stack->substate)
 	{
         case HCI_INIT_SEND_RESET:
-			puts("HCI_INIT_SEND_RESET\n");
+			hci_puts("HCI_INIT_SEND_RESET\n");
             hci_state_reset();
             /*-TODO-*/
             hci_stack->substate = HCI_INIT_W4_SEND_RESET;
             le_hci_send_cmd(&hci_reset);
             break;
 		case HCI_INIT_READ_BD_ADDR:
-			puts("HCI_INIT_READ_BD_ADDR\n");
+			hci_puts("HCI_INIT_READ_BD_ADDR\n");
             hci_stack->substate = HCI_INIT_W4_READ_BD_ADDR;
 			le_hci_send_cmd(&hci_read_bd_addr);
 			break;
         // LE INIT
         case HCI_INIT_LE_READ_BUFFER_SIZE:
-			puts("HCI_INIT_LE_READ_BUFFER_SIZE\n");
+			hci_puts("HCI_INIT_LE_READ_BUFFER_SIZE\n");
             hci_stack->substate = HCI_INIT_W4_LE_READ_BUFFER_SIZE;
             le_hci_send_cmd(&hci_le_read_buffer_size);
             break;
         case HCI_INIT_WRITE_LE_HOST_SUPPORTED:
-			puts("HCI_INIT_WRITE_LE_HOST_SUPPORTED\n");
+			hci_puts("HCI_INIT_WRITE_LE_HOST_SUPPORTED\n");
             // LE Supported Host = 1, Simultaneous Host = 0
             hci_stack->substate = HCI_INIT_W4_WRITE_LE_HOST_SUPPORTED;
             le_hci_send_cmd(&hci_write_le_host_supported, 1, 0);
             break;
         case HCI_INIT_READ_WHITE_LIST_SIZE:
-			puts("HCI_INIT_READ_WHITE_LIST_SIZE\n");
+			hci_puts("HCI_INIT_READ_WHITE_LIST_SIZE\n");
             hci_stack->substate = HCI_INIT_W4_READ_WHITE_LIST_SIZE;
             le_hci_send_cmd(&hci_le_read_white_list_size);
             break;
 
         /* case HCI_INIT_LE_SET_ADV_PARAMETERS: */
-                /* puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n"); */
+                /* hci_puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n"); */
                 /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS; */
                 /* le_hci_send_cmd(&hci_le_set_advertising_parameters, */
                     /* 0x0320, 0x0320,  */
@@ -812,23 +813,23 @@ static void hci_initializing_run()
                     /* 0x7, 0x0); */
                 /* break; */
         /* case HCI_INIT_LE_SET_ADV_DATA: */
-            /* puts("HCI_INIT_LE_SET_ADV_DATA\n"); */
+            /* hci_puts("HCI_INIT_LE_SET_ADV_DATA\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_DATA; */
             /* le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data), sizeof(adv_ind_data), adv_ind_data); */
                 /* break; */
         /* case HCI_INIT_LE_SET_RSP_DATA: */
-            /* puts("HCI_INIT_LE_SET_RSP_DATA\n"); */
+            /* hci_puts("HCI_INIT_LE_SET_RSP_DATA\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_SET_RSP_DATA; */
             /* le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data); */
             /* break; */
         //privacy 
         /* case HCI_INIT_LE_READ_RESOLVING_LIST_SIZE: */
-            /* puts("HCI_INIT_LE_READ_RESOLVING_LIST_SIZE\n"); */
+            /* hci_puts("HCI_INIT_LE_READ_RESOLVING_LIST_SIZE\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_READ_RESOLVING_LIST_SIZE; */
             /* le_hci_send_cmd(&hci_le_read_resolving_list_size); */
             /* break; */
         /* case HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST: */
-            /* puts("HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST\n"); */
+            /* hci_puts("HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_ADD_DEVICE_TO_RESOLVING_LIST; */
             /* le_hci_send_cmd(&hci_le_add_device_to_resolving_list,  */
                     /* rpa[0].peer_identity_address_type, */
@@ -837,25 +838,25 @@ static void hci_initializing_run()
                     /* rpa[0].local_irk); */
             /* break; */
         /* case HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT: */
-            /* puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n"); */
+            /* hci_puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT; */
             /* le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0x384); */
             /* break; */
         /* case HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE: */
-            /* puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n"); */
+            /* hci_puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_ADDRESS_RESOLUTION_ENABLE; */
             /* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1); */
             /* break; */
 
         /* case HCI_INIT_LE_SET_ADV_EN: */
-            /* puts("HCI_INIT_LE_SET_ADV_EN\n"); */
+            /* hci_puts("HCI_INIT_LE_SET_ADV_EN\n"); */
             /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_EN; */
             /* le_hci_send_cmd(&hci_le_set_advertise_enable, 1); */
             /* break; */
         // DONE
         case HCI_INIT_DONE:
             // done.
-			puts("HCI_STATE_WORKING\n");
+			hci_puts("HCI_STATE_WORKING\n");
             hci_stack->state = HCI_STATE_WORKING;
             hci_emit_state();
             return;
@@ -874,7 +875,7 @@ static void hci_initializing_event_handler(uint8_t * packet, uint16_t size)
         if (opcode == hci_stack->last_cmd_opcode){
             command_completed = 1;
         }
-        puts("command_completed\n");
+        hci_puts("command_completed\n");
     }
     if (packet[0] == HCI_EVENT_COMMAND_STATUS){
         uint8_t  status = packet[2];
@@ -884,7 +885,7 @@ static void hci_initializing_event_handler(uint8_t * packet, uint16_t size)
                 command_completed = 1;
             }
         }
-        puts("command_status\n");
+        hci_puts("command_status\n");
     }
 
 
@@ -956,7 +957,7 @@ static void event_handler(uint8_t *packet, int size)
 			}
 			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_resolving_list_size)){
                 hci_stack->le_resolvinglist_capacity = READ_BT_16(packet, 6);
-                printf("le_resolvinglist_capacit %x\n", hci_stack->le_resolvinglist_capacity);
+                hci_deg("le_resolvinglist_capacit %x\n", hci_stack->le_resolvinglist_capacity);
             }
 			break;
 
@@ -976,7 +977,7 @@ static void event_handler(uint8_t *packet, int size)
 					offset += 2;
 					uint16_t num_packets = READ_BT_16(packet, offset);
 					offset += 2;
-                    printf("acl pkt complete : %x\n", num_packets);
+                    hci_deg("acl pkt complete : %x\n", num_packets);
 
 					conn = le_hci_connection_for_handle(handle);
 					if (!conn){
@@ -988,7 +989,7 @@ static void event_handler(uint8_t *packet, int size)
 					} else {
 						conn->num_acl_packets_sent = 0;
 					}
-                    printf("acl pkt remain : %x\n", conn->num_acl_packets_sent);
+                    hci_deg("acl pkt remain : %x\n", conn->num_acl_packets_sent);
 				}
 			}
 			break;
@@ -1593,7 +1594,7 @@ void le_hci_run(void)
 	}
 
 	if (!le_hci_can_send_command_packet_now()) {
-        puts("le_hci_run - le_hci_can_send_command_packet_now\n");
+        hci_puts("le_hci_run - le_hci_can_send_command_packet_now\n");
         return;   
     }
 
@@ -1783,7 +1784,7 @@ void le_hci_run(void)
 
 						// send disconnect
                         if (!le_hci_can_send_command_packet_now()) {
-                            puts("le_hci_run3 - le_hci_can_send_command_packet_now\n");
+                            hci_puts("le_hci_run3 - le_hci_can_send_command_packet_now\n");
                             return;   
                         }
 
@@ -1798,7 +1799,7 @@ void le_hci_run(void)
 					if (hci_classic_supported()){
 						// disable page and inquiry scan
                         if (!le_hci_can_send_command_packet_now()) {
-                            puts("le_hci_run4 - le_hci_can_send_command_packet_now\n");
+                            hci_puts("le_hci_run4 - le_hci_can_send_command_packet_now\n");
                             return;   
                         }
 
@@ -1835,7 +1836,7 @@ void le_hci_run(void)
 		default:
 			break;
 	}
-    /* puts("debug2\n"); */
+    /* hci_puts("debug2\n"); */
 }
 
 int le_hci_send_cmd_packet(uint8_t *packet, int size)

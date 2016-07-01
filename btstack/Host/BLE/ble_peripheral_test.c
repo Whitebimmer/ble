@@ -1119,9 +1119,12 @@ void ble_set_adv(void)
 		/* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 0); */
         break;
     case 2:
+        /* le_hci_send_cmd(&hci_le_set_advertising_data, */
+                /* sizeof(adv_ind_data),sizeof(adv_ind_data), */
+                /* adv_ind_data); */
         le_hci_send_cmd(&hci_le_set_advertising_data,
-                sizeof(adv_ind_data),sizeof(adv_ind_data),
-                adv_ind_data);
+                0,0,
+                NULL);
         break;
     case 3:
         le_hci_send_cmd(&hci_le_set_scan_response_data,

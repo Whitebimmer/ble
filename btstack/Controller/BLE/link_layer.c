@@ -3,6 +3,7 @@
 #include "thread.h"
 #include "ble/ble_h4_transport.h"
 #include "bt_memory.h"
+#include "RF_ble.h"
 
 
 #define LL_DEBUG_EN
@@ -102,8 +103,8 @@ static struct link_layer ll sec(.btmem_highly_available);
 #define LL_TRANSMIT_POWER_LEVEL         0x1
 
 #define LL_ACL_PDU_LENGTH               64
-#define LL_TOTAL_NUM_LE_DATA_PACKET     6
-#if (LL_TOTAL_NUM_LE_DATA_PACKET > CONTROLLER_MAX_TX_PAYLOAD/LL_ACL_PDU_LENGTH)
+#define LL_TOTAL_NUM_LE_DATA_PACKET     (BLE_HW_TX_SIZE/LL_ACL_PDU_LENGTH - 1)
+#if (LL_TOTAL_NUM_LE_DATA_PACKET > (BLE_HW_TX_SIZE/LL_ACL_PDU_LENGTH))
         #error LL_TOTAL_NUM_LE_DATA_PACKET OVERFLOW
 #endif
 
@@ -708,8 +709,8 @@ void ll_send_acl_packet(int handle, u8 *packet, int total_len)
         //Continuing fragment of Higher Layer Message
         rf_tx_len = (total_len > link->pdu_len.connEffectiveMaxTxOctets) ? 
             link->pdu_len.connEffectiveMaxTxOctets : total_len;
-        puts("\nTX : DATA");
-        printf_buf(rf_tx_packet, rf_tx_len);
+        /* puts("\nTX : DATA"); */
+        /* printf_buf(rf_tx_packet, rf_tx_len); */
         if (((pb_flag & 0x1) == 0) && (rf_tx_idx == 0))
         {
             __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, rf_tx_packet, rf_tx_len);
@@ -727,7 +728,7 @@ void ll_send_acl_packet(int handle, u8 *packet, int total_len)
 
     g_pkt_idx++;
     list_add_tail(&pkt->entry, &pkt_list_head);
-    puts("ll_send_acl_exit\n");
+    ll_puts("ll_send_acl_exit\n");
 }
 /* REGISTER_LLP_ACL_TXCHANNEL(ll_send_acl_packet) */
 
@@ -1652,6 +1653,11 @@ static void ll_resolution_enable(void)
 /*
  *                   DATA Length
  */
+#define LL_TXMAXOCTETS_IS_EXCEED(x)     (x > le_data_length.priv->supportedMaxTxOctets)
+#define LL_RXMAXOCTETS_IS_EXCEED(x)     (x > le_data_length.priv->supportedMaxRxOctets)
+#define LL_TXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxTxTime)
+#define LL_RXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxRxTime)
+
 static void __set_ll_effective_data_args(struct le_link *link)
 {
     //the lesser of connMax and connRemoteMax
@@ -1680,20 +1686,29 @@ static void __set_ll_data_length(struct le_link *link)
         (le_data_length.suggestedMaxTxOctets) ? 
         le_data_length.suggestedMaxTxOctets : 27;
 
+    if (LL_TXMAXOCTETS_IS_EXCEED(le_data_length.connInitialMaxTxOctets))
+    {
+        le_data_length.connInitialMaxTxOctets = le_data_length.priv->supportedMaxTxOctets;
+    }
     /* printf("connInitialMaxTxOctets : %x\n", le_data_length.connInitialMaxTxOctets ); */
 
     le_data_length.connInitialMaxTxTime = 
         (le_data_length.suggestedMaxTxTime) ?
         le_data_length.suggestedMaxTxTime : 328;
 
+    if (LL_TXMAXTIME_IS_EXCEED(le_data_length.connInitialMaxTxTime))
+    {
+        le_data_length.connInitialMaxTxTime = le_data_length.priv->supportedMaxTxTime;
+    }
+
     //local
     link->pdu_len.connMaxTxOctets = le_data_length.connInitialMaxTxOctets; //should be 27
-    link->pdu_len.connMaxRxOctets = 27; //chosen by the Controller
     __ble_ops->ioctrl(link->hw, BLE_SET_TX_LENGTH, link->pdu_len.connMaxTxOctets);
+    link->pdu_len.connMaxRxOctets = 27; //chosen by the Controller
+    __ble_ops->ioctrl(link->hw, BLE_SET_RX_LENGTH, link->pdu_len.connMaxRxOctets);
 
     link->pdu_len.connMaxTxTime = le_data_length.connInitialMaxTxTime;
     link->pdu_len.connMaxRxTime = 328;
-    __ble_ops->ioctrl(link->hw, BLE_SET_RX_LENGTH, link->pdu_len.connMaxRxOctets);
 
     //connRemoteMaxTxOctets & connRemoteMaxRxOctets shall be 27
     link->pdu_len.connRemoteMaxTxOctets = 27;
@@ -1720,10 +1735,6 @@ static void __set_ll_data_length(struct le_link *link)
     }
 }
 
-#define LL_TXMAXOCTETS_IS_EXCEED(x)     (x > le_data_length.priv->supportedMaxTxOctets)
-#define LL_RXMAXOCTETS_IS_EXCEED(x)     (x > le_data_length.priv->supportedMaxRxOctets)
-#define LL_TXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxTxTime)
-#define LL_RXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxRxTime)
 
 static void __ll_update_connMaxTxOctets(struct le_link *link, u16 octets)
 {
@@ -5069,13 +5080,13 @@ static int ll_open(int state)
 
 	__ble_ops->handler_register(link->hw, link, &ll_handler);
     
-    //privacy
+    //feature - privacy
     if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY))
     {
         __ble_ops->ioctrl(link->hw, BLE_SET_PRIVACY_ENABLE, le_param.resolution_enable);
     }
 
-    //data length extension
+    //feature - data length extension
     __set_ll_data_length(link);
 
 	__set_link_state(link, state);

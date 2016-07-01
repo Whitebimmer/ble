@@ -61,7 +61,6 @@ struct hci_tx {
 struct lbuff_head *hci_cmd_ptr sec(.btmem_highly_available);
 struct lbuff_head *hci_event_buf sec(.btmem_highly_available);
 struct lbuff_head *hci_rx_buf sec(.btmem_highly_available);
-struct lbuff_head *hci_tx_buf sec(.btmem_highly_available);
 
 u8 hci_buf[CONTROLLER_MAX_TOTAL_PAYLOAD] __attribute__((aligned(4)));
 
@@ -585,6 +584,7 @@ static void le_hci_tx_handler(struct le_link *link, struct ble_tx *tx)
             //LL Ack
             if (ll_is_packet_send())   
             {
+                ll_flow_control.free_num_hci_acl_packets++;
                 le_send_event(HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS, "1H2", 1,
                         link->handle, 1);
             }
@@ -1155,19 +1155,25 @@ int le_hci_push_command(u8 *packet, int size)
 }
 
 
+#define READ_ACL_CONNECTION_HANDLE(buffer) (READ_BT_16(buffer,0) & 0x0fff)
+#define READ_ACL_SIZE(buffer)           READ_BT_16(buffer,2)
 
 int le_hci_push_acl_data(u8 *packet, int len)
 {
-	struct hci_tx *tx;
+    int handle;
+    u16 size;
 
-    tx = lbuf_alloc(hci_tx_buf, sizeof(*tx)+len);
-    ASSERT(tx != NULL, "%s\n", __func__);
+    /* hci_puts("\nTX : DATA "); */
+    /* hci_buf(tx, sizeof(*tx)+tx->len); */
+    handle = READ_ACL_CONNECTION_HANDLE(packet);
+    size = READ_ACL_SIZE(packet);
+    
+    /* printf_buf(packet->data, packet->len - 4); */
+    /* printf_buf(packet->data, size); */
 
-    tx->len = len;
-    memcpy(tx->head, packet, len);
+    ll_send_acl_packet(handle, packet, len);
 
     ll_flow_control.free_num_hci_acl_packets--;
-    lbuf_push(tx);
 
 	return 0;
 }
@@ -1179,13 +1185,14 @@ static void ble_hci_h4_download_data(int packet_type, u8 *packet, int len)
         /* hci_puts("\nTX CMD "); */
         /* hci_buf(packet, len); */
 		le_hci_push_command(packet, len);
+        thread_resume(&hci_thread);
 	} else {
         /* hci_puts("\nTX DATA "); */
         /* hci_buf(packet, len); */
+        //direct to RF tx buf
 		le_hci_push_acl_data(packet, len);
 	}
     //hci resume thread
-    thread_resume(&hci_thread);
 }
 REGISTER_H4_CONTROLLER(ble_hci_h4_download_data);
 
@@ -1202,8 +1209,6 @@ static int ble_hci_h4_can_send_packet_now(u8 packet_type)
 REGISTER_H4_CONTROLLER_FLOW_CONTROL(ble_hci_h4_can_send_packet_now);
 
 
-#define READ_ACL_CONNECTION_HANDLE(buffer) (READ_BT_16(buffer,0) & 0x0fff)
-#define READ_ACL_SIZE(buffer)           READ_BT_16(buffer,2)
 
 
 static int ble_hci_h4_upload_data()
@@ -1229,26 +1234,6 @@ static int ble_hci_h4_upload_data()
 		lbuf_free(rx);
 	}
 
-    tx = lbuf_pop(hci_tx_buf);
-    if (tx){
-        int handle;
-        u16 size;
-
-        /* hci_puts("\nTX : DATA "); */
-        /* hci_buf(tx, sizeof(*tx)+tx->len); */
-        handle = READ_ACL_CONNECTION_HANDLE(tx->head);
-        size = READ_ACL_SIZE(tx->head);
-        
-        /* printf_buf(packet->data, packet->len - 4); */
-        /* printf_buf(packet->data, size); */
-
-        ll_send_acl_packet(handle, tx->head, tx->len - 4);
-        /* ll_send_acl_packet(link, packet->data, size); */
-        //llp_acl_txchannel(handle, tx->data, tx->len - 4);
-        lbuf_free(tx);
-        ll_flow_control.free_num_hci_acl_packets++;
-    }
-
     return awake;
 }
 
@@ -1263,7 +1248,6 @@ static void hci_thread_process(struct thread *th)
     //wait all channel idle
     if ((lbuf_empty(hci_event_buf))
         && (lbuf_empty(hci_rx_buf))
-        && (lbuf_empty(hci_tx_buf))
         && (lbuf_empty(hci_cmd_ptr)))
     {
         //suspend hci thread now
@@ -1349,8 +1333,7 @@ static void hci_param_init(void)
 }
 
 #define HCI_BUF_CMD_POS         0
-#define HCI_BUF_TX_POS          (HCI_BUF_CMD_POS + CONTROLLER_MAX_CMD_PAYLOAD)
-#define HCI_BUF_EVENT_POS       (HCI_BUF_TX_POS + CONTROLLER_MAX_TX_PAYLOAD)
+#define HCI_BUF_EVENT_POS       (HCI_BUF_CMD_POS + CONTROLLER_MAX_CMD_PAYLOAD)
 #define HCI_BUF_RX_POS          (HCI_BUF_EVENT_POS + CONTROLLER_MAX_EVENT_PAYLOAD)
 
 static void lbuf_debug(void);
@@ -1361,16 +1344,11 @@ int hci_firmware_init()
 	hci_cmd_ptr = lbuf_init(hci_buf + HCI_BUF_CMD_POS, CONTROLLER_MAX_CMD_PAYLOAD);
     ll_flow_control.free_num_hci_command_packets = 4;
 
-	hci_tx_buf = lbuf_init(hci_buf + HCI_BUF_TX_POS, CONTROLLER_MAX_TX_PAYLOAD);
-    ll_flow_control.free_num_hci_acl_packets = le_param_t->priv->buf_param.total_num_le_data_pkt;
-
     //controller to host
 	hci_event_buf = lbuf_init(hci_buf + HCI_BUF_EVENT_POS, CONTROLLER_MAX_EVENT_PAYLOAD);
 	hci_rx_buf = lbuf_init(hci_buf + HCI_BUF_RX_POS, CONTROLLER_MAX_RX_PAYLOAD);
 
-    {
-
-    }
+    ll_flow_control.free_num_hci_acl_packets = le_param_t->priv->buf_param.total_num_le_data_pkt;
     hci_param_init();
 
 	thread_create(&hci_thread, hci_thread_process, 3);
@@ -1381,7 +1359,7 @@ int hci_firmware_init()
     }
     /* aes128_test(); */
     /* debug_ll_privacy(); */
-    /* lbuf_debug(); */
+    lbuf_debug();
 }
 
 static void lbuf_debug(void)
@@ -1391,8 +1369,11 @@ static void lbuf_debug(void)
     printf("lbuf is empty : %x\n", lbuf_empty(hci_rx_buf));
     lbuf_push(ptr);
     printf("lbuf is empty : %x\n", lbuf_empty(hci_rx_buf));
+    printf("lbuf have next: %x\n", lbuf_have_next(hci_rx_buf));
     printf("lbuf is empty : %x / pop %x\n", lbuf_empty(hci_rx_buf), lbuf_pop(hci_rx_buf));
+    printf("lbuf have next: %x\n", lbuf_have_next(hci_rx_buf));
     printf("lbuf is empty : %x / pop %x\n", lbuf_empty(hci_rx_buf), lbuf_pop(hci_rx_buf));
+    printf("lbuf have next: %x\n", lbuf_have_next(hci_rx_buf));
     lbuf_free(ptr);
     printf("lbuf is empty : %x\n", lbuf_empty(hci_rx_buf));
 }

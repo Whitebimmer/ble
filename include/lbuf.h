@@ -29,5 +29,7 @@ int lbuf_empty(struct lbuff_head *head);
 
 void lbuf_clear(struct lbuff_head *head);
 
+u8 lbuf_have_next(struct lbuff_head *head);
+
 #endif
 

@@ -80,12 +80,10 @@ struct le_feature_handler{
 
 
 #define CONTROLLER_MAX_CMD_PAYLOAD      0x200
-#define CONTROLLER_MAX_TX_PAYLOAD       0x200
 #define CONTROLLER_MAX_EVENT_PAYLOAD    0x200
 #define CONTROLLER_MAX_RX_PAYLOAD       0x400
 
 #define CONTROLLER_MAX_TOTAL_PAYLOAD    (CONTROLLER_MAX_CMD_PAYLOAD + \
-                                        CONTROLLER_MAX_TX_PAYLOAD + \
                                         CONTROLLER_MAX_EVENT_PAYLOAD + \
                                         CONTROLLER_MAX_RX_PAYLOAD)
 

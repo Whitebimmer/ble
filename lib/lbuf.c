@@ -147,6 +147,24 @@ void lbuf_push(void *lbuf)
 	CPU_INT_EN();
 }
 
+u8 lbuf_have_next(struct lbuff_head *head)
+{
+	struct hentry *p;
+	CPU_SR_ALLOC();
+
+	CPU_INT_DIS();
+
+	list_for_each_entry(p, &head->head, entry)
+	{
+		if (p->state == 0){
+			CPU_INT_EN();
+			return 1;
+		}
+	}
+
+	CPU_INT_EN();
+	return 0;
+}
 
 void *lbuf_pop(struct lbuff_head *head)
 {
