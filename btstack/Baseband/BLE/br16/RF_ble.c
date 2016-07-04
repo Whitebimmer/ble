@@ -95,7 +95,13 @@ struct ble_rx * ble_hw_alloc_rx(struct ble_hw *hw, int size)
 	struct ble_rx *rx;
 
 	rx = lbuf_alloc(hw->lbuf_rx, sizeof(*rx)+size);
-	ASSERT(rx != NULL, "%s\n", "rx alloc err\n");
+    if(rx == NULL)
+    {
+        /* ASSERT(rx != NULL, "%s\n", "rx alloc err\n"); */
+        /* puts("flow control reasons : lack of receive buffer space\n"); */
+        putchar('>');
+        return NULL;
+    }
 	ASSERT(((u32)rx & 0x03) == 0, "%s\n", "rx not align\n");
 
 	memset(rx, 0, sizeof(*rx));
@@ -138,18 +144,23 @@ static void ble_tx_init(struct ble_hw *hw)
 
 static void ble_hw_tx(struct ble_hw *hw, struct ble_tx *tx, int index)
 {
+    u8 sn;
 	if (index == 0){
 		if (tx->len){
 			hw->ble_fp.TXPTR0 = PHY_TO_BLE(tx->data);
 		}
 		hw->ble_fp.TXAHDR0 = (tx->rxadd<<5)|(tx->txadd<<4)|tx->type;
-		hw->ble_fp.TXDHDR0 = (tx->len<<8)|(tx->md<<3)|(tx->sn<<2)|tx->llid;
+        hw->ble_fp.TXDHDR0 = (tx->len<<8)|(tx->md<<3)|(tx->sn<<2)|tx->llid;
+        /* sn = hw->ble_fp.TXDHDR0 & BIT(2); */
+        /* hw->ble_fp.TXDHDR0 = (tx->len<<8)|(tx->md<<3)|sn|tx->llid; */
 	} else {
 		if (tx->len){
 			hw->ble_fp.TXPTR1 = PHY_TO_BLE(tx->data);
 		}
 		hw->ble_fp.TXAHDR1 = (tx->rxadd<<5)|(tx->txadd<<4)|tx->type;
-		hw->ble_fp.TXDHDR1 = (tx->len<<8)|(tx->md<<3)|(tx->sn<<2)|tx->llid;
+        hw->ble_fp.TXDHDR1 = (tx->len<<8)|(tx->md<<3)|(tx->sn<<2)|tx->llid;
+        /* sn = hw->ble_fp.TXDHDR1 & BIT(2); */
+        /* hw->ble_fp.TXDHDR1 = (tx->len<<8)|(tx->md<<3)|sn|tx->llid; */
 	}
 }
 
@@ -1383,7 +1394,7 @@ static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
     ble_rx_pdus_process(hw, rx);
 
     //async PDUs upper to Link Layer
-	/* if (rx->llid != 1 || rx->len != 0) */
+    if (rx->llid != 1 || rx->len != 0)
     {
         /* printf_buf(rx, sizeof(*rx)+rx->len); */
         lbuf_push(rx);
@@ -1533,10 +1544,9 @@ static void __hw_rx_process(struct ble_hw *hw)
 	if (rx->llid!=1 || rx->len!=0){
 		putchar('R');
         //baseband loop buf switch
-        //TO*DO
+        hw->rx[ind] = ble_hw_alloc_rx(hw, 40);
+        *rxptr = PHY_TO_BLE(hw->rx[ind]->data);
 	}
-    hw->rx[ind] = ble_hw_alloc_rx(hw, 40);
-    *rxptr = PHY_TO_BLE(hw->rx[ind]->data);
 
     ble_rx_probe(hw, rx);
 
@@ -1602,25 +1612,27 @@ static void ble_irq_handler()
         //must first deal
 		if(BLE_INT_CON2 & BIT(i+8))//rx int
 		{
-            /* DEBUG_IO_1(0) */
+			BLE_INT_CON1 |= BIT(i+8);     ///  !!! must be clear twice
+            /* DEBUG_IO_1(3) */
+            /* {PORTA_DIR &= ~BIT(3); PORTA_OUT ^= BIT(3);} */
             /* trig_fun(); */
             /* ADC_CON = 1; */
 			__hw_rx_process(hw);
             /* DEBUG_IO_0(0) */
 
-			BLE_INT_CON1 |= BIT(i+8);
-			BLE_INT_CON1 |= BIT(i+8);     ///  !!! must be clear twice
+			/* BLE_INT_CON1 |= BIT(i+8); */
 		}
 
         //must deal after rx
 		if(BLE_INT_CON2 & BIT(i))//event_end int
 		{
+			BLE_INT_CON1 = BIT(i);     ///  !!! must be clear twice
             /* DEBUG_IO_1(1) */
 			__hw_event_process(hw);
 
             /* DEBUG_IO_0(1) */
-			BLE_INT_CON1 = BIT(i);
-			BLE_INT_CON1 = BIT(i);     ///  !!! must be clear twice
+			/* BLE_INT_CON1 = BIT(i); */
+
 
             /* ble_power_off(hw); */
 		}
@@ -1680,6 +1692,7 @@ static void ble_hw_frame_free(struct ble_hw *hw)
 {
     printf("free hw: id=%d\n", HW_ID(hw));
 
+    bt_free(hw->regs);
 	ble_base.inst[HW_ID(hw)] = 0;
 
 	list_del(&hw->entry);
@@ -1887,7 +1900,9 @@ void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
     /* printf_buf(hw->local.addr, 6); */
     puts("conn req : ");
     printf_buf(hw->peer.addr, 6);
-	ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0)));
+	/* ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0))); */
+	ble_hw_tx(hw, tx, 0);
+	ble_hw_tx(hw, tx, 1);
 	ble_hw_enable(hw, 10);
 }
 
