@@ -95,7 +95,13 @@ struct ble_rx * ble_hw_alloc_rx(struct ble_hw *hw, int size)
 	struct ble_rx *rx;
 
 	rx = lbuf_alloc(hw->lbuf_rx, sizeof(*rx)+size);
-	ASSERT(rx != NULL, "%s\n", "rx alloc err\n");
+    if(rx == NULL)
+    {
+        /* ASSERT(rx != NULL, "%s\n", "rx alloc err\n"); */
+        /* puts("flow control reasons : lack of receive buffer space\n"); */
+        putchar('>');
+        return NULL;
+    }
 	ASSERT(((u32)rx & 0x03) == 0, "%s\n", "rx not align\n");
 
 	memset(rx, 0, sizeof(*rx));
@@ -1690,7 +1696,7 @@ static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
     ble_rx_pdus_process(hw, rx);
 
     //async PDUs upper to Link Layer
-	/* if (rx->llid != 1 || rx->len != 0) */
+    if (rx->llid != 1 || rx->len != 0)
     {
         /* printf_buf(rx, sizeof(*rx)+rx->len); */
         lbuf_push(rx);
@@ -1777,11 +1783,6 @@ static void __hw_tx_process(struct ble_hw *hw)
             /* printf_buf(tx, tx->len + sizeof(*tx)); */
 
 		}
-        //if more data 
-        if (!lbuf_empty(hw->lbuf_tx))
-        {
-            tx->md = 1;
-        }
         tx->sn = hw->tx_seqn;
         hw->tx_seqn = !hw->tx_seqn;
         ble_hw_tx(hw, tx, i);
@@ -1852,11 +1853,9 @@ static void __hw_rx_process(struct ble_hw *hw)
 	if (rx->llid!=1 || rx->len!=0){
 		putchar('R');
         //baseband loop buf switch
-        //TO*DO
+        hw->rx[ind] = ble_hw_alloc_rx(hw, 40);
+        *rxptr = PHY_TO_BLE(hw->rx[ind]->data);
 	}
-    hw->rx[ind] = ble_hw_alloc_rx(hw, 40);
-    /* hw->rx[ind] = ble_hw_alloc_rx(hw, hw->rx_octets); */
-    *rxptr = PHY_TO_BLE(hw->rx[ind]->data);
 
     ble_rx_probe(hw, rx);
 

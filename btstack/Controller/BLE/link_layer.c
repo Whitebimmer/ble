@@ -2771,9 +2771,11 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
             break;
     }
     
-
-    //resume ll thread
-    thread_resume(&ll.ll_thread);
+    if (rx->llid != 1 || rx->len != 0)
+    {
+        //resume ll thread
+        thread_resume(&ll.ll_thread);
+    }
 }
 
 static void debug_info(struct le_link *link)
