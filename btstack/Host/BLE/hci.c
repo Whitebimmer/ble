@@ -61,7 +61,7 @@
 #include "bt_memory.h"
 
 /************************HCI DEBUG CONTROL**************************/
-/* #define HCI_DEBUG */
+#define HCI_DEBUG
 
 #ifdef HCI_DEBUG
 #define hci_puts     puts
@@ -470,9 +470,11 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
 
         // send packet
         uint8_t * packet = &hci_stack->hci_packet_buffer[acl_header_pos];
+        printf_buf(packet, 0x8);
         const int size = current_acl_data_packet_length + 4;
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);
 
+        printf("pos %x - size %x\n", acl_header_pos, size);
         hci_puts("acl more ...");
         // done yet?
         if (!more_fragments) break;

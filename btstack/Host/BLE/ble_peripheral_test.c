@@ -1117,6 +1117,7 @@ void ble_set_adv(void)
     case 1:
         /* le_hci_send_cmd(&hci_le_read_advertising_channel_tx_power); */
 		/* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 0); */
+        /* le_hci_send_cmd(&hci_le_write_suggested_default_data_length, 30, 338);  */
         break;
     case 2:
         /* le_hci_send_cmd(&hci_le_set_advertising_data, */
@@ -1328,7 +1329,8 @@ void ble_set_conn(void)
                 0x0, 0x0050, 0x0050, 0x0, 0x320, 0x50, 0x50);
         break;
     case 1:
-        le_hci_send_cmd(&hci_le_read_remote_used_features, 0x0001);
+        /* le_hci_send_cmd(&hci_le_read_remote_used_features, 0x0001); */
+        le_hci_send_cmd(&hci_le_set_data_length, 1, 251, 2120); 
         break;
     case 2:
         le_hci_send_cmd(&hci_disconnect, 0x0001, CONNECTION_TERMINATED_BY_LOCAL_HOST);
@@ -1412,7 +1414,8 @@ void ble_test(void)
         le_hci_send_cmd(&hci_le_read_remote_used_features, 0x01); 
         break;
     case 1:
-        le_hci_send_cmd(&hci_le_set_data_length , 0x0001, 27, 328); 
+        le_hci_send_cmd(&hci_le_set_data_length, 1, 251, 2120); 
+        /* le_hci_send_cmd(&hci_le_set_data_length , 0x0001, 27, 328);  */
         break;
     case 2:
         le_hci_send_cmd(&hci_le_read_suggested_default_data_length); 

@@ -582,7 +582,7 @@ static void le_hci_tx_handler(struct le_link *link, struct ble_tx *tx)
         case LL_DATA_PDU_START:
         case LL_DATA_PDU_CONTINUE:
             //LL Ack
-            if (ll_is_packet_send())   
+            if (ll_packet_is_send())   
             {
                 ll_flow_control.free_num_hci_acl_packets++;
                 le_send_event(HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS, "1H2", 1,

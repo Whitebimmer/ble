@@ -100,9 +100,9 @@ struct ble_rx * ble_hw_alloc_rx(struct ble_hw *hw, int size)
 	rx = lbuf_alloc(hw->lbuf_rx, sizeof(*rx)+size);
     if(rx == NULL)
     {
-        /* ASSERT(rx != NULL, "%s\n", "rx alloc err\n"); */
-        /* puts("flow control reasons : lack of receive buffer space\n"); */
         putchar('>');
+        ASSERT(rx != NULL, "%s\n", "rx alloc err\n");
+        /* puts("flow control reasons : lack of receive buffer space\n"); */
         return NULL;
     }
 	ASSERT(((u32)rx & 0x03) == 0, "%s\n", "rx not align\n");
@@ -738,14 +738,19 @@ static void __set_privacy_enable(struct ble_hw *hw, u8 enable)
 static void __set_rx_length(struct ble_hw *hw, u16 len)
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
+
     ble_fp->RXMAXBUF = len + sizeof(struct ble_rx);
 
     hw->rx_octets = len;
+
+    printf("rx_octets : %x\n", hw->rx_octets);
 }
 
 static void __set_tx_length(struct ble_hw *hw, u16 len)
 {
     hw->tx_octets = len;
+
+    printf("tx_octets : %x\n", hw->tx_octets);
 }
 //===================================//
 //sel: 1    auto_set agc
@@ -921,7 +926,8 @@ static void __set_hw_frame_init(struct ble_hw *hw)
 
 	/*ble_fp->WINCNTL0 = 200; //first_rx:{WINCNTL1[7:0],WINCNTL0[15:0]} N*us
 	ble_fp->WINCNTL1 = (50<<8)|0; //packet_interval_rx:WINCNTL1[15:8] N*us*/
-	ble_fp->RXMAXBUF = 38;
+    ble_fp->RXMAXBUF = 27 + sizeof(struct ble_rx);//38;
+    /* ble_fp->RXMAXBUF = 38; */
 	ble_fp->IFSCNT = T_IFSCNT;                     //txifs / rxifs
 	ble_fp->FILTERCNTL = 0;     //white list disable
 
@@ -1433,7 +1439,7 @@ static void le_hw_upload_data(void (*handler)(void *priv, struct ble_rx *rx))
         rx = lbuf_pop(hw->lbuf_rx);
         if (rx)
         {
-			/* puts("le_hw_upload_data"); */
+            /* puts("le_hw_upload_data"); */
             /* printf_buf(rx, sizeof(*rx)+rx->len); */
             handler(hw->priv, rx);
             lbuf_free(rx);
@@ -1565,7 +1571,9 @@ static void __hw_rx_process(struct ble_hw *hw)
 	if (rx->llid!=1 || rx->len!=0){
 		putchar('R');
         //baseband loop buf switch
-        hw->rx[ind] = ble_hw_alloc_rx(hw, 40);
+        /* hw->rx[ind] = ble_hw_alloc_rx(hw, 40); */
+        hw->rx[ind] = ble_hw_alloc_rx(hw, hw->rx_octets + sizeof(struct ble_rx));
+        put_u16hex(hw->rx_octets + sizeof(struct ble_rx));
         *rxptr = PHY_TO_BLE(hw->rx[ind]->data);
 	}
 
@@ -1690,7 +1698,8 @@ static struct ble_hw *ble_hw_alloc()
 
 	for (i=0; i<8; i++)
 	{
-		if (ble_base.inst[i] == 0){
+		if (ble_base.inst[i] == 0)
+        {
 			hw = &ble_base.hw[i];
 			memset(hw, 0, sizeof(*hw));
 			ble_base.inst[i] = BIT(12) | PHY_TO_BLE(&hw->ble_fp);
@@ -2023,9 +2032,11 @@ static void le_hw_ioctrl(struct ble_hw *hw, int ctrl, ...)
         case BLE_SET_PRIVACY_ENABLE:
             __set_privacy_enable(hw, va_arg(argptr, int));
         case BLE_SET_RX_LENGTH:
+            puts("BLE_SET_RX_LENGTH\n");
             __set_rx_length(hw, va_arg(argptr, u16));
             break;
         case BLE_SET_TX_LENGTH:
+            puts("BLE_SET_TX_LENGTH\n");
             __set_tx_length(hw, va_arg(argptr, u16));
             break;
 		default:
