@@ -837,7 +837,7 @@ static void __white_list_weighted_round_robin(struct le_link *link, struct white
 {
     if (device->cnt++ == 10)
     {
-        device->cnt == 0;
+        device->cnt = 0;
         //TO*DO privacy RPA
         __white_list_upadte(link, device);
     }
@@ -2115,8 +2115,9 @@ static void __set_link_state(struct le_link *link, int state)
 // LL Supervision TimeOut
 static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 {
-    struct le_link *link = sys_timer_get_user(timer);
-   
+    struct le_link *link = (struct le_link*)sys_timer_get_user(timer);
+	struct ble_rx rx ;
+   	rx.data[0]=CONNECTION_TIMEOUT;	
     ASSERT(link != NULL, "%s\n", __func__);
 
     puts("LL Supervision Timeout\n");
@@ -2125,9 +2126,9 @@ static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 
     __set_link_state(link, LL_DISCONNECT);
 
-    /* sys_timer_remove(&link->timeout); */
+    sys_timer_remove(&link->timeout);
 
-    __hci_event_emit(DISCONNECT_STEPS, link, CONNECTION_TIMEOUT);
+    __hci_event_emit(DISCONNECT_STEPS, link,&rx);
 
     //resume ll thread
     thread_resume(&ll.ll_thread);
@@ -2331,6 +2332,8 @@ static void __le_direct_advertising_report_event(struct le_link *link, struct bl
             "111A1A1", 
             1,
             0x1,          //event type : ADV_DIRECT_IND
+            rx->txadd,  //address type
+            rx->data,   //address
             rx->txadd,  //address type
             rx->data,   //address
             link->rssi);
