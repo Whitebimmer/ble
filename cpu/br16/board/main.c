@@ -321,6 +321,10 @@ int main()
                     /* puts("user cmd : TEST\n"); */
                     ble_test();
                     break;
+                case 'D':
+                    puts("user cmd : Data\n");
+                    ble_send_data();
+                    break;
                 default:
                     break;
             }

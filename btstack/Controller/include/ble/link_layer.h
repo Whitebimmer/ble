@@ -79,6 +79,14 @@ struct le_feature_handler{
 #define READ_BT_16(packet, pos) 		(packet[pos]|(packet[pos+1]<<8))
 
 
+#define CONTROLLER_MAX_CMD_PAYLOAD      0x200
+#define CONTROLLER_MAX_EVENT_PAYLOAD    0x200
+#define CONTROLLER_MAX_RX_PAYLOAD       0x400
+
+#define CONTROLLER_MAX_TOTAL_PAYLOAD    (CONTROLLER_MAX_CMD_PAYLOAD + \
+                                        CONTROLLER_MAX_EVENT_PAYLOAD + \
+                                        CONTROLLER_MAX_RX_PAYLOAD)
+
 enum
 {
     /* NO_EVENTS_SPECIFIED                                 = , */
@@ -197,6 +205,45 @@ struct le_addr{
 	u8 addr[6];
 };
 
+struct data_length{
+    u16 connMaxTxOctets;
+    u16 connMaxRxOctets;
+
+    u16 connRemoteMaxTxOctets;
+    u16 connRemoteMaxRxOctets;
+
+    u16 connEffectiveMaxTxOctets;
+    u16 connEffectiveMaxRxOctets;
+
+    u16 connMaxTxTime;
+    u16 connMaxRxTime;
+
+    u16 connRemoteMaxTxTime;
+    u16 connRemoteMaxRxTime;
+
+    u16 connEffectiveMaxTxTime;
+    u16 connEffectiveMaxRxTime;
+};
+
+struct ll_data_pdu_length_read_only{
+
+    u16 supportedMaxTxOctets;
+    u16 supportedMaxTxTime;
+
+    u16 supportedMaxRxOctets;
+    u16 supportedMaxRxTime;
+};
+
+struct ll_data_pdu_length{
+    u16 suggestedMaxTxOctets;
+    u16 suggestedMaxTxTime;
+
+    u16 connInitialMaxTxOctets;
+    u16 connInitialMaxTxTime;
+
+    struct ll_data_pdu_length_read_only *priv;
+};
+
 struct le_link{
 	u8 state;
 	u8 role;
@@ -227,6 +274,10 @@ struct le_link{
     //supervision timeout
     struct sys_timer timeout;
     struct sys_timer adv_timeout;
+    struct sys_timer pr_timeout;    //control procedures response timeout Tprt
+    
+    //Data Length Update
+    struct data_length pdu_len;
 };
 
 

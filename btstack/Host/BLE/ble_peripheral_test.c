@@ -1075,42 +1075,30 @@ void ble_initial_setup(void)
 /*
  *-------------------HCI Tester Sample
  */
-#ifdef BT16
 static const u8 adv_ind_data[] = {
 	0x02, 0x01, 0x06,
-	0x05, 0x09, 'b','t', '1', '6',
 	//0x05, 0x12, 0x80, 0x02, 0x80, 0x02,
 	0x04, 0x0d, 0x00, 0x05, 0x10,
 	0x03, 0x03, 0x0d, 0x18,
 };
-#endif
-
-#ifdef BR16
-static const u8 adv_ind_data[] = {
-	0x02, 0x01, 0x06,
-	0x09, 0x09, 'b','r', '1', '7', '-','4', '.', '2',
-	//0x05, 0x12, 0x80, 0x02, 0x80, 0x02,
-	0x04, 0x0d, 0x00, 0x05, 0x10,
-	0x03, 0x03, 0x0d, 0x18,
-};
-#endif
-
-#ifdef BR17
-static const u8 adv_ind_data[] = {
-	0x02, 0x01, 0x06,
-	0x09, 0x09, 'b','r', '1', '7', '-','4', '.', '2',
-	//0x05, 0x12, 0x80, 0x02, 0x80, 0x02,
-	0x04, 0x0d, 0x00, 0x05, 0x10,
-	0x03, 0x03, 0x0d, 0x18,
-};
-#endif
 
 //len, type, Manufacturer Specific data
 static const u8 scan_rsp_data[] = {
-	30,  0xff, 0x57, 0x01, 0x00, 0x7c, 0x5b, 0x5d, 0x17,
-	0x0e, 0x02, 0xbd, 0xd7, 0x0c, 0xbb, 0x8a, 0xcc, 0xc3,
-	0x3c, 0xf2, 0x86, 0x0f, 0x00, 0x00, 0x00, 0x88, 0x0f,
-	0x10, 0x53, 0x49, 0x56,
+    0x02, 0x0A, 0x00,
+#ifdef BT16
+	0x05, 0x09, 'b','t', '1', '6',
+#endif
+#ifdef BR16
+    #ifdef ROLE_MASTER
+	0x09, 0x09, 'b','r', '1', '6', 'M','4', '.', '1',
+    #endif
+    #ifdef ROLE_SLAVE
+	0x09, 0x09, 'b','r', '1', '6', 'S','4', '.', '1',
+    #endif
+#endif
+#ifdef BR17
+	0x09, 0x09, 'b','r', '1', '7', '-','b', 'l', 'e',
+#endif
 };
 
 #if 1
@@ -1124,16 +1112,20 @@ void ble_set_adv(void)
     {
     case 0:
         le_hci_send_cmd(&hci_le_set_advertising_parameters,
-                0x0020, 0x0020, 0x00, 0x0, 0x0, NULL, 0x1, 0x0);
+                0x0320, 0x0320, 0x00, 0x0, 0x0, NULL, 0x7, 0x0);
         break;
     case 1:
         /* le_hci_send_cmd(&hci_le_read_advertising_channel_tx_power); */
 		/* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 0); */
+        /* le_hci_send_cmd(&hci_le_write_suggested_default_data_length, 30, 338);  */
         break;
     case 2:
+        /* le_hci_send_cmd(&hci_le_set_advertising_data, */
+                /* sizeof(adv_ind_data),sizeof(adv_ind_data), */
+                /* adv_ind_data); */
         le_hci_send_cmd(&hci_le_set_advertising_data,
-                sizeof(adv_ind_data),sizeof(adv_ind_data),
-                adv_ind_data);
+                0,0,
+                NULL);
         break;
     case 3:
         le_hci_send_cmd(&hci_le_set_scan_response_data,
@@ -1253,7 +1245,29 @@ struct resolving_list_parameter scan_rpa[] = {
        .local_irk = IRK_0,
    },
 };
+
 void ble_set_scan(void)
+{
+    static u8 cnt = 0;
+	u8 peer_addr[6];
+
+    //check no other hw in adv state
+    //
+    switch(cnt++)
+    {
+		case 1:
+			le_hci_send_cmd(&hci_le_set_scan_parameters, 
+					1, 0x050, 0x50, 0x2, 0x0);
+			break;
+		case 2:
+			le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
+			cnt = 0;
+			break;
+		default:
+			break;
+    }
+}
+void ble_set_scan_rpa(void)
 {
     static u8 cnt = 0;
 	u8 peer_addr[6];
@@ -1293,12 +1307,11 @@ void ble_set_scan(void)
     }
 }
 
-u8 conn_peer_addr[6] = {0x71, 0x22, 0x98, 0xBA, 0x3A, 0x3E};
+u8 conn_peer_addr[6] = {0x71, 0x22, 0x98, 0xBA, 0x3A, 0x9E};
 /* u8 conn_peer_addr[6] = {0x84, 0xEB, 0x18, 0x77, 0xEC, 0x31}; */
 /* u8 conn_peer_addr[6] = {0x54, 0x36, 0x98, 0xba, 0x3a, 0x4e}; */
 
 #define CONNECTION_TERMINATED_BY_LOCAL_HOST         0x16
-#if 0
 void ble_set_conn(void)
 {
     static u8 cnt = 0;
@@ -1311,12 +1324,13 @@ void ble_set_conn(void)
     case 0:
         /* swap48(conn_peer_addr, peer_addr); */
         le_hci_send_cmd(&hci_le_create_connection, 
-                0x100, 0x0050, 0x0, 
+                0x100, 0x0090, 0x0, 
                 0x0, conn_peer_addr,
                 0x0, 0x0050, 0x0050, 0x0, 0x320, 0x50, 0x50);
         break;
     case 1:
-        le_hci_send_cmd(&hci_le_read_remote_used_features, 0x0001);
+        /* le_hci_send_cmd(&hci_le_read_remote_used_features, 0x0001); */
+        le_hci_send_cmd(&hci_le_set_data_length, 1, 251, 2120); 
         break;
     case 2:
         le_hci_send_cmd(&hci_disconnect, 0x0001, CONNECTION_TERMINATED_BY_LOCAL_HOST);
@@ -1331,7 +1345,6 @@ void ble_set_conn(void)
     }
 }
 
-#else
 
 struct resolving_list_parameter conn_rpa[] = {
    [0] = { 
@@ -1343,7 +1356,7 @@ struct resolving_list_parameter conn_rpa[] = {
    },
 };
 
-void ble_set_conn(void)
+void ble_set_conn_rpa(void)
 {
     static u8 cnt = 0;
 	u8 peer_addr[6];
@@ -1389,7 +1402,6 @@ void ble_set_conn(void)
 			break;
 	}
 }
-#endif
 
 void ble_test(void)
 {
@@ -1402,10 +1414,51 @@ void ble_test(void)
         le_hci_send_cmd(&hci_le_read_remote_used_features, 0x01); 
         break;
     case 1:
+        le_hci_send_cmd(&hci_le_set_data_length, 1, 251, 2120); 
+        /* le_hci_send_cmd(&hci_le_set_data_length , 0x0001, 27, 328);  */
+        break;
+    case 2:
+        le_hci_send_cmd(&hci_le_read_suggested_default_data_length); 
+        break;
+    case 3:
+        le_hci_send_cmd(&hci_le_write_suggested_default_data_length, 30, 338); 
+        break;
+    case 4:
+        le_hci_send_cmd(&hci_le_read_suggested_default_data_length); 
+        break;
+    case 5:
+        le_hci_send_cmd(&hci_le_read_maximum_data_length); 
         cnt = 0;
         break;
 
     default:
+        break;
+    }
+}
+
+u8 buf[0x400];
+
+void ble_send_data(void)
+{
+    static u8 cnt = 0;
+
+    u16 i;
+    for (i = 0; i < 0x100; i++)
+    {
+        buf[i] = i+cnt;
+        buf[i+0x100] = i+1;
+        buf[i+0x200] = i+2;
+        buf[i+0x300] = i+3;
+    }
+    switch(cnt++)
+    {
+    case 0:
+        puts("********my_acl_packet********\n");
+        printf_buf(buf, 0x400);
+        le_l2cap_send_connectionless(1, 0xff, buf, 0x100);
+        break;
+    default:
+        cnt = 0;
         break;
     }
 }

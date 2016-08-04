@@ -166,12 +166,18 @@ struct ble_hw{
 
     void *power_ctrl;
     u32 *regs;
+
+    u16 rx_octets;
+    u16 tx_octets;
+
+    //4.2 0x1b-0xfb
+	u8 tx_buf[2][256];
 };
 
 #define BLE_HW_NUM    1
 
-#define BLE_HW_RX_SIZE  (512*1)
-#define BLE_HW_TX_SIZE  512
+#define BLE_HW_RX_SIZE  (512*2)
+#define BLE_HW_TX_SIZE  (512*2)
 
 struct ble_hw_base {
 	u16 inst[8];

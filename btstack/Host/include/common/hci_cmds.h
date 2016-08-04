@@ -276,6 +276,7 @@ extern "C" {
 #define HCI_SUBEVENT_LE_CONNECTION_UPDATE_COMPLETE         0x03
 #define HCI_SUBEVENT_LE_READ_REMOTE_USED_FEATURES_COMPLETE 0x04
 #define HCI_SUBEVENT_LE_LONG_TERM_KEY_REQUEST              0x05
+#define HCI_SUBEVENT_LE_DATA_LENGTH_CHANGE                 0x07
 /** 
  * @format 11H11AAA2221
  * @param subevent_code
@@ -897,6 +898,7 @@ extern const hci_cmd_t hci_le_set_scan_response_data;
 extern const hci_cmd_t hci_le_start_encryption;
 extern const hci_cmd_t hci_le_test_end;
 extern const hci_cmd_t hci_le_transmitter_test;
+extern const hci_cmd_t hci_le_set_data_length;
 extern const hci_cmd_t hci_le_read_suggested_default_data_length;
 extern const hci_cmd_t hci_le_write_suggested_default_data_length;
 extern const hci_cmd_t hci_le_add_device_to_resolving_list;
@@ -907,6 +909,7 @@ extern const hci_cmd_t hci_le_local_resolvable_address;
 extern const hci_cmd_t hci_le_set_address_resolution_enable;
 extern const hci_cmd_t hci_le_set_resolvable_private_address_timeout;
 extern const hci_cmd_t hci_le_clear_resolving_list;
+extern const hci_cmd_t hci_le_read_maximum_data_length;
     
 extern const hci_cmd_t l2cap_accept_connection;
 extern const hci_cmd_t l2cap_create_channel;

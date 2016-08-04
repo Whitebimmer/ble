@@ -3,6 +3,7 @@
 #include "thread.h"
 #include "ble/ble_h4_transport.h"
 #include "bt_memory.h"
+#include "RF_ble.h"
 
 
 #define LL_DEBUG_EN
@@ -46,7 +47,30 @@ struct link_layer{
 	struct thread ll_thread;
 };
 
-//privacy
+//============= data length 4.2 feature begin
+
+static const struct ll_data_pdu_length_read_only ll_data_pdu_length_ro = {
+
+    /* .supportedMaxTxOctets = 27, */
+    /* .supportedMaxTxTime = 328, */
+
+    /* .supportedMaxRxOctets = 27, */
+    /* .supportedMaxRxTime = 328, */
+
+    /* if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION)) */
+    .supportedMaxTxOctets = 251,
+    .supportedMaxTxTime = 2120,
+
+    .supportedMaxRxOctets = 251,
+    .supportedMaxRxTime = 2120,
+};
+
+
+struct ll_data_pdu_length le_data_length;
+
+//============= data length 4.2 feature end
+//
+//============= privacy 4.2 feature begin
 struct ll_privacy{
     struct sys_timer RPA_timeout;
     u32 RPA_timeout_cnt;
@@ -55,6 +79,7 @@ struct ll_privacy{
 };
 
 struct ll_privacy le_privacy;
+//============= privacy 4.2 feature end
 
 u8 ll_error_code;
 /*
@@ -74,10 +99,15 @@ static struct link_layer ll sec(.btmem_highly_available);
 /*
  *-------------------LE READ PARAMETER
  */
+
 #define LL_TRANSMIT_POWER_LEVEL         0x1
 
 #define LL_ACL_PDU_LENGTH               64
-#define LL_TOTAL_NUM_LE_DATA_PACKET     8
+#define LL_TOTAL_NUM_LE_DATA_PACKET     (BLE_HW_TX_SIZE/LL_ACL_PDU_LENGTH - 1)
+#if (LL_TOTAL_NUM_LE_DATA_PACKET > (BLE_HW_TX_SIZE/LL_ACL_PDU_LENGTH))
+        #error LL_TOTAL_NUM_LE_DATA_PACKET OVERFLOW
+#endif
+
 
 #define LL_WHITE_LIST_SIZE              1
 #define LL_RESOLVING_LIST_SIZE          1
@@ -90,9 +120,9 @@ static struct link_layer ll sec(.btmem_highly_available);
 
 static const struct le_read_parameter le_read_param = {
 #ifndef	BLE_PRIVACY_EN
-    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
+    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE|LE_DATA_PACKET_LENGTH_EXTENSION, 0, 0, 0, 0, 0, 0, 0},
 #else
-    .features = {LL_PRIVACY|LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
+    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
 #endif
     .version = {0x06, 0x0f, 0x00, 0x09, 0x61},
     .versnr = VERSNR,
@@ -100,7 +130,7 @@ static const struct le_read_parameter le_read_param = {
     .subversnr = SUBVERSNR,
 
     //div 2 for lbuf struct cost & hw overlayed
-    .buf_param.total_num_le_data_pkt = LL_TOTAL_NUM_LE_DATA_PACKET/2,
+    .buf_param.total_num_le_data_pkt = LL_TOTAL_NUM_LE_DATA_PACKET,
     .buf_param.buffer_size = LL_ACL_PDU_LENGTH,
 
     .white_list_size        = LL_WHITE_LIST_SIZE,
@@ -415,9 +445,11 @@ static void ll_control_step_verify(ll_step_extend step_ex,
         /* printf("tx steps : %04x\n", step_ex); */
     /* } */
     //procedure break by accident case
-    if ((step_ex == (LL_REJECT_IND|WAIT_RX)) || (step_ex == (LL_REJECT_IND_EXT|WAIT_RX)))
+    if ((step_ex == (LL_REJECT_IND|WAIT_RX)) 
+            || (step_ex == (LL_REJECT_IND_EXT|WAIT_RX))
+            || (step_ex == (LL_UNKNOWN_RSP|WAIT_RX)))
     {
-        ll_puts("##ll break\n");
+        ll_puts("\n##ll break reson : ");ll_u32hex(step_ex);
         ll_control_procedure_finish_emit_event(link, rx, tx);
         ll_ctrl_step.steps_ptr = NULL;
         return;
@@ -630,7 +662,9 @@ static void ll_send_control_data(struct le_link *link, int opcode,
  *                  Link Layer ACL Data (for Upper layer used)
  */
 
-void ll_send_acl_packet(int handle, u8 *packet, int len)
+u8 g_pkt_idx;
+
+void ll_send_acl_packet(int handle, u8 *packet, int total_len)
 {
     struct le_link *link;
 
@@ -645,15 +679,56 @@ void ll_send_acl_packet(int handle, u8 *packet, int len)
     bc_flag = packet[1];
     bc_flag >>= 6;
 
-    //Continuing fragment of Higher Layer Message
-    if ((pb_flag & 0x1) == 0)  
+    int rf_tx_idx;
+    u8 rf_tx_len;
+    u8 *rf_tx_packet;
+
+    //packet payload begin
+    rf_tx_packet = packet + 4;
+    rf_tx_idx = 0;
+
+    //flow control
+    //create node
+    struct fragment_pkt *pkt;
+    
+    //fill in node info 1 fragment N RF packets
+    pkt =  __malloc(sizeof(struct fragment_pkt));
+    ASSERT(pkt != NULL);
+    pkt->cnt = 0;
+
+    do
     {
-        __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, packet+4, len);
-    }
-    else{
-        __ble_ops->send_packet(link->hw, LL_DATA_PDU_CONTINUE, packet+4, len);
-    }
-	/* puts("ll_send_acl_exit\n"); */
+        /* if (total_len > link->pdu_total_len.connEffectiveMaxTxOctets) */
+        /* { */
+            /* puts("greater than connEffectiveMaxTxOctets error!\n"); */
+        /* } */
+        /* if (total_len > link->pdu_total_len.connEffectiveMaxTxTime) */
+        /* { */
+            /* puts("greater than connEffectiveMaxTxTime error!\n"); */
+        /* } */
+        //Continuing fragment of Higher Layer Message
+        rf_tx_len = (total_len > link->pdu_len.connEffectiveMaxTxOctets) ? 
+            link->pdu_len.connEffectiveMaxTxOctets : total_len;
+        puts("\nTX : DATA");
+        printf_buf(rf_tx_packet, rf_tx_len);
+        if (((pb_flag & 0x1) == 0) && (rf_tx_idx == 0))
+        {
+            __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, rf_tx_packet, rf_tx_len);
+        }
+        else{
+            __ble_ops->send_packet(link->hw, LL_DATA_PDU_CONTINUE, rf_tx_packet, rf_tx_len);
+        }
+
+        rf_tx_idx += rf_tx_len;
+        rf_tx_packet += rf_tx_len;
+        total_len -= rf_tx_len; 
+
+        pkt->cnt++;
+    }while(total_len);
+
+    g_pkt_idx++;
+    list_add_tail(&pkt->entry, &pkt_list_head);
+    ll_puts("ll_send_acl_exit\n");
 }
 /* REGISTER_LLP_ACL_TXCHANNEL(ll_send_acl_packet) */
 
@@ -762,7 +837,7 @@ static void __white_list_weighted_round_robin(struct le_link *link, struct white
 {
     if (device->cnt++ == 10)
     {
-        device->cnt == 0;
+        device->cnt = 0;
         //TO*DO privacy RPA
         __white_list_upadte(link, device);
     }
@@ -1574,7 +1649,206 @@ static void ll_resolution_enable(void)
 
 /********************************************************************************/
 
+/********************************************************************************/
+/*
+ *                   DATA Length
+ */
+#define LL_TXMAXOCTETS_IS_EXCEED(x)     (x > le_data_length.priv->supportedMaxTxOctets)
+#define LL_RXMAXOCTETS_IS_EXCEED(x)     (x > le_data_length.priv->supportedMaxRxOctets)
+#define LL_TXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxTxTime)
+#define LL_RXMAXTIME_IS_EXCEED(x)       (x > le_data_length.priv->supportedMaxRxTime)
 
+static void __set_ll_effective_data_args(struct le_link *link)
+{
+    //the lesser of connMax and connRemoteMax
+    link->pdu_len.connEffectiveMaxTxOctets = 
+        (link->pdu_len.connMaxTxOctets > link->pdu_len.connRemoteMaxRxOctets) ?
+        link->pdu_len.connRemoteMaxRxOctets : link->pdu_len.connMaxTxOctets;
+    __ble_ops->ioctrl(link->hw, BLE_SET_TX_LENGTH, link->pdu_len.connEffectiveMaxTxOctets);
+
+    link->pdu_len.connEffectiveMaxRxOctets = 
+        (link->pdu_len.connMaxRxOctets > link->pdu_len.connRemoteMaxTxOctets) ?
+        link->pdu_len.connRemoteMaxTxOctets : link->pdu_len.connMaxRxOctets;
+    __ble_ops->ioctrl(link->hw, BLE_SET_RX_LENGTH, link->pdu_len.connEffectiveMaxRxOctets);
+
+    link->pdu_len.connEffectiveMaxTxTime = 
+        (link->pdu_len.connMaxTxTime > link->pdu_len.connRemoteMaxRxTime) ?
+        link->pdu_len.connRemoteMaxRxTime : link->pdu_len.connMaxTxTime;
+
+    link->pdu_len.connEffectiveMaxRxTime = 
+        (link->pdu_len.connMaxRxTime > link->pdu_len.connRemoteMaxTxTime) ?
+        link->pdu_len.connRemoteMaxTxTime : link->pdu_len.connMaxRxTime;
+}
+
+static void __ll_set_data_length_auto(struct le_link *link)
+{
+    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
+    {
+        if ((link->pdu_len.connMaxTxOctets != 27) 
+            || (link->pdu_len.connMaxRxOctets != 27))
+        {
+            puts("issuse Data Length Update Procedure 1\n");
+            ll_send_control_data(link, LL_LENGTH_REQ,
+                    "2222", 
+                    link->pdu_len.connMaxRxOctets,
+                    link->pdu_len.connMaxRxTime,
+                    link->pdu_len.connMaxTxOctets,
+                    link->pdu_len.connMaxTxTime);
+        }
+
+        if ((link->pdu_len.connMaxTxTime != 328)
+            || (link->pdu_len.connMaxRxTime != 328))
+        {
+            puts("issuse Data Length Update Procedure 2\n");
+
+            ll_send_control_data(link, LL_LENGTH_REQ,
+                    "2222", 
+                    link->pdu_len.connMaxRxOctets,
+                    link->pdu_len.connMaxRxTime,
+                    link->pdu_len.connMaxTxOctets,
+                    link->pdu_len.connMaxTxTime);
+        }
+    }
+}
+//Vol 6 Part B 4.5.10
+static void __set_ll_data_length(struct le_link *link)
+{
+    //Vol 6 Part B 4.5.10
+    le_data_length.connInitialMaxTxOctets = 
+        (le_data_length.suggestedMaxTxOctets) ? 
+        /* le_data_length.suggestedMaxTxOctets : 27; */
+        le_data_length.suggestedMaxTxOctets : le_data_length.priv->supportedMaxTxOctets;
+
+    if (LL_TXMAXOCTETS_IS_EXCEED(le_data_length.connInitialMaxTxOctets))
+    {
+        le_data_length.connInitialMaxTxOctets = le_data_length.priv->supportedMaxTxOctets;
+    }
+    /* printf("connInitialMaxTxOctets : %x\n", le_data_length.connInitialMaxTxOctets ); */
+
+    le_data_length.connInitialMaxTxTime = 
+        (le_data_length.suggestedMaxTxTime) ?
+        /* le_data_length.suggestedMaxTxTime : 328; */
+        le_data_length.suggestedMaxTxTime : le_data_length.priv->supportedMaxTxTime;
+
+    if (LL_TXMAXTIME_IS_EXCEED(le_data_length.connInitialMaxTxTime))
+    {
+        le_data_length.connInitialMaxTxTime = le_data_length.priv->supportedMaxTxTime;
+    }
+
+    //local
+    link->pdu_len.connMaxTxOctets = le_data_length.connInitialMaxTxOctets; //should be 27
+    /* link->pdu_len.connMaxRxOctets = 27; //chosen by the Controller */
+    link->pdu_len.connMaxRxOctets = le_data_length.priv->supportedMaxRxOctets; //chosen by the Controller
+
+    link->pdu_len.connMaxTxTime = le_data_length.connInitialMaxTxTime;
+    /* link->pdu_len.connMaxRxTime = 328; */
+    link->pdu_len.connMaxRxTime = le_data_length.priv->supportedMaxRxTime;
+
+    //connRemoteMaxTxOctets & connRemoteMaxRxOctets shall be 27
+    link->pdu_len.connRemoteMaxTxOctets = 27;
+    link->pdu_len.connRemoteMaxRxOctets = 27;
+    //connRemoteMaxTxTime & connRemoteMaxRxTime shall be 328
+    link->pdu_len.connRemoteMaxTxTime = 328;
+    link->pdu_len.connRemoteMaxRxTime = 328;
+
+    __set_ll_effective_data_args(link);
+
+    /* __event_oneshot_add(link, __ll_set_data_length_auto, 10); */
+}
+
+
+static void __ll_update_connMaxTxOctets(struct le_link *link, u16 octets)
+{
+    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
+    {
+        if (LL_TXMAXOCTETS_IS_EXCEED(octets)){
+            puts("LL_TXMAXOCTETS_IS_EXCEED\n");
+            return;
+        }
+        link->pdu_len.connMaxTxOctets = octets;
+    }
+}
+
+static void __ll_update_connMaxTxTime(struct le_link *link, u16 time)
+{
+    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
+    {
+        if (LL_TXMAXTIME_IS_EXCEED(time)){
+            puts("LL_TXMAXTIME_IS_EXCEED\n");
+            return;
+        }
+        link->pdu_len.connMaxTxTime = time;
+    }
+}
+
+static void __ll_update_connMaxRxOctets(struct le_link *link, u16 octets)
+{
+    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
+    {
+        if (LL_RXMAXOCTETS_IS_EXCEED(octets)){
+            puts("LL_RXMAXOCTETS_IS_EXCEED\n");
+            return;
+        }
+        link->pdu_len.connMaxRxOctets = octets;
+    }
+}
+
+static void __ll_update_connMaxRxTime(struct le_link *link, u16 time)
+{
+    if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
+    {
+        if (LL_RXMAXTIME_IS_EXCEED(time)){
+            puts("LL_RXMAXTIME_IS_EXCEED\n");
+            return;
+        }
+        link->pdu_len.connMaxRxTime = time;
+    }
+}
+
+enum{
+    LL_UPDATE_TXOCTETS = 0,
+    LL_UPDATE_TXTIMES,
+    LL_UPDATE_RXOCTETS,
+    LL_UPDATE_RXTIMES,
+};
+
+/*
+ *      change by Host or Controller
+ */
+static const ll_step_extend data_length_update_steps[];
+
+static void __ll_change_data_length_args(struct le_link *link, u8 type, u16 args)
+{
+    //spec 4.2 Vol 6,Part B,4.5.10
+    switch(type) 
+    {
+        case LL_UPDATE_TXOCTETS:       
+            __ll_update_connMaxTxOctets(link, args);
+            break;
+        case LL_UPDATE_TXTIMES:       
+            __ll_update_connMaxTxTime(link, args);
+            break;
+        case LL_UPDATE_RXOCTETS:       
+            __ll_update_connMaxRxOctets(link, args);
+            break;
+        case LL_UPDATE_RXTIMES:       
+            __ll_update_connMaxRxTime(link, args);
+            break;
+        default:
+            ASSERT(0, "%s\n", __func__);
+            break;
+    }
+
+    //The Controller may change values of connMaxTxOctets... at any time after
+    //entering the Connection State. Whenever it dose so,it shall communicate 
+    //these values to the peer device using the Data Lenght Update Procedure.
+    ll_send_control_data(link, LL_LENGTH_REQ, "2222", 
+            link->pdu_len.connMaxRxOctets,
+            link->pdu_len.connMaxRxTime,
+            link->pdu_len.connMaxTxOctets,
+            link->pdu_len.connMaxTxTime);
+}
+/********************************************************************************/
 enum{
     LL_ADV_IND = 0,
     LL_ADV_DIRECT_IND_HIGH,
@@ -1773,8 +2047,8 @@ static void __set_ll_init_state(struct le_link *link)
 #endif
 
     conn->scan_interval = le_param.conn_param.le_scan_interval;
-	printf("ll_init_state=0x%x\n", conn->scan_interval);
-	printf("ll_init_state=0x%x\n", le_param.conn_param.le_scan_interval);
+	/* printf("ll_init_state=0x%x\n", conn->scan_interval); */
+	/* printf("ll_init_state=0x%x\n", le_param.conn_param.le_scan_interval); */
 	printf_buf(le_param.conn_param.le_scan_interval, 6);
     conn->scan_windows = le_param.conn_param.le_scan_window;
 
@@ -1841,8 +2115,9 @@ static void __set_link_state(struct le_link *link, int state)
 // LL Supervision TimeOut
 static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 {
-    struct le_link *link = sys_timer_get_user(timer);
-   
+    struct le_link *link = (struct le_link*)sys_timer_get_user(timer);
+	struct ble_rx rx ;
+   	rx.data[0]=CONNECTION_TIMEOUT;	
     ASSERT(link != NULL, "%s\n", __func__);
 
     puts("LL Supervision Timeout\n");
@@ -1851,9 +2126,9 @@ static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 
     __set_link_state(link, LL_DISCONNECT);
 
-    /* sys_timer_remove(&link->timeout); */
+    sys_timer_remove(&link->timeout);
 
-    __hci_event_emit(DISCONNECT_STEPS, link, CONNECTION_TIMEOUT);
+    __hci_event_emit(DISCONNECT_STEPS, link,&rx);
 
     //resume ll thread
     thread_resume(&ll.ll_thread);
@@ -2044,7 +2319,7 @@ static void __le_advertising_report_event(struct le_link *link, struct ble_rx *r
 }
 
 
-static void __le_direct_advertising_report_event(struct le_link *link, struct ble_rx *rx, u8 event_type)
+static void __le_direct_advertising_report_event(struct le_link *link, struct ble_rx *rx)
 {
 	struct ble_scan *scan = &link->scan;
 
@@ -2056,7 +2331,7 @@ static void __le_direct_advertising_report_event(struct le_link *link, struct bl
     __hci_emit_le_meta_event(LE_DIRECT_ADVERTISING_REPORT_EVENT,
             "111A1A1", 
             1,
-            1,          //event type
+            0x1,          //event type : ADV_DIRECT_IND
             rx->txadd,  //address type
             rx->data,   //address
             rx->txadd,  //address type
@@ -2064,6 +2339,19 @@ static void __le_direct_advertising_report_event(struct le_link *link, struct bl
             link->rssi);
 }
 
+static void __le_data_length_change_event(struct le_link *link)
+{
+    ll_puts("LE_DATA_LENGTH_CHANGE_EVENT\n");
+
+
+    __hci_emit_le_meta_event(LE_DATA_LENGTH_CHANGE_EVENT,
+            "122222", 
+            link->handle,
+            link->pdu_len.connEffectiveMaxTxOctets,
+            link->pdu_len.connEffectiveMaxTxTime,
+            link->pdu_len.connEffectiveMaxRxOctets,
+            link->pdu_len.connEffectiveMaxRxTime);
+}
 
 
 
@@ -2510,6 +2798,7 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
             break;
     }
     
+    //empty packet not notify upper layer
     if (rx->llid != 1 || rx->len != 0)
     {
         //resume ll thread
@@ -2598,7 +2887,7 @@ static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
                 //InitA is RPA?
                 if (__ll_resolvable_private_addr_verify(rx->data + 6) == TRUE)
                 {
-                    __le_direct_advertising_report_event(link, rx, 0x2);
+                    __le_direct_advertising_report_event(link, rx);
                     break;
                 }
             }
@@ -3871,18 +4160,17 @@ static void __ll_send_length_req()
 
     ASSERT(link != NULL, "%s\n", __func__);
 
-    __hci_param_free(le_param.set_data_length_param);
-
-    //TO*DO
-    u16 rxoctets;
-    u16 rxtime;
+    link->pdu_len.connMaxTxOctets   = param->txoctets;
+    link->pdu_len.connMaxTxTime     = param->txtime;
 
     ll_send_control_data(link, LL_LENGTH_REQ,
             "2222", 
-            rxoctets,
-            rxtime,
+            link->pdu_len.connMaxRxOctets,
+            link->pdu_len.connMaxRxTime,
             param->txoctets,
             param->txtime);
+
+    __hci_param_free(le_param.set_data_length_param);
 }
 
 static void __ll_receive_length_req(struct le_link *link, struct ble_rx *rx)
@@ -3895,26 +4183,29 @@ static void __ll_receive_length_req(struct le_link *link, struct ble_rx *rx)
     u16 remote_txoctets;
     u16 remote_txtime;
     
-    remote_rxoctets = READ_BT16(data, 0);
-    remote_rxtime   = READ_BT16(data, 2);
-    remote_txoctets = READ_BT16(data, 4);
-    remote_txtime   = READ_BT16(data, 6);
+    //It shall immediately start using the updated values for all New Data Channel PDUs 
+    link->pdu_len.connRemoteMaxRxOctets       = READ_BT16(data, 0);
+    link->pdu_len.connRemoteMaxRxTime         = READ_BT16(data, 2);
+    link->pdu_len.connRemoteMaxTxOctets       = READ_BT16(data, 4);
+    link->pdu_len.connRemoteMaxTxTime         = READ_BT16(data, 6);
+
+    printf("connRemoteMaxRxOctets %x\n", link->pdu_len.connRemoteMaxRxOctets);
+    printf("connRemoteMaxRxTime   %x\n", link->pdu_len.connRemoteMaxRxTime  );
+    printf("connRemoteMaxTxOctets %x\n", link->pdu_len.connRemoteMaxTxOctets);
+    printf("connRemoteMaxTxTime   %x\n", link->pdu_len.connRemoteMaxTxTime  );
+
+
+    __set_ll_effective_data_args(link);
 }
 
 static void __ll_send_length_rsp_auto(struct le_link *link)
 {
-    //TO*DO
-    u16 rxoctets;
-    u16 rxtime;
-    u16 txoctets;
-    u16 txtime;
-
     ll_send_control_data(link, LL_LENGTH_RSP,
             "2222", 
-            rxoctets,
-            rxtime,
-            txoctets,
-            txtime);
+            link->pdu_len.connMaxRxOctets,
+            link->pdu_len.connMaxRxTime,
+            link->pdu_len.connMaxTxOctets,
+            link->pdu_len.connMaxTxTime);
 }
 
 static void __ll_receive_length_rsp(struct le_link *link, struct ble_rx *rx)
@@ -3927,10 +4218,17 @@ static void __ll_receive_length_rsp(struct le_link *link, struct ble_rx *rx)
     u16 remote_txoctets;
     u16 remote_txtime;
     
-    remote_rxoctets = READ_BT16(data, 0);
-    remote_rxtime   = READ_BT16(data, 2);
-    remote_txoctets = READ_BT16(data, 4);
-    remote_txtime   = READ_BT16(data, 6);
+    link->pdu_len.connRemoteMaxRxOctets = READ_BT16(data, 0);
+    link->pdu_len.connRemoteMaxRxTime   = READ_BT16(data, 2);
+    link->pdu_len.connRemoteMaxTxOctets = READ_BT16(data, 4);
+    link->pdu_len.connRemoteMaxTxTime   = READ_BT16(data, 6);
+
+    printf("connRemoteMaxRxOctets %x\n", link->pdu_len.connRemoteMaxRxOctets);
+    printf("connRemoteMaxRxTime   %x\n", link->pdu_len.connRemoteMaxRxTime  );
+    printf("connRemoteMaxTxOctets %x\n", link->pdu_len.connRemoteMaxTxOctets);
+    printf("connRemoteMaxTxTime   %x\n", link->pdu_len.connRemoteMaxTxTime  );
+
+    __set_ll_effective_data_args(link);
 }
 
 
@@ -3958,6 +4256,7 @@ static void le_data_length_update(
 
         le_param.set_data_length_param = __hci_param_malloc(malloc_len);
 
+        memcpy(le_param.set_data_length_param, param, malloc_len);
 
         ll_control_data_step_start(data_length_update_steps);
     }else{
@@ -3986,6 +4285,7 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
     
     if (!LL_IS_FINSH())
     {
+        //accident break
         procedure =  ll_control_last_step();
     }
     
@@ -4039,6 +4339,7 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
             __hci_event_emit(procedure, link, rx);
             break;
         case DATA_LENGTH_UPDATE_STEPS:
+            __le_data_length_change_event(link);
             break;
     }
 }
@@ -4150,13 +4451,21 @@ static void master_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             break;
         
         case LL_LENGTH_REQ:
+            ll_puts("--LL_LENGTH_REQ\n");
             if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
             {
                 __ll_receive_length_req(link, rx);
                 __ll_send_length_rsp_auto(link);
+
+
+                __le_data_length_change_event(link);
+            }
+            else{
+                __ll_send_unknow_rsp_auto(link, rx);
             }
             break;
         case LL_LENGTH_RSP:
+            ll_puts("--LL_LENGTH_RSP\n");
             __ll_receive_length_rsp(link, rx);
             break;
 
@@ -4314,6 +4623,11 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             {
                 __ll_receive_length_req(link, rx);
                 __ll_send_length_rsp_auto(link);
+
+                __le_data_length_change_event(link);
+            }
+            else{
+                __ll_send_unknow_rsp_auto(link, rx);
             }
             break;
         case LL_LENGTH_RSP:
@@ -4771,12 +5085,6 @@ __re_adv:
     return;
 }
 
-/*-------------------------------------------------------------------------
- *
- * 							api
- *
- * ----------------------------------------------------------------------*/
-
 
 
 static int ll_open(int state)
@@ -4809,11 +5117,14 @@ static int ll_open(int state)
 
 	__ble_ops->handler_register(link->hw, link, &ll_handler);
     
-    //privacy
+    //feature - privacy
     if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY))
     {
         __ble_ops->ioctrl(link->hw, BLE_SET_PRIVACY_ENABLE, le_param.resolution_enable);
     }
+
+    //feature - data length extension
+    __set_ll_data_length(link);
 
 	__set_link_state(link, state);
 
@@ -4873,6 +5184,14 @@ static int ll_handler_register(const struct lc_handler *handler)
 }
 
 
+static void ll_data_length_init(void)
+{
+    memset(le_data_length, 0x0, sizeof(struct ll_data_pdu_length));
+
+    /* printf("connInitialMaxTxTime: %x\n", le_data_length.connInitialMaxTxTime); */
+    le_data_length.priv = &ll_data_pdu_length_ro;
+}
+
 
 static void *ll_init(struct hci_parameter *hci_param)
 {
@@ -4896,7 +5215,9 @@ static void *ll_init(struct hci_parameter *hci_param)
         //privacy
         ll_resolving_list_init();
     }
+    INIT_LIST_HEAD(&pkt_list_head);
 
+    ll_data_length_init();
     
 	le_event_buf = lbuf_init(ll_buf, 512);
 
@@ -4935,6 +5256,49 @@ static const struct ll_interface ll_api = {
 REGISTER_LL_INTERFACE(ll_api);
 
 
+/*-------------------------------------------------------------------------
+ *
+ * 							API
+ *
+ * ----------------------------------------------------------------------*/
+struct ll_data_pdu_length_read_only *ll_read_maximum_data_length(void)
+{
+    return le_data_length.priv;
+}
+
+struct ll_data_pdu_length *ll_read_suggested_default_data_length(void)
+{
+    return &le_data_length;
+}
+
+void ll_write_suggested_default_data_length(const u8 *data)
+{
+    //Range 0x001B - 0x00FB
+    le_data_length.suggestedMaxTxOctets = READ_BT16(data, 0);
+    printf("suggestedMaxTxOctets : %x\n", le_data_length.suggestedMaxTxOctets);
+
+    //Range 0x0148 - 0x0848
+    le_data_length.suggestedMaxTxTime = READ_BT16(data, 2);
+    printf("suggestedMaxTxOctets : %x\n", le_data_length.suggestedMaxTxTime);
+}
+
+u8 ll_packet_is_send(void)
+{
+    struct fragment_pkt *p, *n;
+
+	list_for_each_entry_safe(p, n, &pkt_list_head, entry){
+        /* printf("ll_is_packet_send pkt cnt %x\n", p->cnt); */
+        p->cnt--;
+        if (!p->cnt)
+        {
+            g_pkt_idx--;
+            list_del(&p->entry);
+            __free(p);
+            return 1;
+        }
+        return 0;
+    }
+}
 /* static const struct le_link_control_interface le_link_control_api */
 /* { */
     /* .phy_link_init      = ; */

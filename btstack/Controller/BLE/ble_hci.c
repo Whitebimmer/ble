@@ -61,9 +61,15 @@ struct hci_tx {
 struct lbuff_head *hci_cmd_ptr sec(.btmem_highly_available);
 struct lbuff_head *hci_event_buf sec(.btmem_highly_available);
 struct lbuff_head *hci_rx_buf sec(.btmem_highly_available);
-struct lbuff_head *hci_tx_buf sec(.btmem_highly_available);
 
-static u8 hci_buf[512+512+1024+512] __attribute__((aligned(4)));
+u8 hci_buf[CONTROLLER_MAX_TOTAL_PAYLOAD] __attribute__((aligned(4)));
+
+struct flow_control{
+    u8 free_num_hci_command_packets;
+    u8 free_num_hci_acl_packets;
+};
+
+static struct flow_control ll_flow_control;
 
 //HIC SET/READ LE
 static struct le_parameter *le_param_t sec(.btmem_highly_available);
@@ -129,7 +135,7 @@ static void __hci_emit_event_of_cmd_complete(u16 opcode, const char *format, ...
 	event = __alloc_event(3, format);
 	ASSERT(event != NULL);
 	event->event = HCI_EVENT_COMMAND_COMPLETE;
-	event->data[0] = 3; //Num_HCI_Command_Packets
+	event->data[0] = ll_flow_control.free_num_hci_command_packets; //Num_HCI_Command_Packets
 	event->data[1] = opcode;
 	event->data[2] = opcode>>8;
 
@@ -157,7 +163,7 @@ static void __hci_emit_event_of_cmd_status(u8 status, u16 opcode)
 	event->event = HCI_EVENT_COMMAND_STATUS;
     event->len = 4;
 	event->data[0] = status;
-    event->data[1] = 3;//Num_HCI_Command_Packets
+    event->data[1] = ll_flow_control.free_num_hci_command_packets;//Num_HCI_Command_Packets
 	event->data[2] = opcode;
 	event->data[3] = opcode>>8;
 
@@ -576,8 +582,12 @@ static void le_hci_tx_handler(struct le_link *link, struct ble_tx *tx)
         case LL_DATA_PDU_START:
         case LL_DATA_PDU_CONTINUE:
             //LL Ack
-            le_send_event(HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS, "1H2", 1,
-                    link->handle, 1);
+            if (ll_packet_is_send())   
+            {
+                ll_flow_control.free_num_hci_acl_packets++;
+                le_send_event(HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS, "1H2", 1,
+                        link->handle, 1);
+            }
             break;
         case LL_CONTROL_PDU:
             /* tx_ctrl_pdu_handler(link, tx); */
@@ -734,16 +744,17 @@ void ctrl_baseband_cmd_handler(u16 opcode, u8 *data, int len)
 
 static const struct hci_read_parameter hci_read_param = {
     .features = {HOLD_MODE|SNIFF_MODE|POWER_CONTROL_REQUESTS},
+#ifdef BR17
+    .public_addr = {0x2e, 0x3a, 0xba, 0x98, 0x36, 0x54},
+#endif
 #ifdef BR16
     /* .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x36, 0x54}, */
-    .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x22, 0x71},
-#endif
-#ifdef BR17
-    /* .public_addr = {0x3e, 0x3a, 0xba, 0x98, 0x36, 0x54}, */
-    .public_addr = {0xee, 0x3a, 0xba, 0x98, 0x22, 0x71},
-#endif
-#ifdef BT16
-    .public_addr = {0x4e, 0x3a, 0xba, 0x98, 0x36, 0x54},
+    #ifdef ROLE_MASTER
+    .public_addr = {0x8e, 0x3a, 0xba, 0x98, 0x22, 0x71},
+    #endif
+    #ifdef ROLE_SLAVE
+    .public_addr = {0x9e, 0x3a, 0xba, 0x98, 0x22, 0x71},
+    #endif
 #endif
 };
 
@@ -990,6 +1001,25 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
             __hci_emit_event_of_cmd_complete(opcode, "12", 0,
                     READ_CONNECTION_HANDLE(data));
             break;
+        case HCI_LE_READ_SUGGESTED_DEFAULT_DATA_LENGTH:
+			hci_puts("HCI_LE_READ_SUGGESTED_DEFAULT_DATA_LENGTH\n");
+            {
+                struct ll_data_pdu_length *priv;
+
+                priv = ll_read_suggested_default_data_length();
+                __hci_emit_event_of_cmd_complete(opcode, "122", 0,
+                    priv->connInitialMaxTxOctets,
+                    priv->connInitialMaxTxTime);
+            }
+            
+            break;
+        case HCI_LE_WRITE_SUGGESTED_DEFAULT_DATA_LENGTH:
+			hci_puts("HCI_LE_WRITE_SUGGESTED_DEFAULT_DATA_LENGTH\n");
+            {
+                ll_write_suggested_default_data_length(data);
+                __hci_emit_event_of_cmd_complete(opcode, "1", 0);
+            }
+            break;
             
         case HCI_LE_ADD_DEVICE_TO_RESOLVING_LIST:
 			hci_puts("HCI_LE_ADD_DEVICE_TO_RESOLVING_LIST\n");
@@ -1040,6 +1070,20 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
             __ll_api->set_RPA_timeout(data);
             __hci_emit_event_of_cmd_complete(opcode, "1", 0);
             break;
+        case HCI_LE_READ_MAXIMUM_DATA_LENGTH:
+			hci_puts("HCI_LE_READ_MAXIMUM_DATA_LENGTH\n");
+            {
+                struct ll_data_pdu_length_read_only *ll_data_pdu_length_ro;
+                
+                ll_data_pdu_length_ro = ll_read_maximum_data_length();
+
+                __hci_emit_event_of_cmd_complete(opcode, "12222", 0,
+                        ll_data_pdu_length_ro->supportedMaxTxOctets,
+                        ll_data_pdu_length_ro->supportedMaxTxTime,
+                        ll_data_pdu_length_ro->supportedMaxRxOctets,
+                        ll_data_pdu_length_ro->supportedMaxRxTime);
+            }
+            break;
             
         default:
             puts("cmd not finish\n");
@@ -1081,7 +1125,7 @@ static int ble_hci_command_process()
 	}
 
 	lbuf_free(cmd);
-
+    ll_flow_control.free_num_hci_command_packets++;
 
     {
         awake = 1;
@@ -1104,24 +1148,32 @@ int le_hci_push_command(u8 *packet, int size)
 	cmd->size = size;
 	memcpy(cmd->data, packet, size);
 
+    ll_flow_control.free_num_hci_command_packets--;
 	lbuf_push(cmd);
 
 	return 0;
 }
 
 
+#define READ_ACL_CONNECTION_HANDLE(buffer) (READ_BT_16(buffer,0) & 0x0fff)
+#define READ_ACL_SIZE(buffer)           READ_BT_16(buffer,2)
 
 int le_hci_push_acl_data(u8 *packet, int len)
 {
-	struct hci_tx *tx;
+    int handle;
+    u16 size;
 
-    tx = lbuf_alloc(hci_tx_buf, sizeof(*tx)+len);
-    ASSERT(tx != NULL);
+    /* hci_puts("\nTX : DATA "); */
+    /* hci_buf(tx, sizeof(*tx)+tx->len); */
+    handle = READ_ACL_CONNECTION_HANDLE(packet);
+    size = READ_ACL_SIZE(packet);
+    
+    /* printf_buf(packet->data, packet->len - 4); */
+    /* printf_buf(packet->data, size); */
 
-    tx->len = len;
-    memcpy(tx->head, packet, len);
+    ll_send_acl_packet(handle, packet, len);
 
-    lbuf_push(tx);
+    ll_flow_control.free_num_hci_acl_packets--;
 
 	return 0;
 }
@@ -1133,20 +1185,30 @@ static void ble_hci_h4_download_data(int packet_type, u8 *packet, int len)
         /* hci_puts("\nTX CMD "); */
         /* hci_buf(packet, len); */
 		le_hci_push_command(packet, len);
+        thread_resume(&hci_thread);
 	} else {
         /* hci_puts("\nTX DATA "); */
         /* hci_buf(packet, len); */
+        //direct to RF tx buf
 		le_hci_push_acl_data(packet, len);
 	}
     //hci resume thread
-    thread_resume(&hci_thread);
-
 }
 REGISTER_H4_CONTROLLER(ble_hci_h4_download_data);
 
+static int ble_hci_h4_can_send_packet_now(u8 packet_type)
+{
+    if (packet_type == HCI_ACL_DATA_PACKET){
+        
+        return 1;
+    }else {
 
-#define READ_ACL_CONNECTION_HANDLE(buffer) (READ_BT_16(buffer,0) & 0x0fff)
-#define READ_ACL_SIZE(buffer)           READ_BT_16(buffer,2)
+        return 1;
+    }
+}
+REGISTER_H4_CONTROLLER_FLOW_CONTROL(ble_hci_h4_can_send_packet_now);
+
+
 
 
 static int ble_hci_h4_upload_data()
@@ -1166,30 +1228,11 @@ static int ble_hci_h4_upload_data()
 
 	rx = lbuf_pop(hci_rx_buf);
 	if (rx) {
-        /* hci_puts("\nRX : DATA "); */
-        /* hci_buf(rx->head, rx->len+sizeof(rx->head)); */
+        hci_puts("\nRX : DATA ");
+        hci_buf(rx->head, rx->len+sizeof(rx->head));
 		ble_h4_packet_handler(HCI_ACL_DATA_PACKET, rx->head, rx->len+sizeof(rx->head));
 		lbuf_free(rx);
 	}
-
-    tx = lbuf_pop(hci_tx_buf);
-    if (tx){
-        int handle;
-        u16 size;
-
-        /* hci_puts("\nTX : DATA "); */
-        /* hci_buf(tx, sizeof(*tx)+tx->len); */
-        handle = READ_ACL_CONNECTION_HANDLE(tx->head);
-        size = READ_ACL_SIZE(tx->head);
-        
-        /* printf_buf(packet->data, packet->len - 4); */
-        /* printf_buf(packet->data, size); */
-
-        ll_send_acl_packet(handle, tx->head, tx->len - 4);
-        /* ll_send_acl_packet(link, packet->data, size); */
-        //llp_acl_txchannel(handle, tx->data, tx->len - 4);
-        lbuf_free(tx);
-    }
 
     return awake;
 }
@@ -1205,7 +1248,6 @@ static void hci_thread_process(struct thread *th)
     //wait all channel idle
     if ((lbuf_empty(hci_event_buf))
         && (lbuf_empty(hci_rx_buf))
-        && (lbuf_empty(hci_tx_buf))
         && (lbuf_empty(hci_cmd_ptr)))
     {
         //suspend hci thread now
@@ -1290,13 +1332,23 @@ static void hci_param_init(void)
     /* printf_buf(hci_param.resolvable_private_addr, 6); */
 }
 
+#define HCI_BUF_CMD_POS         0
+#define HCI_BUF_EVENT_POS       (HCI_BUF_CMD_POS + CONTROLLER_MAX_CMD_PAYLOAD)
+#define HCI_BUF_RX_POS          (HCI_BUF_EVENT_POS + CONTROLLER_MAX_EVENT_PAYLOAD)
+
+static void lbuf_debug(void);
+
 int hci_firmware_init()
 {
-	hci_cmd_ptr = lbuf_init(hci_buf, 512);
-	hci_event_buf = lbuf_init(hci_buf+512, 512);
-	hci_rx_buf = lbuf_init(hci_buf+1024, 1024);
-	hci_tx_buf = lbuf_init(hci_buf+2048, 512);
+    //host to controller
+	hci_cmd_ptr = lbuf_init(hci_buf + HCI_BUF_CMD_POS, CONTROLLER_MAX_CMD_PAYLOAD);
+    ll_flow_control.free_num_hci_command_packets = 4;
 
+    //controller to host
+	hci_event_buf = lbuf_init(hci_buf + HCI_BUF_EVENT_POS, CONTROLLER_MAX_EVENT_PAYLOAD);
+	hci_rx_buf = lbuf_init(hci_buf + HCI_BUF_RX_POS, CONTROLLER_MAX_RX_PAYLOAD);
+
+    ll_flow_control.free_num_hci_acl_packets = le_param_t->priv->buf_param.total_num_le_data_pkt;
     hci_param_init();
 
 	thread_create(&hci_thread, hci_thread_process, 3);
@@ -1307,9 +1359,24 @@ int hci_firmware_init()
     }
     /* aes128_test(); */
     /* debug_ll_privacy(); */
+    lbuf_debug();
 }
 
-
+static void lbuf_debug(void)
+{
+    u8 *ptr;
+    ptr = lbuf_alloc(hci_rx_buf, 10);
+    printf("lbuf is empty : %x\n", lbuf_empty(hci_rx_buf));
+    lbuf_push(ptr);
+    printf("lbuf is empty : %x\n", lbuf_empty(hci_rx_buf));
+    printf("lbuf have next: %x\n", lbuf_have_next(hci_rx_buf));
+    printf("lbuf is empty : %x / pop %x\n", lbuf_empty(hci_rx_buf), lbuf_pop(hci_rx_buf));
+    printf("lbuf have next: %x\n", lbuf_have_next(hci_rx_buf));
+    printf("lbuf is empty : %x / pop %x\n", lbuf_empty(hci_rx_buf), lbuf_pop(hci_rx_buf));
+    printf("lbuf have next: %x\n", lbuf_have_next(hci_rx_buf));
+    lbuf_free(ptr);
+    printf("lbuf is empty : %x\n", lbuf_empty(hci_rx_buf));
+}
 
 
 

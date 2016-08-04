@@ -983,7 +983,18 @@ static void __set_addr_match_disable(struct ble_param *ble_fp)
     ble_fp->OPTCNTL |= BIT(4);
 }
 
+static void __set_rx_length(struct ble_hw *hw, u16 len)
+{
+	struct ble_param *ble_fp = &hw->ble_fp;
+	ble_fp->RXMAXBUF = len;
 
+    hw->rx_octets = len;
+}
+
+static void __set_tx_length(struct ble_hw *hw, u16 len)
+{
+    hw->tx_octets = len;
+}
 //===================================//
 //sel: 1    auto_set agc
 //sel: 0    set agc = inc (0~15)
@@ -2261,7 +2272,10 @@ static void le_hw_close(struct ble_hw *hw)
 
 static void le_hw_send_packet(struct ble_hw *hw, u8 llid, u8 *packet, int len)
 {
+    ASSERT(len <= hw->tx_octets, "%s\n", __func__);
+
 	struct ble_tx *tx = le_hw_alloc_tx(hw, 0, llid, len);
+	/* struct ble_tx *tx = le_hw_alloc_tx(hw, 0, llid, hw->tx_octets); */
 
 	ASSERT(tx != NULL);
 
@@ -2327,6 +2341,14 @@ static void le_hw_ioctrl(struct ble_hw *hw, int ctrl, ...)
         case BLE_SET_RPA_RESOLVE_RESULT:
             /* puts("BLE_SET_RPA_RESOLVE_RESULT\n");  */
             __set_rpa_resolve_result(hw, va_arg(argptr, int), va_arg(argptr, int));
+            break;
+        case BLE_SET_RX_LENGTH:
+            puts("BLE_SET_RX_LENGTH\n");
+            __set_rx_length(hw, va_arg(argptr, u16));
+            break;
+        case BLE_SET_TX_LENGTH:
+            puts("BLE_SET_TX_LENGTH\n");
+            __set_tx_length(hw, va_arg(argptr, u16));
             break;
 		default:
 			break;
