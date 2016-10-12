@@ -10,7 +10,6 @@ export OR32_NAME = $(PLATFORM)
 
 deps = $(objs_c:.o=.d)
 deps_bs = $(objs_bs:.o=.d)
-deps_ls = $(objs_ls:.o=.d)
 
 #*************************************************************************
 #
@@ -20,25 +19,29 @@ deps_ls = $(objs_ls:.o=.d)
 ifeq ($(HOST_OS), windows) 
 
 .PHONY: all clean test
+# a: b c
+	# @echo "-----"
+
+# b:
+	# @echo "*****"
+
+# c:
+	# @echo "^^^^^"
  
 all: object 
 ifeq ($(GEN_LIB),y)
 	@if exist $(LIB_DIR) (rd /s/q $(LIB_DIR))
 	@mkdir $(LIB_DIR)
 	@if exist $(INCLUDE_LIB_PATH)\$(objs_a) del $(INCLUDE_LIB_PATH)\$(objs_a)
-	$(V) $(AR) $(AR_ARGS) $(LIB_DIR)\$(objs_a) $(objs_c) $(objs_ls) $(objs_bs) 
+	$(V) $(AR) $(AR_ARGS) $(LIB_DIR)\$(objs_a) $(objs_c) $(objs_bs) 
 	@copy $(LIB_DIR)\*.a $(INCLUDE_LIB_PATH)  /Y
 else
-	$(V) $(LD) $(LD_ARGS) $(APP_DIR)\$(OR32_NAME).or32 $(objs_c) $(objs_ls) $(objs_bs) $(LIBS) $(SYS_LIBS) $(LINKER)
+	$(V) $(LD) $(LD_ARGS) $(APP_DIR)\$(OR32_NAME).or32 $(objs_c) $(objs_bs) $(LIBS) $(SYS_LIBS) $(LINKER)
 	@$(APP_DIR)\download.bat $(OR32_NAME) $(OBJDUMP) $(OBJCOPY) $(SDK_TYPE)
 endif
  
  
-object: $(objs_ls) $(objs_bs) $(objs_c) $(deps)
-$(objs_ls):%.o:%.s
-	@if exist $(subst /,\,$@) del $(subst /,\,$@)
-	$(V) $(CC)  $(SYS_INCLUDES) $(INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) -c $< -o $@
- 
+object: $(objs_bs) $(objs_c) $(deps)
 $(objs_bs):%.o:%.S
 	@if exist $(subst /,\,$@) del $(subst /,\,$@)
 	$(V) $(CC)  $(SYS_INCLUDES) $(INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) $(CC_ARG) -c $< -o $@
@@ -56,17 +59,11 @@ $(deps_bs):%.d:%.S
 	$(V) $(CC) -MM $(SYS_INCLUDES) $(INCLUDES) $< > $@.1
 	$(V) $(DEPENDS) $@ $(dir $@) $(subst /,\,$@)
 
-$(deps_ls):%.d:%.s
-	$(V) $(CC) -MM $(SYS_INCLUDES) $(INCLUDES) $< > $@.1
-	$(V) $(DEPENDS) $@ $(dir $@) $(subst /,\,$@)
- 
- 
 clean:
 	@for /r %%i in (*.o) do del %%i
 	@for /r %%i in (*.d) do del %%i
 	@for /r %%i in (*.d.1) do del %%i
 	@if exist $(APP_DIR)\$(OR32_NAME).or32 del $(APP_DIR)\$(OR32_NAME).or32
-	@if exist $(INCLUDE_LIB_PATH)\$(objs_a) del $(INCLUDE_LIB_PATH)\$(objs_a)
 
 endif
 
@@ -120,8 +117,7 @@ clean:
 	@ -rm -f $(objs_c) $(deps) 
 	@ -rm -f $(objs_bs) $(deps_bs)
 	@ -rm -f $(objs_ls) $(deps_ls) 
-	@ -rm -f $(LIB_DIR)/$(objs_a) $(APP_DIR)/$(OR32_NAME).or32
-	@ -rm -f $(INCLUDE_LIB_PATH)/$(objs_a)
+	@ -rm -f $(APP_DIR)/$(OR32_NAME).or32
 
 endif
 
