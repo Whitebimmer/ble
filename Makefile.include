@@ -1,0 +1,59 @@
+
+# --------------Project path Setting-----------------------
+export APP_DIR = download$(SLASH)$(PLATFORM)
+
+export MAKE_RULE = $(abspath .)/rule.mk
+export DEPENDS = $(abspath .)/depend.bat
+
+export LINKER = \
+-T$(APP_DIR)\ram.ld \
+-M=$(APP_DIR)\map.txt \
+
+export CC_ARG = \
+-DNOFLOAT \
+-DEMBEDDED \
+-DBR17\
+-DFPGA\
+
+export INCLUDES = \
+-I../include \
+-I../cpu/$(PLATFORM)/include \
+
+
+.PHONY: all clean usage
+
+ifeq ($(HOST_OS), windows) 
+all:
+	@for /f %%i in ('dir /ad /b') do \
+		if exist %%i\Makefile make -C %%i || exit 1 \
+
+
+clean:
+	@for /f %%i in ('dir /ad /b') do \
+		if exist %%i\Makefile make clean -C %%i
+
+endif
+
+ifeq ($(HOST_OS), linux) 
+
+makedir = $(shell find -maxdepth 1 -type d)
+
+all:
+	@for i in $(makedir); do \
+		if [ $$i != "." ] && [ -f $$i/Makefile ]; then \
+			make -C $$i || exit 1; \
+		fi \
+	done
+
+clean:
+	@for i in $(makedir); do \
+		if [ $$i != "." ] && [ -f $$i/Makefile ]; then \
+			make clean -C $$i || exit 1; \
+		fi \
+	done
+
+usage:
+	@echo Complie project	: make
+	@echo Clean project   	: make clean
+
+endif

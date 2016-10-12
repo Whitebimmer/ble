@@ -1,10 +1,40 @@
-export shell = $(SHELL)
-# export shell = cmd
-# export CPU = bt16
-export CPU = br16
+# -----------------Usage --------------------------
 
-#------------------------Main tree - CPU   
--include Makefile.$(CPU)
+# 1.编译工程:		make;
+# 2.清理工程:		make clean;
+# --------------basic setting-----------------------
+# ifeq ($(LANG),)
+ifeq ($(shell uname),Linux)
+export HOST_OS = linux
+else
+export HOST_OS = windows
+endif
+#
 
+#配置下载CPU架构(bfin/pi32/pi32_lto)
+export ARCH = pi32_lto
+
+#配置下载目标平台(br16/br17)
+export CHIPID = br17
+
+#配置项目文件指向(br16/br17)
+export PLATFORM = br17
+
+#配置是否FPGA 验证平台(FPGA/CHIP)
+export TYPE=CHIP
+
+ifeq ($(HOST_OS), linux) 
+export SLASH=/
+endif
+
+ifeq ($(HOST_OS), windows) 
+export SLASH=\\
+endif
+
+#配置是否显示编译信息(@/ )
+export V=@
+
+
+-include tools$(SLASH)compiler$(SLASH)Makefile.$(ARCH)
 
 
