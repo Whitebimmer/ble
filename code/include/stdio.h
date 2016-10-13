@@ -3,7 +3,7 @@
 
 #include "stdarg.h"
  
-int puts(char *out); 
+int puts(const char *out); 
 
 int printf(const char *format, ...);
 

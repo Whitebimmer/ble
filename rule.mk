@@ -8,8 +8,8 @@ objs_bs = $(abspath $(obj_S))
 export OR32_NAME = $(PLATFORM)
 
 
-deps = $(objs_c:.o=.d)
-deps_bs = $(objs_bs:.o=.d)
+deps = $(objs:.o=.d)
+deps_bs = $(obj_S:.o=.d)
 
 #*************************************************************************
 #
@@ -37,6 +37,7 @@ ifeq ($(GEN_LIB),y)
 	@copy $(LIB_DIR)\*.a $(INCLUDE_LIB_PATH)  /Y
 else
 	$(V) $(LD) $(LD_ARGS) $(APP_DIR)\$(OR32_NAME).or32 $(objs_c) $(objs_bs) $(LIBS) $(SYS_LIBS) $(LINKER)
+	@echo "^^^^^"
 	@$(APP_DIR)\download.bat $(OR32_NAME) $(OBJDUMP) $(OBJCOPY) $(SDK_TYPE)
 endif
  
@@ -44,19 +45,19 @@ endif
 object: $(objs_bs) $(objs_c) $(deps)
 $(objs_bs):%.o:%.S
 	@if exist $(subst /,\,$@) del $(subst /,\,$@)
-	$(V) $(CC)  $(SYS_INCLUDES) $(INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) $(CC_ARG) -c $< -o $@
+	$(V) $(CC)  $(INCLUDES) $(SYS_INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) $(CC_ARG) -c $< -o $@
  
 $(objs_c):%.o:%.c
 	@if exist $(subst /,\,$@) del $(subst /,\,$@)
 	@echo + CC $<
-	$(V) $(CC)  $(SYS_INCLUDES) $(INCLUDES) $(CC_ARGS) $(CC_ARG) -c $< -o $@
+	$(V) $(CC)  $(INCLUDES) $(SYS_INCLUDES) $(CC_ARGS) $(CC_ARG) -c $< -o $@
  
 $(deps):%.d:%.c
-	$(V) $(CC) -MM $(SYS_INCLUDES) $(INCLUDES) $< > $@.1
+	$(V) $(CC) -MM $(INCLUDES) $(SYS_INCLUDES) $< > $@.1
 	$(V) $(DEPENDS) $@ $(dir $@) $(subst /,\,$@)
 
 $(deps_bs):%.d:%.S
-	$(V) $(CC) -MM $(SYS_INCLUDES) $(INCLUDES) $< > $@.1
+	$(V) $(CC) -MM $(INCLUDES) $(SYS_INCLUDES) $< > $@.1
 	$(V) $(DEPENDS) $@ $(dir $@) $(subst /,\,$@)
 
 clean:
@@ -92,25 +93,25 @@ endif
 object: $(objs_ls) $(objs_bs) $(objs_c) $(deps)
 $(objs_ls):%.o:%.s
 	@if [ -f $@ ]; then rm $@; fi
-	$(V) $(CC)  $(SYS_INCLUDES) $(INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) -c $< -o $@
+	$(V) $(CC)  $(INCLUDES) $(SYS_INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) -c $< -o $@
  
 $(objs_bs):%.o:%.S
 	@if [ -f $@ ]; then rm $@; fi
-	$(V) $(CC)  $(SYS_INCLUDES) $(INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) $(CC_ARG) -c $< -o $@
+	$(V) $(CC)  $(INCLUDES) $(SYS_INCLUDES) -D__ASSEMBLY__ $(CC_ARGS) $(CC_ARG) -c $< -o $@
  
 $(objs_c):%.o:%.c
 	@if [ -f $@ ]; then rm $@; fi
 	@echo + CC $<
-	$(V) $(CC)  $(SYS_INCLUDES) $(INCLUDES) $(CC_ARGS) $(CC_ARG) -c $< -o $@
+	$(V) $(CC)  $(INCLUDES) $(SYS_INCLUDES) $(CC_ARGS) $(CC_ARG) -c $< -o $@
  
 $(deps):%.d:%.c
-	$(V) $(CC) -MM $(SYS_INCLUDES) $(INCLUDES) $< | sed 's,\($(notdir $*)\)\.o[:]*,$(dir $@)\1.o $@ : ,g' > $@
+	$(V) $(CC) -MM $(INCLUDES) $(SYS_INCLUDES) $< | sed 's,\($(notdir $*)\)\.o[:]*,$(dir $@)\1.o $@ : ,g' > $@
 
 $(deps_bs):%.d:%.S
-	$(V) $(CC) -MM $(SYS_INCLUDES) $(INCLUDES) $< | sed 's,\($(notdir $*)\)\.o[:]*,$(dir $@)\1.o $@ : ,g' > $@
+	$(V) $(CC) -MM $(INCLUDES) $(SYS_INCLUDES) $< | sed 's,\($(notdir $*)\)\.o[:]*,$(dir $@)\1.o $@ : ,g' > $@
 
 $(deps_ls):%.d:%.s
-	$(V) $(CC) -MM $(SYS_INCLUDES) $(INCLUDES) $< | sed 's,\($(notdir $*)\)\.o[:]*,$(dir $@)\1.o $@ : ,g' > $@
+	$(V) $(CC) -MM $(INCLUDES) $(SYS_INCLUDES) $< | sed 's,\($(notdir $*)\)\.o[:]*,$(dir $@)\1.o $@ : ,g' > $@
  
  
 clean:

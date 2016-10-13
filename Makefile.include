@@ -6,8 +6,8 @@ export MAKE_RULE = $(abspath .)/rule.mk
 export DEPENDS = $(abspath .)/depend.bat
 
 export LINKER = \
--T$(APP_DIR)/ram.ld \
--M=$(APP_DIR)/map.txt \
+-T../download/$(PLATFORM)/ram.ld \
+-M=../download/$(PLATFORM)/map.txt \
 
 
 .PHONY: all clean usage
@@ -16,12 +16,10 @@ ifeq ($(HOST_OS), windows)
 all:
 	@echo $(MAKE_RULE)
 	@echo $(DEPENDS)
-	@for /f %%i in ('dir /ad /b') do \
-		if exist %%i\Makefile make -C %%i || exit 1 \
+	@make -C code || exit 1 \
 
 clean:
-	@for /f %%i in ('dir /ad /b') do \
-		if exist %%i\Makefile make clean -C %%i
+	@make clean -C code || exit 1 \
 
 endif
 

@@ -172,25 +172,26 @@ u8 ram2_memory[0x100] sec(.db_memory);
 
 int main()
 {
-
     /* printf("CLK_CON0 : %x\n", CLK_CON0); */
     /* printf("CLK_CON1 : %x\n", CLK_CON1); */
     /* printf("CLK_CON2 : %x\n", CLK_CON2); */
     /* printf("SYS_DIV : %x\n", SYS_DIV); */
     /* {PORTA_DIR &= ~BIT(1); PORTA_OUT |= BIT(1);} */
 #ifdef FPGA 
-	pll_init();
+	fpga_pll_init();
     uart_init((48000000/ 460800));  // pa8
     /* uart_init((48000000/ 115200));  // pa8 */
     puts("...fpga br17 setup ok.......\n");
 #else
-	br16_pll_init();
-    uart_init((64000000/ 460800));  // pa8
+    pll_init();
+    uart_init((48000000/ 460800));  // pa8
+    /* osc_clk_init(); */
+    /* uart_init((24000000/ 115200));  // pa8 */
     puts("...br17 setup ok.......\n");
     /* SFR(FMA_CON1, 8, 1, 1);   // FM_LDO TO BT */
     /* SFR(LDO_CON, 5, 1, 1);    // open ldo15 */
-    FMA_CON1 |= BIT(8);
-    LDO_CON |= BIT(5);
+    /* FMA_CON1 |= BIT(8); */
+    /* LDO_CON |= BIT(5); */
 #endif
 
     puts("\nbt_power_is_poweroff_post : ");

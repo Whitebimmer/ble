@@ -31,7 +31,7 @@ objs += \
    Protocol/BLE/att_server.o \
    Protocol/BLE/sm.o \
    LL_TS_4_2_1_hci_test.o \
-   hcitest_uart.o
+   hcitest_uart.o \
 
 INCLUDES += \
 -IBaseband/include/ble/$(CHIPID)/ \

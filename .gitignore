@@ -1,5 +1,6 @@
 #Object file
 *.o
+*.d
 *.ko
 *.obj
 *.elf

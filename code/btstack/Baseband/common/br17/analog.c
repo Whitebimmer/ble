@@ -2,6 +2,7 @@
 #include "cpu.h"
 #include "typedef.h"
 
+#define bt_printf 
 /*
     bt trim vlaue deal
 */
@@ -23,7 +24,7 @@ u8 bt_trim_error = 0;
     /* }else { */
         /* bt_puts("bt_trim_once\n"); */
         /* cache_read((u8 *)&trim_info, bt_zone_addr+8, sizeof(trim_info)); */
-        /* bt_printf("bw:0x%x     i_dc:%d      q_dc:%d\n",trim_info.bw_set,trim_info.i_dc,trim_info.q_dc); */
+        /* printf("bw:0x%x     i_dc:%d      q_dc:%d\n",trim_info.bw_set,trim_info.i_dc,trim_info.q_dc); */
         /* if(trim_info.crc == CRC16((u8*)&trim_info+2,sizeof(trim_info)-2)){ */
             /* bt_puts("trim_info crc_ok\n"); */
             /* bt_trim_cfg = 0; */
@@ -49,7 +50,7 @@ u8 bt_trim_error = 0;
     /* u32 bt_zone_addr; */
     /* bt_puts("save_trim_value\n"); */
 	/* if(bt_trim_error) { */
-		/* bt_printf("trim err:%d\n",bt_trim_error); */
+		/* printf("trim err:%d\n",bt_trim_error); */
 		/* return; */
 	/* } */
     /* bt_zone_addr = app_use_flash_cfg.flash_size - ((68+4)*1024); */
@@ -278,8 +279,8 @@ static unsigned char RF_trim_iq(short trim_w)
 
     offseti_fda_set(i_dc);  // tx offset i channel
     offsetq_fda_set(q_dc);  // tx offset q channel
-    trim_info.i_dc = i_dc;
-    trim_info.q_dc = q_dc;
+    /* trim_info.i_dc = i_dc; */
+    /* trim_info.q_dc = q_dc; */
     return 1;
 }
 
@@ -472,7 +473,7 @@ static void bt_rccl_trim(void)
 		bt_trim_error = 1;		
 		bw_set = 0x20;
 	}
-	trim_info.bw_set = bw_set;	
+	/* trim_info.bw_set = bw_set;	 */
     SFR(WLA_CON3,  9,  6, (bw_set&0x3f));    //BP_BW0_12v
     SFR(WLA_CON18, 10 ,  1, 0);     //RCCL_EN_12v
     SFR(WLA_CON18, 12 , 1, 0);     //RCCL_GO_12v
@@ -619,11 +620,7 @@ static void bt_pll_init(void)
 void bt_analog_init(void)
 {
     /* SFR(BTA_CON0, 0 , 1, 1);      //LDO_EN_12v */
-    if(get_bt_trim_cfg()){ 
-        bt_rccl_trim();
-    }else{ 
-         SFR(WLA_CON3,  9,  6, (trim_info.bw_set&0x3f));    //BP_BW0_12v */
-    } 
+    bt_rccl_trim();
 //======================= rx ===========================//
     SFR(WLA_CON0,  0,  1, 1);      //LDO_EN_12v
     SFR(WLA_CON0,  1,  1, 0);      //RXLDO_EN_12v
@@ -861,13 +858,13 @@ void bt_osc_internal_cfg(u8 sel_l,u8 sel_r)
     SFR(WLA_CON17, 5,  5,  sel_r); // BTOSC_CRSEL 0x12
 }
 
-void bta_reset_pll_bank()
-{
-    RF_analog_init(0);
-    bta_pll_bank_scan(129);
-    RF_analog_init(1);
-    bd_freq_table_init(1);
-}
+/* void bta_reset_pll_bank() */
+/* { */
+    /* RF_analog_init(0); */
+    /* bta_pll_bank_scan(129); */
+    /* RF_analog_init(1); */
+    /* bd_freq_table_init(1); */
+/* } */
 
 void bt_rf_analog_init(void)
 {

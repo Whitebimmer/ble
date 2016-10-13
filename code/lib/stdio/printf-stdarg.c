@@ -1,4 +1,5 @@
 #include "stdio.h"
+/* #include "printf.h" */
 #include "fcvt.h"
 #include <stdarg.h>
 
@@ -221,7 +222,7 @@ int sprintf(char *out, const char *format, ...)
 }
 
 
-int puts(char *out)
+int puts(const char *out)
 {
 	while(*out != '\0')
 	{

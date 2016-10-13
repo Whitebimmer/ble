@@ -1,7 +1,7 @@
 #include "typedef.h"
 
 
-void pll_init(void)
+void fpga_pll_init(void)
 {
     CLK_CON0 &= ~BIT(8);
     delay(100);

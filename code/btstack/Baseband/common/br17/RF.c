@@ -266,7 +266,7 @@ static unsigned const long bt_frac_pll_frac[83] =
 
 struct common_rf_param rf;
 
-static void bta_pll_config_init()
+void bta_pll_config_init()
 {
     unsigned char i, buf8;
 	BT_PLLCONFIG_ADR = (volatile unsigned long)rf.pll_config_tab; 
@@ -334,7 +334,7 @@ static void RF_mdm_set_timer()
 
 }
 /* AT_POWER */
-static void RF_mdm_init(void)
+void RF_mdm_init(void)
 {
     SFR(BT_MDM_CON0, 0, 1, 0);         // fsk symbol time track disable
     SFR(BT_MDM_CON0, 1, 3, 4);         // when to switch fsk mode to psk mode(in the 5uS guard)
@@ -392,7 +392,7 @@ static void RF_mdm_init(void)
     SFR(BT_MDM_CON2, 14, 1, 1);        // FADE_EN
     SFR(BT_MDM_CON2, 15, 1, 0);        // FADE_EN_gt
 
-    bredr_mdm_init(NULL);
+    /* bredr_mdm_init(NULL); */
 
     ble_mdm_init(NULL);
 
