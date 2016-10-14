@@ -40,10 +40,6 @@ void clk_out(void)
 
 void pll_init(void)
 {
-    CRC_REG = 0X6EA5;
-    WDT_CON = 0;                // CLOSE WDT
-    CRC_REG = 0X0;
-
     SFR(CLK_CON0,  2,  2,  0); // clk_mux0  sel rc
     SFR(CLK_CON0,  0,  1,  1); //  rcen
     delay(100);

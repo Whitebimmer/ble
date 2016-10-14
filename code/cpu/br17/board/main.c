@@ -126,7 +126,7 @@ void *realloc(void *ptr, int len)
 }
 */
 
-void exception_isr(void) AT(.dll_api);
+/* void exception_isr(void) AT(.dll_api); */
 void exception_isr(void)
 {
     puts("\n\n---------------------------SDK exception_isr---------------------\n\n");
@@ -185,8 +185,6 @@ int main()
 #else
     pll_init();
     uart_init((48000000/ 460800));  // pa8
-    /* osc_clk_init(); */
-    /* uart_init((24000000/ 115200));  // pa8 */
     puts("...br17 setup ok.......\n");
     /* SFR(FMA_CON1, 8, 1, 1);   // FM_LDO TO BT */
     /* SFR(LDO_CON, 5, 1, 1);    // open ldo15 */
@@ -199,7 +197,7 @@ int main()
     /* puts("\nbt_power_is_poweroff_probe : "); */
     /* put_u8hex(bt_power_is_poweroff_probe()); */
 
-    if ((PWR_CON & 0xe0) != 0x80)
+    if (0)//if ((PWR_CON & 0xe0) != 0x80)
     {
         delay(500000);
 
@@ -219,23 +217,25 @@ int main()
     }
     /* pmalloc_init(RAM_S, RAM_E); */
 
-    /* puts("-----1\n"); */
+    puts("-----1\n");
 	system_init();
 
-    /* puts("-----2\n"); */
+    puts("-----2\n");
 	timer0_start();
 
-    /* puts("-----3\n"); */
-	RF_init();
+    puts("-----3\n");
+    RF_init();
 
     //----------debug
-    HWI_Install(EXCEPTION_INIT, exception_isr, 3) ; //timer0_isr
+    /* HWI_Install(EXCEPTION_INIT, exception_isr, 3) ; //timer0_isr */
+    HWI_Install(0, exception_isr, 3) ; //timer0_isr
     disable_wtd();
-    /* { */
-        /* u32 *ptr = 0x55; */
+    {
+        u32 *ptr = 0x55;
 
-        /* *ptr = 1; */
-    /* } */
+        *ptr = 1;
+    }
+#if 0
     u8 *ptr;
     ptr = ram2_memory;
 #if 1
@@ -250,7 +250,16 @@ int main()
     }
 #endif
 
+#endif
 
+    u32 tmp;
+    __asm__ volatile ("mov %0,ie0" : "=r"(tmp));
+    printf("ie0 = %08x \n", tmp);
+    __asm__ volatile ("mov %0,ie1" : "=r"(tmp));
+    printf("ie1 = %08x \n", tmp);
+    __asm__ volatile ("mov %0,icfg" : "=r"(tmp));
+    printf("icfg = %08x \n", tmp);
+    CPU_INT_EN();
 	ENABLE_INT();
     /* puts("-----4\n"); */
 	thread_init(&os_thread_ins);
@@ -280,8 +289,14 @@ int main()
 	/*INTALL_HWI(BT_BLE_INT, le_hw_isr, 0);
 	INTALL_HWI(18, le_test_uart_isr, 0);*/
 
-    puts("------------BLE 4.2 1 start run loop-----------\n");
-    while(1)
+    __asm__ volatile ("mov %0,ie0" : "=r"(tmp));
+    printf("ie0 = %08x \n", tmp);
+    __asm__ volatile ("mov %0,ie1" : "=r"(tmp));
+    printf("ie1 = %08x \n", tmp);
+    __asm__ volatile ("mov %0,icfg" : "=r"(tmp));
+    printf("icfg = %08x \n", tmp);
+    puts("------------BLE 4.2 X start run loop-----------\n");
+    while(1);
     {
 		int c;
        //asm("idle");
