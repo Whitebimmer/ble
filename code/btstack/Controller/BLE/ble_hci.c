@@ -58,9 +58,9 @@ struct hci_tx {
 }__attribute__((packed));
 
 
-struct lbuff_head *hci_cmd_ptr sec(.btmem_highly_available);
-struct lbuff_head *hci_event_buf sec(.btmem_highly_available);
-struct lbuff_head *hci_rx_buf sec(.btmem_highly_available);
+struct lbuff_head *hci_cmd_ptr SEC(.btmem_highly_available);
+struct lbuff_head *hci_event_buf SEC(.btmem_highly_available);
+struct lbuff_head *hci_rx_buf SEC(.btmem_highly_available);
 
 u8 hci_buf[CONTROLLER_MAX_TOTAL_PAYLOAD] __attribute__((aligned(4)));
 
@@ -72,9 +72,9 @@ struct flow_control{
 static struct flow_control ll_flow_control;
 
 //HIC SET/READ LE
-static struct le_parameter *le_param_t sec(.btmem_highly_available);
+static struct le_parameter *le_param_t SEC(.btmem_highly_available);
 
-static struct hci_parameter hci_param sec(.btmem_highly_available);
+static struct hci_parameter hci_param SEC(.btmem_highly_available);
 
 #define   ROLE_MASTER   0  /* 0:slave 1:Master */ 
 
@@ -1359,7 +1359,7 @@ int hci_firmware_init()
     }
     /* aes128_test(); */
     /* debug_ll_privacy(); */
-    lbuf_debug();
+    /* lbuf_debug(); */
 }
 
 static void lbuf_debug(void)

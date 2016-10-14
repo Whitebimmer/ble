@@ -10,7 +10,7 @@ struct h4_memb{
 };
 
 
-static struct h4_memb h4 sec(.btmem_highly_available);
+static struct h4_memb h4 SEC(.btmem_highly_available);
 
 static void h4_packet_handler(int type, u8 *packet, int size)
 {

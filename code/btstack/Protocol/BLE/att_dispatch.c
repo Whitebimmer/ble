@@ -47,8 +47,8 @@
 
 static void dummy_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size);
 
-static btstack_packet_handler_t att_client_handler sec(.btmem_highly_available) = &dummy_packet_handler;
-static btstack_packet_handler_t att_server_handler sec(.btmem_highly_available) = &dummy_packet_handler;
+static btstack_packet_handler_t att_client_handler SEC(.btmem_highly_available) = &dummy_packet_handler;
+static btstack_packet_handler_t att_server_handler SEC(.btmem_highly_available) = &dummy_packet_handler;
 
 static void dummy_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
 }

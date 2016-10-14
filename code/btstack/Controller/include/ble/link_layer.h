@@ -324,7 +324,7 @@ struct ll_interface{
 
 #define REGISTER_LL_INTERFACE(ops) \
 	const struct ll_interface *__ll_api \
-			__attribute__((section(".ble"))) = &ops
+			SEC(.ble) = &ops
 
 extern const struct ll_interface *__ll_api;
 
@@ -338,11 +338,11 @@ void le_ll_push_control_data(u8 opcode, const u8 *param);
 
 // #define REGISTER_LLP_ACL_RXCHANNEL(fn) \
 	// const rx_handler_t llp_acl_rxchannel \
-			// __attribute__((section(".ble"))) = fn
+			// SEC(.ble) = fn
 
 // #define REGISTER_LLP_ACL_TXCHANNEL(fn) \
 	// const tx_handler_t llp_acl_txchannel \
-			// __attribute__((section(".ble"))) = fn
+			// SEC(.ble) = fn
 
 // extern const rx_handler_t llp_acl_rxchannel;
 

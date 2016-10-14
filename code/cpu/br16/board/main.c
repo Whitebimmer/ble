@@ -168,7 +168,7 @@ const struct bt_low_power_param bt_power_param = {
     .delay_us = 64000000/1000000L,
 };
 
-u8 ram2_memory[0x100] sec(.db_memory);
+u8 ram2_memory[0x100] SEC(.db_memory);
 
 int main()
 {

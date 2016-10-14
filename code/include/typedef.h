@@ -12,6 +12,24 @@ Date£º
 
 #include "asm_type.h"
 
+#ifdef __GNUC__
+#define SEC_USED(x)     __attribute__((section(#x),used))
+#define AT(x)           __attribute__((section(#x),used))
+#define SEC(x)          __attribute__((section(#x)))
+#define SET(x)          __attribute__((x))
+#define _PACKED_        __attribute__((packed))
+#define _INLINE_        __attribute__((always_inline))
+#define _ALIGNED(x)_    __attribute__((aligned(x)))
+#else 
+#define SEC_USED(x)     
+#define AT(x)          
+#define SEC(x)        
+#define SET(x)       
+#define _PACKED_     
+#define _INLINE_     
+#define _ALIGNED(x)_
+#endif
+
 #ifdef __BIG_ENDIAN
 #define __BYTE_ORDER  __BIG_ENDIAN
 #elif defined __LITTLE_ENDIAN
@@ -54,17 +72,6 @@ Date£º
 #define      true        1
 #define      false       0
 
-#ifdef __GNUC__
-#define sec(x) __attribute__((section(#x)))
-#define AT(x) __attribute__((section(#x)))
-#define SET(x) __attribute__((x))
-#define _GNU_PACKED_	__attribute__((packed))
-#else
-#define sec(x)
-#define AT(x)
-#define SET(x)
-#define _GNU_PACKED_
-#endif
 
 #ifndef NULL
 #define NULL    ((void *)0)

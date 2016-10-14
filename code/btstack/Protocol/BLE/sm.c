@@ -252,15 +252,15 @@ typedef struct sm_setup_context {
 } sm_setup_context_t;
 
 // 
-static sm_setup_context_t the_setup sec(.btmem_highly_available);
-static sm_setup_context_t * setup sec(.btmem_highly_available) = &the_setup;
+static sm_setup_context_t the_setup SEC(.btmem_highly_available);
+static sm_setup_context_t * setup SEC(.btmem_highly_available) = &the_setup;
 
 // active connection - the one for which the_setup is used for
-static uint16_t sm_active_connection sec(.btmem_highly_available) = 0;
+static uint16_t sm_active_connection SEC(.btmem_highly_available) = 0;
 
 // @returns 1 if oob data is available
 // stores oob data in provided 16 byte buffer if not null
-static int (*sm_get_oob_data)(uint8_t addres_type, bd_addr_t addr, uint8_t * oob_data) sec(.btmem_highly_available) = NULL;
+static int (*sm_get_oob_data)(uint8_t addres_type, bd_addr_t addr, uint8_t * oob_data) SEC(.btmem_highly_available) = NULL;
 
 // used to notify applicationss that user interaction is neccessary, see sm_notify_t below
 static btstack_packet_handler_t sm_client_packet_handler = NULL;

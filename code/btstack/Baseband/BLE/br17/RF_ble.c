@@ -36,13 +36,13 @@ static volatile int ble_debug_signal[BLE_HW_NUM];
 	/* u8 tx[BLE_HW_NUM][BLE_HW_TX_SIZE]; */
 /* }; */
 
-static struct ble_hw_base ble_base sec(.btmem_highly_available);
+static struct ble_hw_base ble_base SEC(.btmem_highly_available);
 
 struct baseband{
     struct list_head head;
 };
 
-static struct baseband bb sec(.btmem_highly_available);
+static struct baseband bb SEC(.btmem_highly_available);
 
 struct ble_handle {
 	u8 store_regs;
@@ -50,7 +50,7 @@ struct ble_handle {
 	u32 regs[16];
 };
 
-static struct ble_handle  handle sec(.btmem_highly_available);
+static struct ble_handle  handle SEC(.btmem_highly_available);
 
 #define __this  (&handle)
 

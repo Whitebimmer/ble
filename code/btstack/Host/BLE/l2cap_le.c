@@ -75,8 +75,8 @@
 static void l2cap_packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size);
 
 static void (*packet_handler) (void * connection, uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-static btstack_packet_handler_t attribute_protocol_packet_handler sec(.btmem_highly_available);
-static btstack_packet_handler_t security_protocol_packet_handler sec(.btmem_highly_available);
+static btstack_packet_handler_t attribute_protocol_packet_handler SEC(.btmem_highly_available);
+static btstack_packet_handler_t security_protocol_packet_handler SEC(.btmem_highly_available);
 
 void le_l2cap_init(){
     

@@ -35,6 +35,7 @@ export EXCEPT=br16
     -path "${DIR}/code/btstack/Controller/common/*" ! -path "${DIR}/code/btstack/Controller/common/${TARGET}*" -prune -o \
     -path "${DIR}/code/btstack/Controller/include/common/*" ! -path "${DIR}/code/btstack/Controller/include/common/${TARGET}*" -prune -o \
     -path "${DIR}/code/cpu/*" ! -path "${DIR}/code/cpu/${TARGET}*" -prune -o \
+    -path "${DIR}/tools" -prune -o \
     -name "*.[Sch]" -print > cscope.files
 
 

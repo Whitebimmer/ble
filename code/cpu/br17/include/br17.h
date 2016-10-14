@@ -1,7 +1,7 @@
 
 #ifndef __BR17__
-#define __BR17__
-
+#define __BR17__
+
 //===============================================================================//
 //
 //      sfr define
@@ -22,26 +22,26 @@
 
   #define map_adr(grp, adr)  ((64 * grp + adr) * 4)     // grp(0x0-0xff), adr(0x0-0x3f)
 
-#define SFR(sfr, start, len, dat) (sfr = (sfr & ~((~(0xffffffff << len)) << start)) | ((dat & (~(0xffffffff << len))) << start))
-//===============================================================================//
-//
-//      high speed sfr address define
-//
-//===============================================================================//
-
-//............. 0x0000 - 0x00ff............ for cpu
-  #define DSPCON                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x00)))
-  #define ILAT1                         (*(__RO __u32 *)(hs_base + map_adr(0x00, 0x01)))
-  #define ILAT1_SET                     (*(__WO __u32 *)(hs_base + map_adr(0x00, 0x02)))
-  #define ILAT1_CLR                     (*(__WO __u32 *)(hs_base + map_adr(0x00, 0x03)))
+#define SFR(sfr, start, len, dat) (sfr = (sfr & ~((~(0xffffffff << len)) << start)) | ((dat & (~(0xffffffff << len))) << start))
+//===============================================================================//
+//
+//      high speed sfr address define
+//
+//===============================================================================//
+
+//............. 0x0000 - 0x00ff............ for cpu
+  #define DSPCON                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x00)))
+  #define ILAT1                         (*(__RO __u32 *)(hs_base + map_adr(0x00, 0x01)))
+  #define ILAT1_SET                     (*(__WO __u32 *)(hs_base + map_adr(0x00, 0x02)))
+  #define ILAT1_CLR                     (*(__WO __u32 *)(hs_base + map_adr(0x00, 0x03)))
   #define ILAT0                         (*(__RO __u32 *)(hs_base + map_adr(0x00, 0x04)))
   #define ILAT0_SET                     (*(__WO __u32 *)(hs_base + map_adr(0x00, 0x05)))
   #define ILAT0_CLR                     (*(__WO __u32 *)(hs_base + map_adr(0x00, 0x06)))
-  #define IPCON0                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x07)))
-  #define IPCON1                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x08)))
-  #define IPCON2                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x09)))
+  #define IPCON0                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x07)))
+  #define IPCON1                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x08)))
+  #define IPCON2                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x09)))
   #define IPCON3                        (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x0a)))
-
+
   #define TICK_TMR_CON                  (*(__RW __u8  *)(hs_base + map_adr(0x00, 0x10)))
   #define TICK_TMR_CNT                  (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x11)))
   #define TICK_TMR_PRD                  (*(__RW __u32 *)(hs_base + map_adr(0x00, 0x12)))
@@ -61,56 +61,56 @@
   #define LSB_MMU_MSG_CH                (*(__RO __u32 *)(hs_base + map_adr(0x01, 0x0b)))
   #define PRP_WR_LIMIT_MSG              (*(__RO __u32 *)(hs_base + map_adr(0x01, 0x0c)))
   #define LSB_WR_LIMIT_CH               (*(__RO __u32 *)(hs_base + map_adr(0x01, 0x0d)))
-
-//............. 0x0200 - 0x02ff............ for sfc
-  #define SFC_CON                       (*(__RW __u32 *)(hs_base + map_adr(0x02, 0x00)))
-  #define SFC_BAUD                      (*(__WO __u8  *)(hs_base + map_adr(0x02, 0x01)))
-  #define SFC_CODE                      (*(__WO __u16 *)(hs_base + map_adr(0x02, 0x02)))
-  #define SFC_BASE_ADR                  (*(__WO __u32 *)(hs_base + map_adr(0x02, 0x03)))
-
-//............. 0x0300 - 0x03ff............ for enc
-  #define ENC_CON                       (*(__RW __u8  *)(hs_base + map_adr(0x03, 0x00)))
-  #define ENC_KEY                       (*(__WO __u16 *)(hs_base + map_adr(0x03, 0x01)))
-  #define ENC_ADR                       (*(__WO __u16 *)(hs_base + map_adr(0x03, 0x02)))
+
+//............. 0x0200 - 0x02ff............ for sfc
+  #define SFC_CON                       (*(__RW __u32 *)(hs_base + map_adr(0x02, 0x00)))
+  #define SFC_BAUD                      (*(__WO __u8  *)(hs_base + map_adr(0x02, 0x01)))
+  #define SFC_CODE                      (*(__WO __u16 *)(hs_base + map_adr(0x02, 0x02)))
+  #define SFC_BASE_ADR                  (*(__WO __u32 *)(hs_base + map_adr(0x02, 0x03)))
+
+//............. 0x0300 - 0x03ff............ for enc
+  #define ENC_CON                       (*(__RW __u8  *)(hs_base + map_adr(0x03, 0x00)))
+  #define ENC_KEY                       (*(__WO __u16 *)(hs_base + map_adr(0x03, 0x01)))
+  #define ENC_ADR                       (*(__WO __u16 *)(hs_base + map_adr(0x03, 0x02)))
   #define SFC_UNENC_ADRH                (*(__RW __u32 *)(hs_base + map_adr(0x03, 0x03)))
-  #define SFC_UNENC_ADRL                (*(__RW __u32 *)(hs_base + map_adr(0x03, 0x04)))
-
-//............. 0x0400 - 0x04ff............ for others
-  #define WL_CON0                       (*(__RW __u32 *)(hs_base + map_adr(0x04, 0x00)))
+  #define SFC_UNENC_ADRL                (*(__RW __u32 *)(hs_base + map_adr(0x03, 0x04)))
+
+//............. 0x0400 - 0x04ff............ for others
+  #define WL_CON0                       (*(__RW __u32 *)(hs_base + map_adr(0x04, 0x00)))
   #define WL_CON1                       (*(__RW __u32 *)(hs_base + map_adr(0x04, 0x01)))
   #define WL_CON2                       (*(__RW __u32 *)(hs_base + map_adr(0x04, 0x02)))
   #define WL_CON3                       (*(__RW __u32 *)(hs_base + map_adr(0x04, 0x03)))
 
   #define WL_LOFC_CON                   (*(__RW __u32 *)(hs_base + map_adr(0x04, 0x08)))
   #define WL_LOFC_RES                   (*(__RW __u32 *)(hs_base + map_adr(0x04, 0x09)))
-//  #define PD_CON                        (*(__RW __u16 *)(hs_base + map_adr(0x04, 0x01)))
-
-//............. 0x0500 - 0x05ff............ for aes
-  #define AES_CON                       (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x00)))
-  #define AES_DATIN                     (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x01)))
-  #define AES_KEY                       (*(__WO __u32 *)(hs_base + map_adr(0x05, 0x02)))
-  #define AES_ENCRES0                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x03)))
-  #define AES_ENCRES1                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x04)))
-  #define AES_ENCRES2                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x05)))
+//  #define PD_CON                        (*(__RW __u16 *)(hs_base + map_adr(0x04, 0x01)))
+
+//............. 0x0500 - 0x05ff............ for aes
+  #define AES_CON                       (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x00)))
+  #define AES_DATIN                     (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x01)))
+  #define AES_KEY                       (*(__WO __u32 *)(hs_base + map_adr(0x05, 0x02)))
+  #define AES_ENCRES0                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x03)))
+  #define AES_ENCRES1                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x04)))
+  #define AES_ENCRES2                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x05)))
   #define AES_ENCRES3                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x06)))
   #define AES_DECRES0                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x07)))
   #define AES_DECRES1                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x08)))
   #define AES_DECRES2                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x09)))
   #define AES_DECRES3                   (*(__RW __u32 *)(hs_base + map_adr(0x05, 0x0a)))
-
+
 //............. 0x0600 - 0x06ff............ for fft
   #define FFT_CON                       (*(__RW __u32 *)(hs_base + map_adr(0x06, 0x00)))
   #define FFT_ADRI                      (*(__RW __u32 *)(hs_base + map_adr(0x06, 0x01)))
   #define FFT_ADRO                      (*(__RW __u32 *)(hs_base + map_adr(0x06, 0x02)))
   #define FFT_ADRW                      (*(__RW __u32 *)(hs_base + map_adr(0x06, 0x03)))
 
-//............. 0x0700 - 0x07ff............ for eq
-  #define EQ_CON                        (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x00)))
-  #define EQ_LEN                        (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x01)))
-  #define EQ_ADRI                       (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x02)))
-  #define EQ_ADRO                       (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x03)))
+//............. 0x0700 - 0x07ff............ for eq
+  #define EQ_CON                        (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x00)))
+  #define EQ_LEN                        (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x01)))
+  #define EQ_ADRI                       (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x02)))
+  #define EQ_ADRO                       (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x03)))
   #define EQ_CADR                       (*(__RW __u32 *)(hs_base + map_adr(0x07, 0x04)))
-
+
 //............. 0x0800 - 0x08ff............ for src
   #define SRC_CON0                      (*(__RW __u32 *)(hs_base + map_adr(0x08, 0x00)))
   #define SRC_CON1                      (*(__RW __u32 *)(hs_base + map_adr(0x08, 0x01)))
@@ -121,7 +121,7 @@
   #define SRC_ODAT_ADR                  (*(__RW __u32 *)(hs_base + map_adr(0x08, 0x06)))
   #define SRC_ODAT_LEN                  (*(__RW __u32 *)(hs_base + map_adr(0x08, 0x07)))
   #define SRC_FLTB_ADR                  (*(__RW __u32 *)(hs_base + map_adr(0x08, 0x08)))
-
+
 //............. 0x0800 - 0x08ff............ for fm
   #define FM_CON                        (*(__RW __u32 *)(hs_base + map_adr(0x09, 0x00)))
   #define FM_BASE                       (*(__RW __u32 *)(hs_base + map_adr(0x09, 0x01)))
@@ -173,11 +173,11 @@
   #define MCCH5_CON1                    (*(__RW __u32 *)(hs_base + map_adr(0x0a, 0x23)))
   #define MCCH5_CMP                     (*(__RW __u32 *)(hs_base + map_adr(0x0a, 0x24)))
 
-//===============================================================================//
-//
-//      low speed sfr address define
-//
-//===============================================================================//
+//===============================================================================//
+//
+//      low speed sfr address define
+//
+//===============================================================================//
 
 //............. 0x0000 - 0x00ff............ for syscfg
   #define CHIP_ID                       (*(__RO __u16 *)(ls_base + map_adr(0x00, 0x00)))
@@ -207,168 +207,168 @@
   #define EFUSE_CON                     (*(__RW __u16 *)(ls_base + map_adr(0x00, 0x25)))
 //#define HTC_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x00, 0x26)))
 
-//............. 0x0100 - 0x01ff............ for port
-  #define PORTA_OUT                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x00)))
-  #define PORTA_IN                      (*(__RO __u16 *)(ls_base + map_adr(0x01, 0x01)))
-  #define PORTA_DIR                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x02)))
-  #define PORTA_DIE                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x03)))
-  #define PORTA_PU                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x04)))
-  #define PORTA_PD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x05)))
-  #define PORTA_HD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x06)))
-
-  #define PORTB_OUT                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x08)))
-  #define PORTB_IN                      (*(__RO __u16 *)(ls_base + map_adr(0x01, 0x09)))
-  #define PORTB_DIR                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0a)))
-  #define PORTB_DIE                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0b)))
-  #define PORTB_PU                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0c)))
-  #define PORTB_PD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0d)))
-  #define PORTB_HD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0e)))
-
-  #define PORTC_OUT                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x10)))
-  #define PORTC_IN                      (*(__RO __u16 *)(ls_base + map_adr(0x01, 0x11)))
-  #define PORTC_DIR                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x12)))
-  #define PORTC_DIE                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x13)))
-  #define PORTC_PU                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x14)))
-  #define PORTC_PD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x15)))
-  #define PORTC_HD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x16)))
-
-  #define PORTD_OUT                     (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x18)))
-  #define PORTD_IN                      (*(__RO __u8  *)(ls_base + map_adr(0x01, 0x19)))
-  #define PORTD_DIR                     (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1a)))
-  #define PORTD_DIE                     (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1b)))
-  #define PORTD_PU                      (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1c)))
-  #define PORTD_PD                      (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1d)))
-  #define PORTD_HD                      (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1e)))
-
-//............. 0x0200 - 0x02ff............ for timer
-  #define TMR0_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x00)))
-  #define TMR0_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x01)))
-  #define TMR0_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x02)))
-  #define TMR0_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x03)))
-  #define TMR1_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x04)))
-  #define TMR1_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x05)))
-  #define TMR1_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x06)))
-  #define TMR1_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x07)))
-  #define TMR2_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x08)))
-  #define TMR2_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x09)))
-  #define TMR2_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0a)))
-  #define TMR2_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0b)))
-  #define TMR3_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0c)))
-  #define TMR3_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0d)))
-  #define TMR3_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0e)))
-  #define TMR3_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0f)))
-
-//............. 0x0300 - 0x03ff............ for uart
-  #define UT0_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x00)))
-  #define UT0_BAUD                      (*(__WO __u16 *)(ls_base + map_adr(0x03, 0x01)))
-  #define UT0_BUF                       (*(__RW __u8  *)(ls_base + map_adr(0x03, 0x02)))
-  #define UT0_OT                        (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x03)))
-  #define UT0_DMA_RD_ADR                (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x04)))
-  #define UT0_DMA_RD_CNT                (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x05)))
+//............. 0x0100 - 0x01ff............ for port
+  #define PORTA_OUT                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x00)))
+  #define PORTA_IN                      (*(__RO __u16 *)(ls_base + map_adr(0x01, 0x01)))
+  #define PORTA_DIR                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x02)))
+  #define PORTA_DIE                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x03)))
+  #define PORTA_PU                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x04)))
+  #define PORTA_PD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x05)))
+  #define PORTA_HD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x06)))
+
+  #define PORTB_OUT                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x08)))
+  #define PORTB_IN                      (*(__RO __u16 *)(ls_base + map_adr(0x01, 0x09)))
+  #define PORTB_DIR                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0a)))
+  #define PORTB_DIE                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0b)))
+  #define PORTB_PU                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0c)))
+  #define PORTB_PD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0d)))
+  #define PORTB_HD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x0e)))
+
+  #define PORTC_OUT                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x10)))
+  #define PORTC_IN                      (*(__RO __u16 *)(ls_base + map_adr(0x01, 0x11)))
+  #define PORTC_DIR                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x12)))
+  #define PORTC_DIE                     (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x13)))
+  #define PORTC_PU                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x14)))
+  #define PORTC_PD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x15)))
+  #define PORTC_HD                      (*(__RW __u16 *)(ls_base + map_adr(0x01, 0x16)))
+
+  #define PORTD_OUT                     (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x18)))
+  #define PORTD_IN                      (*(__RO __u8  *)(ls_base + map_adr(0x01, 0x19)))
+  #define PORTD_DIR                     (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1a)))
+  #define PORTD_DIE                     (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1b)))
+  #define PORTD_PU                      (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1c)))
+  #define PORTD_PD                      (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1d)))
+  #define PORTD_HD                      (*(__RW __u8  *)(ls_base + map_adr(0x01, 0x1e)))
+
+//............. 0x0200 - 0x02ff............ for timer
+  #define TMR0_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x00)))
+  #define TMR0_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x01)))
+  #define TMR0_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x02)))
+  #define TMR0_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x03)))
+  #define TMR1_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x04)))
+  #define TMR1_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x05)))
+  #define TMR1_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x06)))
+  #define TMR1_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x07)))
+  #define TMR2_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x08)))
+  #define TMR2_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x09)))
+  #define TMR2_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0a)))
+  #define TMR2_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0b)))
+  #define TMR3_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0c)))
+  #define TMR3_CNT                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0d)))
+  #define TMR3_PRD                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0e)))
+  #define TMR3_PWM                      (*(__RW __u16 *)(ls_base + map_adr(0x02, 0x0f)))
+
+//............. 0x0300 - 0x03ff............ for uart
+  #define UT0_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x00)))
+  #define UT0_BAUD                      (*(__WO __u16 *)(ls_base + map_adr(0x03, 0x01)))
+  #define UT0_BUF                       (*(__RW __u8  *)(ls_base + map_adr(0x03, 0x02)))
+  #define UT0_OT                        (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x03)))
+  #define UT0_DMA_RD_ADR                (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x04)))
+  #define UT0_DMA_RD_CNT                (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x05)))
   #define UT0_DMA_WR_SADR               (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x06)))
   #define UT0_DMA_WR_EADR               (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x07)))
   #define UT0_DMA_WR_CNT                (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x08)))
-  #define UT1_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x09)))
-  #define UT1_BAUD                      (*(__WO __u16 *)(ls_base + map_adr(0x03, 0x0a)))
-  #define UT1_BUF                       (*(__RW __u8  *)(ls_base + map_adr(0x03, 0x0b)))
-  #define UT1_OT                        (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x0c)))
+  #define UT1_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x09)))
+  #define UT1_BAUD                      (*(__WO __u16 *)(ls_base + map_adr(0x03, 0x0a)))
+  #define UT1_BUF                       (*(__RW __u8  *)(ls_base + map_adr(0x03, 0x0b)))
+  #define UT1_OT                        (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x0c)))
   #define UT1_DMA_RD_ADR                (*(__WO __u32 *)(ls_base + map_adr(0x03, 0x0d)))
   #define UT1_DMA_RD_CNT                (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x0e)))
   #define UT1_DMA_WR_SADR               (*(__WO __u32 *)(ls_base + map_adr(0x03, 0x0f)))
   #define UT1_DMA_WR_EADR               (*(__WO __u32 *)(ls_base + map_adr(0x03, 0x10)))
   #define UT1_DMA_WR_CNT                (*(__RW __u32 *)(ls_base + map_adr(0x03, 0x11)))
-  #define UT2_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x12)))
+  #define UT2_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x03, 0x12)))
   #define UT2_BUF                       (*(__RW __u8  *)(ls_base + map_adr(0x03, 0x13)))
-  #define UT2_BAUD                      (*(__WO __u16 *)(ls_base + map_adr(0x03, 0x14)))
-
-//............. 0x0400 - 0x04ff............ for spi
-  #define SPI0_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x04, 0x00)))
-  #define SPI0_BAUD                     (*(__WO __u16 *)(ls_base + map_adr(0x04, 0x01)))
-  #define SPI0_BUF                      (*(__RW __u8  *)(ls_base + map_adr(0x04, 0x02)))
-  #define SPI0_ADR                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x03)))
-  #define SPI0_CNT                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x04)))
-  #define SPI1_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x04, 0x05)))
-  #define SPI1_BAUD                     (*(__WO __u16 *)(ls_base + map_adr(0x04, 0x06)))
-  #define SPI1_BUF                      (*(__RW __u8  *)(ls_base + map_adr(0x04, 0x07)))
-  #define SPI1_ADR                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x08)))
-  #define SPI1_CNT                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x09)))
-
-//............. 0x0500 - 0x05ff............ for pap
-  #define PAP_CON                       (*(__RW __u32 *)(ls_base + map_adr(0x05, 0x00)))
-  #define PAP_DAT0                      (*(__WO __u16 *)(ls_base + map_adr(0x05, 0x01)))
+  #define UT2_BAUD                      (*(__WO __u16 *)(ls_base + map_adr(0x03, 0x14)))
+
+//............. 0x0400 - 0x04ff............ for spi
+  #define SPI0_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x04, 0x00)))
+  #define SPI0_BAUD                     (*(__WO __u16 *)(ls_base + map_adr(0x04, 0x01)))
+  #define SPI0_BUF                      (*(__RW __u8  *)(ls_base + map_adr(0x04, 0x02)))
+  #define SPI0_ADR                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x03)))
+  #define SPI0_CNT                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x04)))
+  #define SPI1_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x04, 0x05)))
+  #define SPI1_BAUD                     (*(__WO __u16 *)(ls_base + map_adr(0x04, 0x06)))
+  #define SPI1_BUF                      (*(__RW __u8  *)(ls_base + map_adr(0x04, 0x07)))
+  #define SPI1_ADR                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x08)))
+  #define SPI1_CNT                      (*(__WO __u32 *)(ls_base + map_adr(0x04, 0x09)))
+
+//............. 0x0500 - 0x05ff............ for pap
+  #define PAP_CON                       (*(__RW __u32 *)(ls_base + map_adr(0x05, 0x00)))
+  #define PAP_DAT0                      (*(__WO __u16 *)(ls_base + map_adr(0x05, 0x01)))
   #define PAP_DAT1                      (*(__WO __u16 *)(ls_base + map_adr(0x05, 0x02)))
-  #define PAP_BUF                       (*(__RW __u16 *)(ls_base + map_adr(0x05, 0x03)))
-//#define PAP_BUF8                      (*(__RW __u8  *)(ls_base + map_adr(0x05, 0x04)))
-  #define PAP_ADR                       (*(__WO __u32 *)(ls_base + map_adr(0x05, 0x05)))
-  #define PAP_CNT                       (*(__WO __u32 *)(ls_base + map_adr(0x05, 0x06)))
-
-//............. 0x0600 - 0x06ff............ for sd
-  #define SD0_CON0                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x00)))
-  #define SD0_CON1                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x01)))
-  #define SD0_CON2                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x02)))
-  #define SD0_CPTR                      (*(__WO __u32 *)(ls_base + map_adr(0x06, 0x03)))
+  #define PAP_BUF                       (*(__RW __u16 *)(ls_base + map_adr(0x05, 0x03)))
+//#define PAP_BUF8                      (*(__RW __u8  *)(ls_base + map_adr(0x05, 0x04)))
+  #define PAP_ADR                       (*(__WO __u32 *)(ls_base + map_adr(0x05, 0x05)))
+  #define PAP_CNT                       (*(__WO __u32 *)(ls_base + map_adr(0x05, 0x06)))
+
+//............. 0x0600 - 0x06ff............ for sd
+  #define SD0_CON0                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x00)))
+  #define SD0_CON1                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x01)))
+  #define SD0_CON2                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x02)))
+  #define SD0_CPTR                      (*(__WO __u32 *)(ls_base + map_adr(0x06, 0x03)))
   #define SD0_DPTR                      (*(__WO __u32 *)(ls_base + map_adr(0x06, 0x04)))
-  #define SD1_CON0                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x05)))
-  #define SD1_CON1                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x06)))
-  #define SD1_CON2                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x07)))
-  #define SD1_CPTR                      (*(__WO __u32 *)(ls_base + map_adr(0x06, 0x08)))
-  #define SD1_DPTR                      (*(__WO __u32 *)(ls_base + map_adr(0x06, 0x09)))
-
-//............. 0x0700 - 0x07ff............ for iic
-  #define IIC_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x07, 0x00)))
+  #define SD1_CON0                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x05)))
+  #define SD1_CON1                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x06)))
+  #define SD1_CON2                      (*(__RW __u16 *)(ls_base + map_adr(0x06, 0x07)))
+  #define SD1_CPTR                      (*(__WO __u32 *)(ls_base + map_adr(0x06, 0x08)))
+  #define SD1_DPTR                      (*(__WO __u32 *)(ls_base + map_adr(0x06, 0x09)))
+
+//............. 0x0700 - 0x07ff............ for iic
+  #define IIC_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x07, 0x00)))
   #define IIC_BUF                       (*(__RW __u8  *)(ls_base + map_adr(0x07, 0x01)))
   #define IIC_BAUD                      (*(__WO __u8  *)(ls_base + map_adr(0x07, 0x02)))
-
-//............. 0x0800 - 0x08ff............ for lcd
+
+//............. 0x0800 - 0x08ff............ for lcd
   #define LCDC_CON0                     (*(__RW __u16 *)(ls_base + map_adr(0x08, 0x00)))
 //#define LCDC_CON1                     (*(__RW __u16 *)(ls_base + map_adr(0x08, 0x01)))
-  #define SEG_IOEN0                     (*(__RW __u16 *)(ls_base + map_adr(0x08, 0x02)))
-  #define SEG_IOEN1                     (*(__RW __u16 *)(ls_base + map_adr(0x08, 0x03)))
-
-//............. 0x0900 - 0x09ff............ for others
-  #define PWM4_CON                      (*(__WO __u8  *)(ls_base + map_adr(0x09, 0x00)))
-  #define IRTC_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x09, 0x01)))
+  #define SEG_IOEN0                     (*(__RW __u16 *)(ls_base + map_adr(0x08, 0x02)))
+  #define SEG_IOEN1                     (*(__RW __u16 *)(ls_base + map_adr(0x08, 0x03)))
+
+//............. 0x0900 - 0x09ff............ for others
+  #define PWM4_CON                      (*(__WO __u8  *)(ls_base + map_adr(0x09, 0x00)))
+  #define IRTC_CON                      (*(__RW __u16 *)(ls_base + map_adr(0x09, 0x01)))
   #define IRFLT_CON                     (*(__RW __u8  *)(ls_base + map_adr(0x09, 0x02)))
-
-//............. 0x0a00 - 0x0aff............ for dac
+
+//............. 0x0a00 - 0x0aff............ for dac
   #define DAC_LEN                       (*(__WO __u16 *)(ls_base + map_adr(0x0a, 0x00)))
-  #define DAC_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x01)))
-  #define DAC_ADR                       (*(__WO __u32 *)(ls_base + map_adr(0x0a, 0x02)))
-  #define DAC_TRML                      (*(__WO __u8  *)(ls_base + map_adr(0x0a, 0x03)))
-  #define DAC_TRMR                      (*(__WO __u8  *)(ls_base + map_adr(0x0a, 0x04)))
-
-  #define ADC_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x08)))
-//
-  #define ADC_ADR                       (*(__WO __u32 *)(ls_base + map_adr(0x0a, 0x0b)))
-  #define ADC_LEN                       (*(__WO __u16 *)(ls_base + map_adr(0x0a, 0x0c)))
-
-  #define DAA_CON0                      (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x10)))
+  #define DAC_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x01)))
+  #define DAC_ADR                       (*(__WO __u32 *)(ls_base + map_adr(0x0a, 0x02)))
+  #define DAC_TRML                      (*(__WO __u8  *)(ls_base + map_adr(0x0a, 0x03)))
+  #define DAC_TRMR                      (*(__WO __u8  *)(ls_base + map_adr(0x0a, 0x04)))
+
+  #define ADC_CON                       (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x08)))
+//
+  #define ADC_ADR                       (*(__WO __u32 *)(ls_base + map_adr(0x0a, 0x0b)))
+  #define ADC_LEN                       (*(__WO __u16 *)(ls_base + map_adr(0x0a, 0x0c)))
+
+  #define DAA_CON0                      (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x10)))
   #define DAA_CON1                      (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x11)))
   #define DAA_CON2                      (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x12)))
   #define DAA_CON3                      (*(__RW __u16 *)(ls_base + map_adr(0x0a, 0x13)))
-  #define DAA_CON4                      (*(__RW __u8  *)(ls_base + map_adr(0x0a, 0x14)))
-
-//............. 0x0b00 - 0x0bff............ for alnk
-  #define ALNK_CON0                     (*(__RW __u16 *)(ls_base + map_adr(0x0b, 0x00)))
-  #define ALNK_CON1                     (*(__RW __u16 *)(ls_base + map_adr(0x0b, 0x01)))
-  #define ALNK_CON2                     (*(__RW __u16 *)(ls_base + map_adr(0x0b, 0x02)))
-  #define ALNK_ADR0                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x03)))
-  #define ALNK_ADR1                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x04)))
-  #define ALNK_ADR2                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x05)))
-  #define ALNK_ADR3                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x06)))
-  #define ALNK_LEN                      (*(__WO __u16 *)(ls_base + map_adr(0x0b, 0x07)))
-
-//............. 0x0c00 - 0x0cff............ for nfc
-  #define NFC_CON0                      (*(__RW __u32 *)(ls_base + map_adr(0x0c, 0x01)))
+  #define DAA_CON4                      (*(__RW __u8  *)(ls_base + map_adr(0x0a, 0x14)))
+
+//............. 0x0b00 - 0x0bff............ for alnk
+  #define ALNK_CON0                     (*(__RW __u16 *)(ls_base + map_adr(0x0b, 0x00)))
+  #define ALNK_CON1                     (*(__RW __u16 *)(ls_base + map_adr(0x0b, 0x01)))
+  #define ALNK_CON2                     (*(__RW __u16 *)(ls_base + map_adr(0x0b, 0x02)))
+  #define ALNK_ADR0                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x03)))
+  #define ALNK_ADR1                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x04)))
+  #define ALNK_ADR2                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x05)))
+  #define ALNK_ADR3                     (*(__WO __u32 *)(ls_base + map_adr(0x0b, 0x06)))
+  #define ALNK_LEN                      (*(__WO __u16 *)(ls_base + map_adr(0x0b, 0x07)))
+
+//............. 0x0c00 - 0x0cff............ for nfc
+  #define NFC_CON0                      (*(__RW __u32 *)(ls_base + map_adr(0x0c, 0x01)))
   #define NFC_CON1                      (*(__RW __u32 *)(ls_base + map_adr(0x0c, 0x02)))
   #define NFC_CON2                      (*(__RW __u32 *)(ls_base + map_adr(0x0c, 0x03)))
   #define NFC_BUF0                      (*(__RW __u32 *)(ls_base + map_adr(0x0c, 0x04)))
   #define NFC_BUF1                      (*(__RW __u32 *)(ls_base + map_adr(0x0c, 0x05)))
   #define NFC_BUF2                      (*(__WO __u32 *)(ls_base + map_adr(0x0c, 0x06)))
   #define NFC_BUF3                      (*(__WO __u32 *)(ls_base + map_adr(0x0c, 0x07)))
-
-//............. 0x0d00 - 0x0dff............ for usb
-  #define USB_IO_CON                    (*(__RW __u16 *)(ls_base + map_adr(0x0d, 0x00)))
+
+//............. 0x0d00 - 0x0dff............ for usb
+  #define USB_IO_CON                    (*(__RW __u16 *)(ls_base + map_adr(0x0d, 0x00)))
   #define USB_CON0                      (*(__RW __u32 *)(ls_base + map_adr(0x0d, 0x01)))
   #define USB_CON1                      (*(__RW __u32 *)(ls_base + map_adr(0x0d, 0x02)))
   #define USB_EP0_CNT                   (*(__WO __u16 *)(ls_base + map_adr(0x0d, 0x03)))
@@ -382,23 +382,23 @@
   #define USB_EP2_RADR                  (*(__WO __u32 *)(ls_base + map_adr(0x0d, 0x0b)))
   #define USB_EP3_TADR                  (*(__WO __u32 *)(ls_base + map_adr(0x0d, 0x0c)))
   #define USB_EP3_RADR                  (*(__WO __u32 *)(ls_base + map_adr(0x0d, 0x0d)))
-
-//............. 0x0e00 - 0x0eff............ for crc
+
+//............. 0x0e00 - 0x0eff............ for crc
   #define CRC_FIFO                      (*(__WO __u8  *)(ls_base + map_adr(0x0e, 0x00)))
   #define CRC_REG                       (*(__RW __u16 *)(ls_base + map_adr(0x0e, 0x01)))
-
-//............. 0x0f00 - 0x0fff............ for rand64
+
+//............. 0x0f00 - 0x0fff............ for rand64
   #define RAND64L                       (*(__RO __u8  *)(ls_base + map_adr(0x0f, 0x00)))
   #define RAND64H                       (*(__RO __u8  *)(ls_base + map_adr(0x0f, 0x01)))
-
-//............. 0x1000 - 0x10ff............ for adc
+
+//............. 0x1000 - 0x10ff............ for adc
   #define GPADC_CON                     (*(__RW __u16 *)(ls_base + map_adr(0x10, 0x00)))
   #define GPADC_RES                     (*(__RO __u16 *)(ls_base + map_adr(0x10, 0x01)))
-
+
 //............. 0x1100 - 0x11ff............ for pulse counter
   #define PLCNTCON                      (*(__RW __u8  *)(ls_base + map_adr(0x11, 0x00)))
   #define PLCNTVL                       (*(__RW __u16 *)(ls_base + map_adr(0x11, 0x01)))
-
+
 //............. 0x1200 - 0x12ff............ for power down
   #define PD_CON                        (*(__RW __u16 *)(ls_base + map_adr(0x12, 0x00)))
   #define PD_DAT                        (*(__RW __u8  *)(ls_base + map_adr(0x12, 0x01)))

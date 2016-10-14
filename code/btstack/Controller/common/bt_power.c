@@ -18,7 +18,7 @@ struct bt_power_hdl{
 	u8 is_poweroff;
 };
 
-static struct bt_power_hdl hdl sec(.btmem_highly_available);
+static struct bt_power_hdl hdl SEC(.btmem_highly_available);
 
 #define __this (&hdl)
 
@@ -41,7 +41,7 @@ static void __power_on()
 
 //diable flash power  (code must run in RAM!!!)
 //recovery flash power (code must run in RAM!!!)
-static void __power_off(void) sec(.poweroff_text);
+static void __power_off(void) SEC(.poweroff_text);
 static void __power_off()
 {
 	u32 usec;

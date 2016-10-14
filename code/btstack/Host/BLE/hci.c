@@ -98,7 +98,7 @@ static void hci_emit_state();
 #ifndef HAVE_MALLOC
 static hci_stack_t   hci_stack_static;
 #endif
-static hci_stack_t * hci_stack sec(.btmem_highly_available) = NULL;
+static hci_stack_t * hci_stack SEC(.btmem_highly_available) = NULL;
 
 // test helper
 static uint8_t disable_l2cap_timeouts = 0;

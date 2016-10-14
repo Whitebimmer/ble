@@ -57,8 +57,8 @@
 // MARK: hci_connection_t
 #ifdef MAX_NO_HCI_CONNECTIONS
 #if MAX_NO_HCI_CONNECTIONS > 0
-static hci_connection_t hci_connection_storage[MAX_NO_HCI_CONNECTIONS] sec(.btmem_highly_available);
-static memory_pool_t hci_connection_pool sec(.btmem_highly_available);
+static hci_connection_t hci_connection_storage[MAX_NO_HCI_CONNECTIONS] SEC(.btmem_highly_available);
+static memory_pool_t hci_connection_pool SEC(.btmem_highly_available);
 hci_connection_t * le_btstack_memory_hci_connection_get(void){
     return (hci_connection_t *) memory_pool_get(&hci_connection_pool);
 }
@@ -90,8 +90,8 @@ void btstack_memory_hci_connection_free(hci_connection_t *hci_connection){
 // MARK: l2cap_service_t
 #ifdef MAX_NO_L2CAP_SERVICES
 #if MAX_NO_L2CAP_SERVICES > 0
-static l2cap_service_t l2cap_service_storage[MAX_NO_L2CAP_SERVICES] sec(.btmem_highly_available);
-static memory_pool_t l2cap_service_pool sec(.btmem_highly_available);
+static l2cap_service_t l2cap_service_storage[MAX_NO_L2CAP_SERVICES] SEC(.btmem_highly_available);
+static memory_pool_t l2cap_service_pool SEC(.btmem_highly_available);
 l2cap_service_t * le_btstack_memory_l2cap_service_get(void){
     return (l2cap_service_t *) memory_pool_get(&l2cap_service_pool);
 }
@@ -122,8 +122,8 @@ void btstack_memory_l2cap_service_free(l2cap_service_t *l2cap_service){
 // MARK: l2cap_channel_t
 #ifdef MAX_NO_L2CAP_CHANNELS
 #if MAX_NO_L2CAP_CHANNELS > 0
-static l2cap_channel_t l2cap_channel_storage[MAX_NO_L2CAP_CHANNELS] sec(.btmem_highly_available);
-static memory_pool_t l2cap_channel_pool sec(.btmem_highly_available);
+static l2cap_channel_t l2cap_channel_storage[MAX_NO_L2CAP_CHANNELS] SEC(.btmem_highly_available);
+static memory_pool_t l2cap_channel_pool SEC(.btmem_highly_available);
 l2cap_channel_t * le_btstack_memory_l2cap_channel_get(void){
     return (l2cap_channel_t *) memory_pool_get(&l2cap_channel_pool);
 }
@@ -156,8 +156,8 @@ void btstack_memory_l2cap_channel_free(l2cap_channel_t *l2cap_channel){
 // MARK: gatt_client_t
 #ifdef MAX_NO_GATT_CLIENTS
 #if MAX_NO_GATT_CLIENTS > 0
-static gatt_client_t gatt_client_storage[MAX_NO_GATT_CLIENTS] sec(.btmem_highly_available);
-static memory_pool_t gatt_client_pool sec(.btmem_highly_available);
+static gatt_client_t gatt_client_storage[MAX_NO_GATT_CLIENTS] SEC(.btmem_highly_available);
+static memory_pool_t gatt_client_pool SEC(.btmem_highly_available);
 gatt_client_t * btstack_memory_gatt_client_get(void){
     return (gatt_client_t *) memory_pool_get(&gatt_client_pool);
 }
@@ -188,8 +188,8 @@ void btstack_memory_gatt_client_free(gatt_client_t *gatt_client){
 // MARK: gatt_subclient_t
 #ifdef MAX_NO_GATT_SUBCLIENTS
 #if MAX_NO_GATT_SUBCLIENTS > 0
-static gatt_subclient_t gatt_subclient_storage[MAX_NO_GATT_SUBCLIENTS] sec(.btmem_highly_available);
-static memory_pool_t gatt_subclient_pool sec(.btmem_highly_available);
+static gatt_subclient_t gatt_subclient_storage[MAX_NO_GATT_SUBCLIENTS] SEC(.btmem_highly_available);
+static memory_pool_t gatt_subclient_pool SEC(.btmem_highly_available);
 gatt_subclient_t * btstack_memory_gatt_subclient_get(void){
     return (gatt_subclient_t *) memory_pool_get(&gatt_subclient_pool);
 }

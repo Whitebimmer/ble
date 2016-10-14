@@ -168,7 +168,7 @@ const struct bt_low_power_param bt_power_param = {
     .delay_us = 64000000/1000000L,
 };
 
-u8 ram2_memory[0x100] sec(.db_memory);
+u8 ram2_memory[0x100] SEC(.db_memory);
 
 int main()
 {
@@ -230,11 +230,11 @@ int main()
     /* HWI_Install(EXCEPTION_INIT, exception_isr, 3) ; //timer0_isr */
     HWI_Install(0, exception_isr, 3) ; //timer0_isr
     disable_wtd();
-    {
-        u32 *ptr = 0x55;
+    /* { */
+        /* u32 *ptr = 0x55; */
 
-        *ptr = 1;
-    }
+        /* *ptr = 1; */
+    /* } */
 #if 0
     u8 *ptr;
     ptr = ram2_memory;
@@ -259,7 +259,7 @@ int main()
     printf("ie1 = %08x \n", tmp);
     __asm__ volatile ("mov %0,icfg" : "=r"(tmp));
     printf("icfg = %08x \n", tmp);
-    CPU_INT_EN();
+    /* CPU_INT_EN(); */
 	ENABLE_INT();
     /* puts("-----4\n"); */
 	thread_init(&os_thread_ins);

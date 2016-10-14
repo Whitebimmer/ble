@@ -3,7 +3,7 @@
 #include "thread.h"
 
 
-static volatile struct list_head timer_head sec(.btmem_highly_available);
+static volatile struct list_head timer_head SEC(.btmem_highly_available);
 static struct thread timer_thread;
 
 static bool __timer_is_listed(struct sys_timer *timer)

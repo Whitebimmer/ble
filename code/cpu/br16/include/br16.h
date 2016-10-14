@@ -21,7 +21,7 @@
   
   #define map_adr(grp, adr)  ((64 * grp + adr) * 4)     // grp(0x0-0xff), adr(0x0-0x3f)
  
-#define SFR(sfr, start, len, dat) (sfr = (sfr & ~((~(0xffffffff << len)) << start)) | ((dat & (~(0xffffffff << len))) << start))
+#define SFR(sfr, start, len, dat) (sfr = (sfr & ~((~(0xffffffff << len)) << start)) | ((dat & (~(0xffffffff << len))) << start))
 //===============================================================================// 
 // 
 //      high speed sfr address define 

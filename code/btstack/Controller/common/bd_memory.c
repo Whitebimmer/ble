@@ -1,9 +1,9 @@
 #include "lbuf.h"
 #include "bt_memory.h"
 
-static u8 mem_pool[4*1024] sec(.baseband);
+static u8 mem_pool[4*1024] SEC(.baseband);
 
-static u8 ram1_pool[2*1024] sec(.ram1_data);
+static u8 ram1_pool[2*1024] SEC(.ram1_data);
 
 
 void *bd_malloc(int size)

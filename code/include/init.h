@@ -7,15 +7,15 @@ typedef void (*initcall_t)(void);
 
 #define __initcall(fn)  \
 	const initcall_t __initcall_##fn \
-			__attribute__((section(".initcall"))) = fn
+			AT(.initcall) = fn
 
 #define early_initcall(fn)  \
 	const initcall_t __initcall_##fn \
-		__attribute__((section(".early.initcall"))) = fn
+			AT(.early.initcall) = fn
 
 #define late_initcall(fn)  \
 	const initcall_t __initcall_##fn \
-		__attribute__((section(".late.initcall"))) = fn
+			AT(.late.initcall) = fn
 
 
 

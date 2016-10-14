@@ -145,7 +145,7 @@ static int gap_scannable = 0;
 static char gap_device_name[20];
 static uint16_t gap_appearance = 0;
 
-static bd_addr_t gap_reconnection_address sec(.btmem_highly_available);
+static bd_addr_t gap_reconnection_address SEC(.btmem_highly_available);
 
 static int att_default_value_long = 0;
 
@@ -167,8 +167,8 @@ static int ui_digits_for_passkey = 0;
 static timer_source_t heartbeat;
 static uint8_t counter = 0;
 static int update_client = 0;
-static int client_configuration sec(.btmem_highly_available) = 0;
-static uint16_t client_configuration_handle sec(.btmem_highly_available);
+static int client_configuration SEC(.btmem_highly_available) = 0;
+static uint16_t client_configuration_handle SEC(.btmem_highly_available);
 
 static uint16_t handle = 0;
 

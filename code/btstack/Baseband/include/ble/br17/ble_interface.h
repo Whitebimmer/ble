@@ -163,7 +163,7 @@ struct ble_operation{
 
 #define REGISTER_BLE_OPERATION(ops) \
 	const struct ble_operation *__ble_ops \
-			__attribute__((section(".ble"))) = &ops
+            SEC(.ble) = &ops
 
 
 extern const struct ble_operation *__ble_ops;

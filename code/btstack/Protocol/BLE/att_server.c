@@ -78,21 +78,21 @@ typedef enum {
     ATT_SERVER_REQUEST_RECEIVED_AND_VALIDATED,
 } att_server_state_t;
 
-static att_connection_t att_connection sec(.btmem_highly_available);
-static att_server_state_t att_server_state sec(.btmem_highly_available);
+static att_connection_t att_connection SEC(.btmem_highly_available);
+static att_server_state_t att_server_state SEC(.btmem_highly_available);
 
-static uint8_t   att_client_addr_type sec(.btmem_highly_available);
-static bd_addr_t att_client_address sec(.btmem_highly_available);
-static uint16_t  att_request_size sec(.btmem_highly_available)   = 0;
+static uint8_t   att_client_addr_type SEC(.btmem_highly_available);
+static bd_addr_t att_client_address SEC(.btmem_highly_available);
+static uint16_t  att_request_size SEC(.btmem_highly_available)   = 0;
 static uint8_t   att_request_buffer[HCI_ACL_PAYLOAD_SIZE];
 
-static int       att_ir_le_device_db_index sec(.btmem_highly_available) = -1;
-static int       att_ir_lookup_active sec(.btmem_highly_available) = 0;
+static int       att_ir_le_device_db_index SEC(.btmem_highly_available) = -1;
+static int       att_ir_lookup_active SEC(.btmem_highly_available) = 0;
 
-static int       att_handle_value_indication_handle sec(.btmem_highly_available) = 0;    
-static struct sys_timer att_handle_value_indication_timer sec(.btmem_highly_available);
+static int       att_handle_value_indication_handle SEC(.btmem_highly_available) = 0;    
+static struct sys_timer att_handle_value_indication_timer SEC(.btmem_highly_available);
 
-static btstack_packet_handler_t att_client_packet_handler sec(.btmem_highly_available) = NULL;
+static btstack_packet_handler_t att_client_packet_handler SEC(.btmem_highly_available) = NULL;
 
 static void att_handle_value_indication_notify_client(uint8_t status, uint16_t client_handle, uint16_t attribute_handle){
     

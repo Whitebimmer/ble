@@ -85,12 +85,12 @@ u8 ll_error_code;
 /*
  *-------------------HCI PARAMETER
  */
-static struct hci_parameter *hci_param_t sec(.btmem_highly_available);
+static struct hci_parameter *hci_param_t SEC(.btmem_highly_available);
 
 
 
 
-static struct link_layer ll sec(.btmem_highly_available);
+static struct link_layer ll SEC(.btmem_highly_available);
 
 
 #define ROLE_IS_SLAVE(link)         (((struct le_link *)link)->role)
@@ -141,7 +141,7 @@ static const struct le_read_parameter le_read_param = {
 #define LE_FEATURES_IS_SUPPORT(x)      (le_read_param.features[0] & x)
 
 
-static struct le_parameter le_param sec(.btmem_highly_available);
+static struct le_parameter le_param SEC(.btmem_highly_available);
 /*******************************************************************/
 /*******************************************************************/
 /*
@@ -295,7 +295,7 @@ struct le_event{
 	u8 data[0];
 }__attribute__((packed));
 
-struct lbuff_head *le_event_buf sec(.btmem_highly_available);
+struct lbuff_head *le_event_buf SEC(.btmem_highly_available);
 
 static u8 ll_buf[512] __attribute__((aligned(4)));
 
@@ -785,7 +785,7 @@ static void __read_connection_param(struct ble_conn_param *param, u8 *data)
  *                  Device Filtering(white list)
  */
 
-static u8 ll_white_list_used sec(.btmem_highly_available);
+static u8 ll_white_list_used SEC(.btmem_highly_available);
 
 static void ll_white_list_init(void)
 {
@@ -1004,7 +1004,7 @@ static void device_addr_resolve(u8 *irk, u8 *addr)
  *                   Privacy(resolving list)
  */
 
-static u8 ll_resolving_list_used sec(.btmem_highly_available);
+static u8 ll_resolving_list_used SEC(.btmem_highly_available);
 
 static bool __resolve_list_IRK_verify(const u8 *irk)
 {

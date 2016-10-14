@@ -61,11 +61,11 @@ static uint16_t uuid16_from_uuid(uint16_t uuid_len, uint8_t * uuid){
 }
 
 // ATT Database
-static uint8_t const * att_db sec(.btmem_highly_available) = NULL;
-static att_read_callback_t  att_read_callback  sec(.btmem_highly_available) = NULL;
-static att_write_callback_t att_write_callback sec(.btmem_highly_available) = NULL;
-static uint8_t  att_prepare_write_error_code sec(.btmem_highly_available)   = 0;
-static uint16_t att_prepare_write_error_handle sec(.btmem_highly_available) = 0x0000;
+static uint8_t const * att_db SEC(.btmem_highly_available) = NULL;
+static att_read_callback_t  att_read_callback  SEC(.btmem_highly_available) = NULL;
+static att_write_callback_t att_write_callback SEC(.btmem_highly_available) = NULL;
+static uint8_t  att_prepare_write_error_code SEC(.btmem_highly_available)   = 0;
+static uint16_t att_prepare_write_error_handle SEC(.btmem_highly_available) = 0x0000;
 
 // new java-style iterator
 typedef struct att_iterator {

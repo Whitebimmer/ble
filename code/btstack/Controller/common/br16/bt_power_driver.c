@@ -63,7 +63,7 @@ struct power_driver_hdl{
     u8 kstb6;
 };
 
-static struct power_driver_hdl  driver_hdl sec(.btmem_highly_available);
+static struct power_driver_hdl  driver_hdl SEC(.btmem_highly_available);
 
 #define __this (&driver_hdl)
 /********************************************************************************/
@@ -84,7 +84,7 @@ static void delay_us(u32 n)
 //  function:   pwr_buf
 //  description: power control write/read 1 byte
 ////////////////////////////////////////////////////////////
-/* static u8 pwr_buf (u8 buf) sec(.poweroff_text); */
+/* static u8 pwr_buf (u8 buf) SEC(.poweroff_text); */
 static u8 pwr_buf (u8 buf)
 {
     PD_DAT = buf;
@@ -475,7 +475,7 @@ static void __hw_power_off_exit(void)
 
 }
 
-//void power_init(u8 mode)sec(.poweroff_flash);
+//void power_init(u8 mode)SEC(.poweroff_flash);
 static void __hw_power_init(u8 osc_type)
 {
     if(osc_type== BT_OSC)
@@ -533,7 +533,7 @@ static void __hw_power_init(u8 osc_type)
     __pmu_debug();
 }
 
-static u8 __hw_power_is_poweroff(void)sec(.poweroff_flash);
+static u8 __hw_power_is_poweroff(void)SEC(.poweroff_flash);
 static u8 __hw_power_is_poweroff(void)
 {
     u32 pwr_down_wkup;
@@ -727,7 +727,7 @@ void bt_poweroff_recover()
 
 #define rtc_di              IRTC_CON & BIT(11)
 
-/* void rtc_tbuf (u8 buf) sec(.poweroff_text); */
+/* void rtc_tbuf (u8 buf) SEC(.poweroff_text); */
 void rtc_tbuf (u8 buf)
 {
     u8 aaa, cnt;
@@ -745,7 +745,7 @@ void rtc_tbuf (u8 buf)
         rtc_ck_l;
     }
 }
-/* u8 rtc_rbuf (void )sec(.poweroff_text); */
+/* u8 rtc_rbuf (void )SEC(.poweroff_text); */
 u8 rtc_rbuf (void )
 {
     u8 bbb, cnt;
@@ -883,7 +883,7 @@ static void __regs_pop(u32 *ptr, u8 num)
     ASSERT(((ptr - ptr_begin) <= (num)), "%s\n", __func__);
 }
 
-static void __hw_cache_idle(void) sec(.poweroff_text);
+static void __hw_cache_idle(void) SEC(.poweroff_text);
 static void __hw_cache_idle()
 {
     //µÈflash ²Ù×÷Íê±Ï
@@ -891,33 +891,33 @@ static void __hw_cache_idle()
     SFC_CON &=~BIT(0);
 }
 
-static void __hw_cache_run(void) sec(.poweroff_text);
+static void __hw_cache_run(void) SEC(.poweroff_text);
 static void __hw_cache_run()
 {
     SFC_CON |= BIT(0);
 }
 
-static void __hw_ldo_sw30(void) sec(.poweroff_text);
+static void __hw_ldo_sw30(void) SEC(.poweroff_text);
 static void __hw_ldo_sw30(void)
 {
     LDO_CON |= BIT(3);          // DVDDA VDD short enable
     SFR(LDO_CON, 8, 2, 0x3);    // VDDIO set to 3.0v 
 }
 
-static void __hw_ldo_sw33(void) sec(.poweroff_text);
+static void __hw_ldo_sw33(void) SEC(.poweroff_text);
 static void __hw_ldo_sw33(void)
 {
     LDO_CON &= ~BIT(3);         // DVDDA VDD short disable
     SFR(LDO_CON, 8, 2, 0x1);    // VDDIO set to 3.3v
 }
 
-/* static void __hw_bt_analog_off(void) sec(.poweroff_text); */
+/* static void __hw_bt_analog_off(void) SEC(.poweroff_text); */
 static void __hw_bt_analog_off(void)
 {
     BTA_CON0 &= ~BIT(0);
 }
 
-/* static void __hw_bt_analog_on(void) sec(.poweroff_text); */
+/* static void __hw_bt_analog_on(void) SEC(.poweroff_text); */
 static void __hw_bt_analog_on(void)
 {
     BTA_CON0 |= BIT(0);
@@ -962,7 +962,7 @@ static __hw_ldo_vbg_on(void)
     LDO_CON |= BIT(0);    //VBG
 }
 
-static u8 __hw_power_is_wakeup(void) sec(.poweroff_text);
+static u8 __hw_power_is_wakeup(void) SEC(.poweroff_text);
 static u8 __hw_power_is_wakeup(void)
 {
     u8 pd_tmp;
@@ -1061,7 +1061,7 @@ static u32 __power_suspend(u32 usec, void (*resume)())
 }
 
 
-static void __power_down_enter(void) sec(.poweroff_text);
+static void __power_down_enter(void) SEC(.poweroff_text);
 static void __power_down_enter(void)
 {
     __hw_ldo_vbg_off();
@@ -1085,7 +1085,7 @@ static void __power_down_enter(void)
 }
 
 
-static void __power_down_exit(void) sec(.poweroff_text);
+static void __power_down_exit(void) SEC(.poweroff_text);
 static void __power_down_exit(void)
 {
     while(__hw_power_is_wakeup() == 0)
@@ -1169,7 +1169,7 @@ static void __power_ioctrl(int ctrl, ...)
 }
 
 
-u8 __power_is_poweroff()sec(.poweroff_flash);
+u8 __power_is_poweroff()SEC(.poweroff_flash);
 u8 __power_is_poweroff()
 {
     return __hw_power_is_poweroff();

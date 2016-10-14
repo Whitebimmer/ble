@@ -71,7 +71,7 @@ typedef struct le_device_memory_db {
 #define LE_DEVICE_MEMORY_SIZE 4
 #define INVALID_ENTRY_ADDR_TYPE 0xff
 
-le_device_memory_db_t le_devices[LE_DEVICE_MEMORY_SIZE] sec(.db_memory);
+le_device_memory_db_t le_devices[LE_DEVICE_MEMORY_SIZE] SEC(.db_memory);
 
 #define DB_DEBUG_EN
 
