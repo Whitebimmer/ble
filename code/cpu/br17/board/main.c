@@ -191,8 +191,8 @@ int main()
     /* SFR(FMA_CON1, 8, 1, 1);   // FM_LDO TO BT */
     /* SFR(LDO_CON, 5, 1, 1);    // open ldo15 */
     SFR(FMA_CON1, 12, 1, 1);   // FM_LDO TO BT
-    /* SFR(LDO_CON, 31, 1, 1);    // open ldo15 */
-    /* SFR(LDO_CON, 1, 1, 1);    // open ldo15 */
+    SFR(LDO_CON, 31, 1, 1);    // open ldo15
+    SFR(LDO_CON, 1, 1, 1);    // open ldo15
 #endif
 
     puts("\nbt_power_is_poweroff_post : ");

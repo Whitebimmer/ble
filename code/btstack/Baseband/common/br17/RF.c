@@ -439,7 +439,7 @@ static void rf_debug()
    //bt14Ð¡°åµÄ³ÌÐòÒª¸Ä
 	SFR(WL_CON0,24,4,0);
 	SFR(WL_CON0,8,1,1);
-	SFR(BT_EXT_CON,2,3,2);
+	SFR(BT_EXT_CON,2,3,1);      //1:BLE 2:BREDR
 
     /* DIAGCNTL = (1<<7)|(0); */
     BT_EXT_CON |=BIT(1);
@@ -472,12 +472,12 @@ void RF_init()
 
     BT_BSB_CON |= BIT(14)|BIT(15)|BIT(13)|(1<<9)|(1<<6)|(1<<3)|BIT(8)|BIT(2)|BIT(1)|BIT(0);
 
-    BT_LP_CON |= BIT(0);	//[>Dual mode<]
+    BT_LP_CON |= BIT(0);	/*Dual mode*/
     /* BT_LP_CON &= ~BIT(0);	//[>Dual mode<] */
 
     /* puts("rf_pll_init 2\n"); */
 	RF_mdm_init();
-	/* rf_debug(); */
+    rf_debug();
 
     /* puts("rf_pll_init 3\n"); */
 	if(bt_power_is_poweroff_post()) {

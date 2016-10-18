@@ -752,6 +752,8 @@ static void __set_white_list_addr(struct ble_hw *hw, u8 addr_type, const u8 *add
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
 
+    puts(__func__);
+
     addr_type = (addr_type) ? 1 : 0;
     ble_fp->FILTERCNTL = ble_fp->FILTERCNTL & 0x7f | (addr_type&0x1)<<8 | 1;
     ble_fp->FILTERCNTL |= BIT(4);
@@ -760,11 +762,11 @@ static void __set_white_list_addr(struct ble_hw *hw, u8 addr_type, const u8 *add
 	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
 	ble_fp->WHITELIST0U = (addr[5] << 8) | addr[4];
 
-    /* printf("addr type %x\n", addr_type); */
+    printf("addr type %x\n", addr_type);
 
-    /* printf("addr L %x\n", ble_fp->WHITELIST0L); */
-    /* printf("addr M %x\n", ble_fp->WHITELIST0M); */
-    /* printf("addr U %x\n", ble_fp->WHITELIST0U); */
+    printf("addr L %x\n", ble_fp->WHITELIST0L);
+    printf("addr M %x\n", ble_fp->WHITELIST0M);
+    printf("addr U %x\n", ble_fp->WHITELIST0U);
 }
 
 static void __set_receive_encrypted(struct ble_hw *hw, u8 rx_enable)
@@ -995,7 +997,7 @@ static void __set_addr_match_disable(struct ble_param *ble_fp)
 static void __set_rx_length(struct ble_hw *hw, u16 len)
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
-	ble_fp->RXMAXBUF = len;
+    ble_fp->RXMAXBUF = len;
 
     hw->rx_octets = len;
 }
@@ -1955,14 +1957,15 @@ static void ble_irq_handler()
 		if(BLE_INT_CON2 & BIT(i))//event_end int
 		{
 			BLE_INT_CON1 = BIT(i);     ///  !!! must be clear twice
-            /* DEBUG_IO_1(1) */
+            /* DEBUG_IOB_1(1) */
 			__hw_event_process(hw);
 
-            /* DEBUG_IO_0(1) */
+            /* DEBUG_IOB_0(1) */
 			/* BLE_INT_CON1 = BIT(i); */
 
 
             /* ble_power_off(hw); */
+
 		}
 	}
 
@@ -2358,7 +2361,7 @@ static void le_hw_ioctrl(struct ble_hw *hw, int ctrl, ...)
             break;
         case BLE_SET_RX_LENGTH:
             puts("BLE_SET_RX_LENGTH\n");
-            __set_rx_length(hw, va_arg(argptr, u16));
+            /* __set_rx_length(hw, va_arg(argptr, u16)); */
             break;
         case BLE_SET_TX_LENGTH:
             puts("BLE_SET_TX_LENGTH\n");
@@ -2395,7 +2398,7 @@ void ble_rf_init(void)
 	BLE_CON0  = BIT(0);          //ble_en
 	/* BLE_CON1  = 3;               //sync_err */
     //debug
-    BLE_DBG_CON = BIT(0) | (10 << 8);
+    BLE_DBG_CON = BIT(0) | (9 << 8);
 }
 
 static void le_hw_init()

@@ -36,7 +36,7 @@ char ble_agc_normal_set(void *fp, char sel , char inc)
     {
         hw->agc_buf1 = (hw->agc_buf1 + packet_ptr->RSSI1)/2;
 
-       if(hw->agc_set < 17)                      /// LNA && DMIX
+       if(hw->agc_set < 20)                      /// LNA && DMIX
        {
             if(  hw->agc_buf1 < 364)      hw->agc_set += 2;    //-15
             else if(hw->agc_buf1 < 458)   hw->agc_set += 1;     //-13
@@ -44,7 +44,7 @@ char ble_agc_normal_set(void *fp, char sel , char inc)
             else if(hw->agc_buf1 > 686)   hw->agc_set -= 1;     //-9.5
             else                        hw->agc_set  = hw->agc_set;
        }
-       else if(hw->agc_set < 23)
+       else if(hw->agc_set < 26)
        {
            if(  hw->agc_buf1 < 409)       hw->agc_set += 2;      //-14
            else if(  hw->agc_buf1 < 514)  hw->agc_set += 1;      //-12
@@ -52,7 +52,7 @@ char ble_agc_normal_set(void *fp, char sel , char inc)
            else if(hw->agc_buf1 > 770)    hw->agc_set -= 1;      //-8.5
            else                       hw->agc_set  = hw->agc_set;
        }
-       else if(hw->agc_set < 27)
+       else if(hw->agc_set < 30)
        {
             if(hw->agc_buf1 < 458)        hw->agc_set += 2;      //-13
             else if(hw->agc_buf1 < 648)   hw->agc_set += 1;      //-10
@@ -71,86 +71,84 @@ char ble_agc_normal_set(void *fp, char sel , char inc)
     }
 
     if(hw->agc_set< 0)        hw->agc_set = 0;
-    else if(hw->agc_set > 34) hw->agc_set = 34;
+    else if(hw->agc_set > 32) hw->agc_set = 32;
     else                  hw->agc_set  = hw->agc_set;
 
     if(hw->agc_set< 9)        dato = 1;
-    else if(hw->agc_set > 28) dato = 2;
+    else if(hw->agc_set > 26) dato = 2;
     else                  dato = 0;
 
     switch(hw->agc_set)
     {
                                    /// BP_GA LNA_IADJ LNA_GSEL0 LNA_ISEL  DMIX_R_S               ///  PA_CSEL LNA_GSEL1 PLL_IVCOS BG_ISEL
-        case 0 :  packet_ptr->RXGAIN0 = 0X0 | (3<<4) | (0<<8) | (0<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
-                  break; //-10.7   175
-        case 1 :  packet_ptr->RXGAIN0 = 0X0 | (3<<4) | (0<<8) | (1<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
-                  break; //-11.5
-        case 2 :  packet_ptr->RXGAIN0 = 0X0 | (3<<4) | (0<<8) | (2<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
-                  break; //-12.3
-        case 3 :  packet_ptr->RXGAIN0 = 0X0 | (1<<4) | (0<<8) | (2<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
-                  break; //-14.8
-        case 4 :  packet_ptr->RXGAIN0 = 0X1 | (1<<4) | (0<<8) | (2<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
-                  break; //-17.7
-        case 5 :  packet_ptr->RXGAIN0 = 0X2 | (1<<4) | (0<<8) | (2<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
-                 break; //-20.7
-        case 6 :  packet_ptr->RXGAIN0 = 0X3 | (1<<4) | (0<<8) | (2<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
-                 break; //-23.5
-        case 7 :  packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (2<<9) | (0<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break; //-26.8
-        case 8 :  packet_ptr->RXGAIN0 = 0X5 | (1<<4) | (0<<8) | (2<<9) | (0<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break; //-29.5   175
-        case 9 :  packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (2<<9) | (1<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-31.5
-        case 10 : packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (3<<9) | (1<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-32.5
-        case 11 : packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (2<<9) | (2<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-34.6
-        case 12 : packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (2<<9) | (3<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-36.8
-        case 13 : packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (2<<9) | (4<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-38.5
-        case 14 : packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (2<<9) | (5<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-39.8
-        case 15 : packet_ptr->RXGAIN0 = 0X4 | (1<<4) | (0<<8) | (2<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-41.9   180
-        case 16 : packet_ptr->RXGAIN0 = 0X5 | (1<<4) | (0<<8) | (2<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-44.8
-        case 17 : packet_ptr->RXGAIN0 = 0X6 | (1<<4) | (0<<8) | (2<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-47.8
-        case 18 : packet_ptr->RXGAIN0 = 0X7 | (1<<4) | (0<<8) | (2<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-50.8
-        case 19 : packet_ptr->RXGAIN0 = 0X8 | (1<<4) | (0<<8) | (2<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-53.6
-        case 20 : packet_ptr->RXGAIN0 = 0X8 | (0<<4) | (0<<8) | (3<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-56.4   200
-        case 21 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (1<<8) | (3<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-58.3
-        case 22 : packet_ptr->RXGAIN0 = 0X5 | (0<<4) | (1<<8) | (3<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-61.3
-        case 23 : packet_ptr->RXGAIN0 = 0X6 | (0<<4) | (1<<8) | (3<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-64.3
-        case 24 : packet_ptr->RXGAIN0 = 0X7 | (0<<4) | (1<<8) | (3<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-67.3
-        case 25 : packet_ptr->RXGAIN0 = 0X8 | (0<<4) | (1<<8) | (3<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-70    250
-        case 26 : packet_ptr->RXGAIN0 = 0X8 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
-                 break;//-71.3
-        case 27 : packet_ptr->RXGAIN0 = 0X8 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                 break;//-74.2
-        case 28 : packet_ptr->RXGAIN0 = 0X9 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                 break;//-77.2
-        case 29 : packet_ptr->RXGAIN0 = 0XA | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                  break;//-80.2
-        case 30 : packet_ptr->RXGAIN0 = 0XB | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                  break;//-83.1  420
-        case 31 : packet_ptr->RXGAIN0 = 0XC | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                  break;//-86.3
-        case 32 : packet_ptr->RXGAIN0 = 0XD | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                  break;//-89.3
-        case 33 : packet_ptr->RXGAIN0 = 0XE | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                  break;//-92.9
-        case 34 : packet_ptr->RXGAIN0 = 0XF | (0<<4) | (1<<8) | (6<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
-                  break;//-96.1
+        case 0 : packet_ptr->RXGAIN0 = 0X0 | (0<<4) | (0<<8) | (0<<9) | (0<<12);  packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 1 : packet_ptr->RXGAIN0 = 0X0 | (0<<4) | (0<<8) | (1<<9) | (0<<12);  packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 2 : packet_ptr->RXGAIN0 = 0X0 | (0<<4) | (0<<8) | (3<<9) | (0<<12);  packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+ //       case 0 : ; case 1 :  ;case 2 : ;
+
+        case 3 :  packet_ptr->RXGAIN0 = 0X0 | (0<<4) | (0<<8) | (5<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 4 :  packet_ptr->RXGAIN0 = 0X1 | (0<<4) | (0<<8) | (5<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 5 :  packet_ptr->RXGAIN0 = 0X2 | (0<<4) | (0<<8) | (5<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 6 :  packet_ptr->RXGAIN0 = 0X3 | (0<<4) | (0<<8) | (5<<9) | (0<<12); packet_ptr->RXSET = (0X1F) |  (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 7 :  packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (0<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 8 :  packet_ptr->RXGAIN0 = 0X5 | (0<<4) | (0<<8) | (5<<9) | (0<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 9 :  packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (1<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 10 : packet_ptr->RXGAIN0 = 0X5 | (0<<4) | (0<<8) | (5<<9) | (1<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 11 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (2<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 12 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (3<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 13 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (4<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 14 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (5<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 15 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (6<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 16 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (0<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 17 : packet_ptr->RXGAIN0 = 0X5 | (0<<4) | (0<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 18 : packet_ptr->RXGAIN0 = 0X6 | (0<<4) | (0<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 19 : packet_ptr->RXGAIN0 = 0X7 | (0<<4) | (0<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 20 : packet_ptr->RXGAIN0 = 0X4 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 21 : packet_ptr->RXGAIN0 = 0X5 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 22 : packet_ptr->RXGAIN0 = 0X6 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 23 : packet_ptr->RXGAIN0 = 0X7 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 24 : packet_ptr->RXGAIN0 = 0X8 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (1<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 25 : packet_ptr->RXGAIN0 = 0X8 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 26 : packet_ptr->RXGAIN0 = 0X9 | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                 break;
+        case 27 : packet_ptr->RXGAIN0 = 0XA | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                  break;
+        case 28 : packet_ptr->RXGAIN0 = 0XB | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                  break;
+        case 29 : packet_ptr->RXGAIN0 = 0XC | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                  break;
+        case 30 : packet_ptr->RXGAIN0 = 0XD | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                  break;
+        case 31 : packet_ptr->RXGAIN0 = 0XE | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                  break;
+        case 32 : packet_ptr->RXGAIN0 = 0XF | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
+                  break;
         default : packet_ptr->RXGAIN0 = 0XF | (0<<4) | (1<<8) | (5<<9) | (7<<12); packet_ptr->RXSET = (0X1F) | (0<<7) | (3<<8) | (0X1<<11);
     }
 

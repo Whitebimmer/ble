@@ -811,8 +811,12 @@ static void hci_initializing_run()
                 le_hci_send_cmd(&hci_le_set_advertising_parameters,
                     0x0320, 0x0320, 
                     0x00, 0x00, 
-                    0x0, rpa[0].peer_identity_address, 
+                    0x0, NULL,
                     0x7, 0x0);
+                    /* 0x0320, 0x0320,  */
+                    /* 0x00, 0x00,  */
+                    /* 0x0, rpa[0].peer_identity_address,  */
+                    /* 0x7, 0x0); */
                 break;
         case HCI_INIT_LE_SET_ADV_DATA:
             hci_puts("HCI_INIT_LE_SET_ADV_DATA\n");

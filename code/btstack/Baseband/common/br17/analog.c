@@ -823,7 +823,7 @@ void RF_analog_init(char en)
         SFR(WLA_CON29, 2 , 1, 1);       //1 bt_pllb_sel
         SFR(WLA_CON29, 3 , 1, 1);       //1 bt_pllrn_sel
         SFR(WLA_CON29, 4 , 1, 1);       //1 bt_pll_sel
-        SFR(WLA_CON29, 15 ,1, 0);       // bt_pll_acc
+        SFR(WLA_CON29, 15 ,1, 1);       // bt_pll_acc
         SFR(WLA_CON28, 8 , 1, 1);       // wl_pllmode_sel
         SFR(WLA_CON28, 9 , 1, 1);       // wl_pllref_sel
         SFR(WLA_CON28, 10, 1, 0);       // wl_dsm_sel
