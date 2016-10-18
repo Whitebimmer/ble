@@ -11,6 +11,7 @@ void osc_clk_init(void)
     /* CLK_CON0 |= BIT(0); */
 
     /* CLK_CON0 &= ~BIT(8); */
+    SFR(CLK_CON1,14,2,2);
     //bt osc en
     SFR(WLA_CON17,10 ,4 ,0x8);    //osc HCS
     SFR(WLA_CON17,0  ,5 ,0x10);   //osc CLS
@@ -23,7 +24,8 @@ void osc_clk_init(void)
     SFR(WLA_CON18, 2 ,2 ,0x2);    //osc xhd current
     SFR(WLA_CON14,10 ,1 ,0x1);    //osc en ; no connect should close    
 
-    SFR(CLK_CON0, 6, 2, 0x0);
+    SFR(CLK_CON1,14,2,1);
+    /* SFR(CLK_CON0, 6, 2, 0x0); */
 
     /* CLK_CON0 |= BIT(8);             //rc_clk switch to osc_clk */
 }
@@ -44,12 +46,12 @@ void pll_init(void)
     SFR(CLK_CON0,  0,  1,  1); //  rcen
     delay(100);
     SFR(CLK_CON0,  8,  1,  0); // SYS_CLK: 0:RC_CLK; 1:MUX_CLK
-    /* osc_clk_init(); */
+    osc_clk_init();
 
     SFR(PLL_CON,  8,  2,  0);  // PLL_ref_sel: 0:PLL_OSC_CLK  ; 1: BTOSC_CLK
-    SFR(PLL_CON,  2,  5,  (BTOSC_CLK/2-2));  // PLL_REFDS
+    SFR(PLL_CON,  2,  5,  0);  // PLL_REFDS
     SFR(PLL_CON,  7,  1,  1);  // PLL_REFDSEN: PLL_SEL12M = 0: PLL_ref/1 ; 1: PLL_ref/(2+PLL_REFDS)
-    SFR(PLL_CON, 16,  1,  0);  // PLL_SEL12M:  0: 2M ; 1: 12M
+    SFR(PLL_CON, 16,  1,  1);  // PLL_SEL12M:  0: 2M ; 1: 12M
     SFR(PLL_CON, 10,  1,  0);  // PLL_SEL12M:  0: 2M ; 1: 12M
     SFR(PLL_CON,  1,  1,  0);  // PLL_RN
     SFR(PLL_CON,  0,  1,  1);  // PLL_EN;
@@ -59,7 +61,7 @@ void pll_init(void)
 
     SFR(CLK_CON2, 31,  1,  0); // PLL_192_SEL: 0:PLL_192  1:PLL_480/2.5
 
-    SFR(CLK_CON2,  0,  2,  0); // PLL_SYS_CLK:  0:PLL_192M; 1:PLL_480M; 2:FM_PLL; 3:0
+    SFR(CLK_CON2,  0,  2,  1); // PLL_SYS_CLK:  0:PLL_192M; 1:PLL_480M; 2:FM_PLL; 3:0
     SFR(CLK_CON2,  2,  2,  0); // PLL_SYS_DIV1: 0:1/1; 1:1/3; 2:1/5; 3:/7
     SFR(CLK_CON2,  4,  2,  2); // PLL_SYS_DIV2: 0:1/1; 1:1/2; 2:1/4; 3:/8
 
@@ -76,7 +78,7 @@ void pll_init(void)
     delay(100);
     SFR(CLK_CON0,  8,  1,  1); // SYS_CLK: 0:MUX_CLK0; 1:MUX_CLK1
     SFR(SYS_DIV,  0,  8,  0);  // SYS_CLK = SYS_CLK/(1+n);
-    SFR(SYS_DIV,  8,  3,  0);  // LSB_CLK = SYS_CLK/(1+n);
+    SFR(SYS_DIV,  8,  3,  1);  // LSB_CLK = SYS_CLK/(1+n);
     SFR(SYS_DIV,  11, 1,  0);  // FM_CLK = SYS_CLK/(1+n);
 
     /* clk_out(); */

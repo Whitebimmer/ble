@@ -805,25 +805,25 @@ static void hci_initializing_run()
             le_hci_send_cmd(&hci_le_read_white_list_size);
             break;
 
-        /* case HCI_INIT_LE_SET_ADV_PARAMETERS: */
-                /* hci_puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n"); */
-                /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS; */
-                /* le_hci_send_cmd(&hci_le_set_advertising_parameters, */
-                    /* 0x0320, 0x0320,  */
-                    /* 0x00, 0x00,  */
-                    /* 0x0, rpa[0].peer_identity_address,  */
-                    /* 0x7, 0x0); */
-                /* break; */
-        /* case HCI_INIT_LE_SET_ADV_DATA: */
-            /* hci_puts("HCI_INIT_LE_SET_ADV_DATA\n"); */
-            /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_DATA; */
-            /* le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data), sizeof(adv_ind_data), adv_ind_data); */
-                /* break; */
-        /* case HCI_INIT_LE_SET_RSP_DATA: */
-            /* hci_puts("HCI_INIT_LE_SET_RSP_DATA\n"); */
-            /* hci_stack->substate = HCI_INIT_W4_LE_SET_RSP_DATA; */
-            /* le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data); */
-            /* break; */
+        case HCI_INIT_LE_SET_ADV_PARAMETERS:
+                hci_puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n");
+                hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS;
+                le_hci_send_cmd(&hci_le_set_advertising_parameters,
+                    0x0320, 0x0320, 
+                    0x00, 0x00, 
+                    0x0, rpa[0].peer_identity_address, 
+                    0x7, 0x0);
+                break;
+        case HCI_INIT_LE_SET_ADV_DATA:
+            hci_puts("HCI_INIT_LE_SET_ADV_DATA\n");
+            hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_DATA;
+            le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data), sizeof(adv_ind_data), adv_ind_data);
+                break;
+        case HCI_INIT_LE_SET_RSP_DATA:
+            hci_puts("HCI_INIT_LE_SET_RSP_DATA\n");
+            hci_stack->substate = HCI_INIT_W4_LE_SET_RSP_DATA;
+            le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data);
+            break;
         //privacy 
         /* case HCI_INIT_LE_READ_RESOLVING_LIST_SIZE: */
             /* hci_puts("HCI_INIT_LE_READ_RESOLVING_LIST_SIZE\n"); */
@@ -850,11 +850,11 @@ static void hci_initializing_run()
             /* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1); */
             /* break; */
 
-        /* case HCI_INIT_LE_SET_ADV_EN: */
-            /* hci_puts("HCI_INIT_LE_SET_ADV_EN\n"); */
-            /* hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_EN; */
-            /* le_hci_send_cmd(&hci_le_set_advertise_enable, 1); */
-            /* break; */
+        case HCI_INIT_LE_SET_ADV_EN:
+            hci_puts("HCI_INIT_LE_SET_ADV_EN\n");
+            hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_EN;
+            le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
+            break;
         // DONE
         case HCI_INIT_DONE:
             // done.

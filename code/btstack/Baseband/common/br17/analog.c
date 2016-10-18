@@ -2,7 +2,7 @@
 #include "cpu.h"
 #include "typedef.h"
 
-#define bt_printf 
+#define bt_printf   printf
 /*
     bt trim vlaue deal
 */
@@ -708,7 +708,7 @@ void bt_analog_init(void)
   //======================= osc ===========================//
     //SFR(WLA_CON17, 0,  5,  0X00); // BTOSC_CLSEL 0x12
     //SFR(WLA_CON17, 5,  5,  0X00); // BTOSC_CRSEL 0x12
-    SFR(WLA_CON17, 10, 4,  3); // BTOSC_Hcs
+    SFR(WLA_CON17, 10, 4,  7); // BTOSC_Hcs
 
     SFR(WLA_CON29, 11, 1,  0); // BTOSC_EN_SEL_BASEBAND
     SFR(WLA_CON14, 10, 1,  1); // BTOSC_EN
@@ -776,9 +776,6 @@ void bt_analog_init(void)
     delay(rf.delay_sys*100);
 
     bta_pll_bank_scan(127);
-
- 
-
 
     bt_printf("\n\n br17 analog  test  ......\n\n");
 }

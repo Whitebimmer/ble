@@ -162,10 +162,12 @@ void disable_wtd(void)
 }
 
 const struct bt_low_power_param bt_power_param = {
-    .osc_type = RTC_OSCH,
-    .osc_hz = 12000000L,
+    .osc_type = RTC_OSCL,
+    .osc_hz = 32768L,
     .is_use_PR = 0,
-    .delay_us = 64000000/1000000L,
+    .delay_us = 160000000/1000000L,
+    .config = BT_POWER_DOWN_EN,
+    .d2sh_dis_sw = 0,
 };
 
 u8 ram2_memory[0x100] SEC(.db_memory);
@@ -188,8 +190,9 @@ int main()
     puts("...br17 setup ok.......\n");
     /* SFR(FMA_CON1, 8, 1, 1);   // FM_LDO TO BT */
     /* SFR(LDO_CON, 5, 1, 1);    // open ldo15 */
-    /* FMA_CON1 |= BIT(8); */
-    /* LDO_CON |= BIT(5); */
+    SFR(FMA_CON1, 12, 1, 1);   // FM_LDO TO BT
+    /* SFR(LDO_CON, 31, 1, 1);    // open ldo15 */
+    /* SFR(LDO_CON, 1, 1, 1);    // open ldo15 */
 #endif
 
     puts("\nbt_power_is_poweroff_post : ");
@@ -223,7 +226,12 @@ int main()
     puts("-----2\n");
 	timer0_start();
 
+    bt_power_init(&bt_power_param);
+    set_pwrmd(2);
+    bt_osc_internal_cfg(0x11, 0x11);
+
     puts("-----3\n");
+
     RF_init();
 
     //----------debug
@@ -253,12 +261,12 @@ int main()
 #endif
 
     u32 tmp;
-    __asm__ volatile ("mov %0,ie0" : "=r"(tmp));
-    printf("ie0 = %08x \n", tmp);
-    __asm__ volatile ("mov %0,ie1" : "=r"(tmp));
-    printf("ie1 = %08x \n", tmp);
-    __asm__ volatile ("mov %0,icfg" : "=r"(tmp));
-    printf("icfg = %08x \n", tmp);
+    /* __asm__ volatile ("mov %0,ie0" : "=r"(tmp)); */
+    /* printf("ie0 = %08x \n", tmp); */
+    /* __asm__ volatile ("mov %0,ie1" : "=r"(tmp)); */
+    /* printf("ie1 = %08x \n", tmp); */
+    /* __asm__ volatile ("mov %0,icfg" : "=r"(tmp)); */
+    /* printf("icfg = %08x \n", tmp); */
     /* CPU_INT_EN(); */
 	ENABLE_INT();
     /* puts("-----4\n"); */
@@ -277,7 +285,6 @@ int main()
     }
     else
     {
-    	bt_power_init(&bt_power_param);
 
     	puts("-----6\n");
     	ble_main();
@@ -289,14 +296,14 @@ int main()
 	/*INTALL_HWI(BT_BLE_INT, le_hw_isr, 0);
 	INTALL_HWI(18, le_test_uart_isr, 0);*/
 
-    __asm__ volatile ("mov %0,ie0" : "=r"(tmp));
-    printf("ie0 = %08x \n", tmp);
-    __asm__ volatile ("mov %0,ie1" : "=r"(tmp));
-    printf("ie1 = %08x \n", tmp);
-    __asm__ volatile ("mov %0,icfg" : "=r"(tmp));
-    printf("icfg = %08x \n", tmp);
+    /* __asm__ volatile ("mov %0,ie0" : "=r"(tmp)); */
+    /* printf("ie0 = %08x \n", tmp); */
+    /* __asm__ volatile ("mov %0,ie1" : "=r"(tmp)); */
+    /* printf("ie1 = %08x \n", tmp); */
+    /* __asm__ volatile ("mov %0,icfg" : "=r"(tmp)); */
+    /* printf("icfg = %08x \n", tmp); */
     puts("------------BLE 4.2 X start run loop-----------\n");
-    while(1);
+    while(1)
     {
 		int c;
        //asm("idle");

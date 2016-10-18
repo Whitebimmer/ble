@@ -453,6 +453,7 @@ static void rf_debug()
 }
 void RF_init()
 {
+    bt_pll_para(24000000L,48000000L,0,0);
     SFR(CLK_CON1, 14, 2, 0);
     delay(100);
     SFR(WL_CON0, 7, 1, 1);
@@ -460,28 +461,43 @@ void RF_init()
     SFR(WL_CON0,16, 4, 5);
     SFR(WL_CON0,20, 2, 2);
 
+    delay(100);
 
     SFR(WL_CON0, 0, 1, 1);
 	delay(1000);
     BT_BSB_CON |= BIT(10);
 
-	/* bt_puts("rf_pll_init 1\n"); */
+    /* puts("rf_pll_init 1\n"); */
 	/* RWBTCNTL |= BIT(31)|BIT(30); */
 
     BT_BSB_CON |= BIT(14)|BIT(15)|BIT(13)|(1<<9)|(1<<6)|(1<<3)|BIT(8)|BIT(2)|BIT(1)|BIT(0);
 
-    /* BT_LP_CON |= BIT(0);	//[>Dual mode<] */
+    BT_LP_CON |= BIT(0);	//[>Dual mode<]
+    /* BT_LP_CON &= ~BIT(0);	//[>Dual mode<] */
 
-	/* bt_puts("rf_pll_init 2\n"); */
+    /* puts("rf_pll_init 2\n"); */
 	RF_mdm_init();
 	/* rf_debug(); */
 
-	/* bt_puts("rf_pll_init\n"); */
+    /* puts("rf_pll_init 3\n"); */
 	if(bt_power_is_poweroff_post()) {
 		return;
 	}
 	
+    /* printf("CLK_CON0 : %x\n",  CLK_CON0); */
+    /* printf("CLK_CON1 : %x\n",  CLK_CON1); */
+    /* printf("CLK_CON2 : %x\n",  CLK_CON2); */
+    /* printf("PLL_CON : %x\n",  PLL_CON); */
+    /* printf("SYS_DIV : %x\n",  SYS_DIV); */
+    /* printf("LDO_CON : %x\n",  LDO_CON); */
+    /* printf("FMA_CON0 : %x\n",  FMA_CON0); */
+    /* printf("FMA_CON1 : %x\n",  FMA_CON1); */
+    /* printf("FMA_CON2 : %x\n",  FMA_CON2); */
+    /* printf("FMA_CON3 : %x\n",  FMA_CON3); */
+    /* printf("WLA_CON0 : %x\n",  WLA_CON0); */
+    /* puts("rf_pll_init 4\n"); */
 	bt_rf_analog_init();
+    /* puts("rf_pll_init 5\n"); */
     bta_pll_config_init();
 
  	//bredr_init();

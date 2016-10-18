@@ -15,6 +15,7 @@ INCLUDES = \
 -Ios/ucos \
 -Ibtstack/ \
 -Ibtstack/Baseband/include/ble/$(CHIPID)/ \
+-Ibtstack/Baseband/include/common/ \
 -Ibtstack/Baseband/include/common/$(CHIPID)/ \
 -Ibtstack/Controller/include/ \
 -Ibtstack/Controller/include/common/ \
@@ -58,12 +59,12 @@ objs += \
    btstack/Baseband/common/$(CHIPID)/RF.o \
    btstack/Baseband/BLE/$(CHIPID)/RF_ble.o \
    btstack/Baseband/BLE/$(CHIPID)/analog_ble.o \
+   btstack/Baseband/common/$(CHIPID)/bt_power_driver.o \
+   btstack/Baseband/common/$(CHIPID)/bt_power.o \
+   btstack/Baseband/common/$(CHIPID)/bd_memory.o \
    btstack/Controller/BLE/ble_hci.o \
    btstack/Controller/BLE/ble_main.o \
    btstack/Controller/BLE/link_layer.o \
-   btstack/Controller/common/$(CHIPID)/bt_power_driver.o \
-   btstack/Controller/common/bt_power.o \
-   btstack/Controller/common/bd_memory.o \
    btstack/Host/BLE/hci.o \
    btstack/Host/BLE/h4_transport.o \
    btstack/Host/BLE/l2cap_le.o \
