@@ -140,13 +140,6 @@ struct ble_addr{
 #define BLE_HW_RX_SIZE  (512*2)
 #define BLE_HW_TX_SIZE  (512*4)
 
-#define BLE_HW_MAX_RX_OCTETES	251
-#define BLE_HW_MAX_TX_OCTETES	251
-#define BLE_HW_MIN_RX_OCTETES	27
-#define BLE_HW_MIN_TX_OCTETES	27
-
-#define ENC_MIC_LEN		4
-
 #define BLE_HW_RX_BUF_SIZE		(((sizeof(struct ble_rx) + BLE_HW_MAX_RX_OCTETES + ENC_MIC_LEN)/4+1)*4)
 #define BLE_HW_TX_BUF_SIZE		(((sizeof(struct ble_tx) + BLE_HW_MAX_TX_OCTETES + ENC_MIC_LEN)/4+1)*4)
 
@@ -195,7 +188,7 @@ struct ble_hw{
     // u16 rx_octets;
     u16 tx_octets;
 
-    //4.2 0x1b-0xfb
+    //4.2 0x1b-0xfb/default 251
 	u8 rx_buf[2][BLE_HW_RX_BUF_SIZE] __attribute__((aligned(0x4)));
 	u8 tx_buf[2][BLE_HW_TX_BUF_SIZE] __attribute__((aligned(0x4)));
 };

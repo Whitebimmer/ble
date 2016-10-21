@@ -2799,7 +2799,7 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
     }
     
     //empty packet not notify upper layer
-    if (rx->llid != 1 || rx->len != 0)
+	if (RX_PACKET_IS_VALID(rx))
     {
         //resume ll thread
         thread_resume(&ll.ll_thread);

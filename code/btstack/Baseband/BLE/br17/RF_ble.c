@@ -28,14 +28,6 @@ static volatile int ble_debug_signal[BLE_HW_NUM];
 #define HW_TX_INDEX(ble_fp)    ((struct ble_param *)ble_fp->TXTOG & BIT(0))
 
 
-
-/* struct ble_hw_base { */
-	/* u16 inst[8]; */
-	/* struct ble_hw hw[BLE_HW_NUM]; */
-	/* u8 rx[BLE_HW_NUM][BLE_HW_RX_SIZE]; */
-	/* u8 tx[BLE_HW_NUM][BLE_HW_TX_SIZE]; */
-/* }; */
-
 static struct ble_hw_base ble_base SEC(.btmem_highly_available);
 
 struct baseband{
@@ -99,7 +91,7 @@ struct ble_rx * ble_hw_alloc_rx(struct ble_hw *hw, int len)
 {
 	struct ble_rx *rx;
 
-	rx = lbuf_alloc(hw->lbuf_rx, sizeof(*rx) + len + ENC_MIC_LEN);
+	rx = lbuf_alloc(hw->lbuf_rx, RX_PACKET_SIZE(len));
     if(rx == NULL)
     {
         /* ASSERT(rx != NULL, "%s\n", "rx alloc err\n"); */
@@ -114,7 +106,7 @@ struct ble_rx * ble_hw_alloc_rx(struct ble_hw *hw, int len)
 	return  rx;
 }
 
-static u32 ble_hw_get_rx_remain(struct ble_hw *hw)
+static u32 ble_hw_rx_underload(struct ble_hw *hw)
 {
 	return lbuf_remain_len(hw->lbuf_rx, BLE_HW_RX_BUF_SIZE * 3);
 }
@@ -125,13 +117,15 @@ static struct ble_tx * le_hw_alloc_tx(struct ble_hw *hw,
 {
 	struct ble_tx *tx;
 
-	tx = lbuf_alloc(hw->lbuf_tx, sizeof(*tx) + len + ENC_MIC_LEN);
+	tx = lbuf_alloc(hw->lbuf_tx, TX_PACKET_SIZE(len));
 
 	ASSERT(tx != NULL, "%s\n", "RF tx alloc err\n");
 	memset(tx, 0, sizeof(*tx));
 	tx->type = type;
 	tx->llid = llid;
-	tx->len = len;
+    printf("hw alloc tx : %x\n", tx->len);
+    tx->len = len;
+    printf("hw alloc tx 2 : %x\n", tx->len);
 
 	return tx;
 }
@@ -140,6 +134,7 @@ static struct ble_tx * le_hw_alloc_tx(struct ble_hw *hw,
 u8 pmalloc_rx[BLE_HW_NUM][BLE_HW_RX_SIZE];
 u8 pmalloc_tx[BLE_HW_NUM][BLE_HW_TX_SIZE];
 
+//features 4.2 fix maximum buffer size for hw
 static void ble_rx_init(struct ble_hw *hw)
 {
 	hw->lbuf_rx = lbuf_init(pmalloc_rx[HW_ID(hw)], BLE_HW_RX_SIZE);
@@ -1750,7 +1745,7 @@ static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
     ble_rx_pdus_process(hw, rx);
 
     //async PDUs upper to Link Layer
-    if (rx->llid != 1 || rx->len != 0)
+	if (RX_PACKET_IS_VALID(rx))
     {
         /* printf_buf(rx, sizeof(*rx)+rx->len); */
         lbuf_push(rx);
@@ -1856,11 +1851,62 @@ static void __hw_tx_process(struct ble_hw *hw)
 	}
 }
 
+
+static struct ble_rx *ble_rx_buf_alloc(struct ble_hw *hw, struct ble_rx *rx, int ind)
+{
+	struct ble_rx *rx_alloc;
+	struct ble_rx temp_rx;
+
+	struct ble_param *ble_fp = &hw->ble_fp;
+
+	u16 *rxptr;
+	rxptr  =  (u16 *)&ble_fp->RXPTR0   + ind;
+
+	if (RX_PACKET_IS_VALID(rx))
+    {
+		putchar('R');
+		if(ble_hw_rx_underload(hw))
+        {
+			if(NULL != *rxptr)
+            {
+				/* putchar('a'); */
+				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
+			}
+			else
+            {
+                puts("overload -> underload\n");
+				*rxptr = PHY_TO_BLE(hw->rx_buf[ind] + sizeof(*rx));
+				rx_alloc = &temp_rx;	
+                RX_PACKET_SET_INVALID(rx);
+			}
+		}
+		else{
+			if(NULL != *rxptr)
+            {	
+                puts("underload -> overload\n");
+				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
+				*rxptr = NULL;
+			}
+			else{
+				/* putchar('d'); */
+				rx_alloc = &temp_rx;	
+                RX_PACKET_SET_INVALID(rx);
+			}
+		}
+	}
+	else{
+		rx_alloc = &temp_rx;	
+	}
+
+	memcpy((u8 *)rx_alloc, (u8 *)rx, sizeof(*rx) + rx->len);
+
+    return rx_alloc;
+}
+
 static void __hw_rx_process(struct ble_hw *hw)
 {
 	int ind;
 	struct ble_rx *rx, *rx_alloc;
-	struct ble_rx temp_rx;
 	u8 rx_check;
 	int rxahdr, rxdhdr, rxstat;
 	u16 *rxptr;
@@ -1918,50 +1964,13 @@ static void __hw_rx_process(struct ble_hw *hw)
 	ble_hw_encrypt_check(hw);
 
 	/* putchar('r'); */
-    //data buf loop
-	if (rx->llid!=1 || rx->len!=0){
-		putchar('R');
-        //baseband loop buf switch
-        /* hw->rx[ind] = ble_hw_alloc_rx(hw, hw->rx_octets); */
-		/* *rxptr = PHY_TO_BLE(hw->rx[ind]->data); */
-		if(ble_hw_get_rx_remain(hw)){
-			if(NULL != *rxptr){
-				/* putchar('a'); */
-				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
-			}
-			else{
-				/* putchar('b'); */
-				*rxptr = PHY_TO_BLE(hw->rx_buf[ind] + sizeof(*rx));
-				rx_alloc = &temp_rx;	
-				rx->len = 0;
-				rx->llid = 1;
-			}
-		}
-		else{
-			if(NULL != *rxptr){	
-				/* putchar('c'); */
-				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
-				*rxptr = NULL;
-			}
-			else{
-				/* putchar('d'); */
-				rx_alloc = &temp_rx;	
-				rx->len = 0;
-				rx->llid = 1;
-			}
-		}
-	}
-	else{
-		rx_alloc = &temp_rx;	
-	}
-
-	memcpy((u8 *)rx_alloc, (u8 *)rx, sizeof(*rx) + rx->len);
+    //baseband loop buf switch
+    rx_alloc = ble_rx_buf_alloc(hw, rx, ind);
 	ble_rx_probe(hw, rx_alloc);
 
 	__hw_tx_process(hw);
 }
 
-#define TX_PACKET_SIZE(tx)         (sizeof(struct ble_tx) + tx->len + ENC_MIC_LEN)
 
 static void __hw_event_process(struct ble_hw *hw)
 {
@@ -1974,12 +1983,10 @@ static void __hw_event_process(struct ble_hw *hw)
 			putchar('0' + HW_ID(hw));
             __set_adv_channel_index(hw, hw->adv_channel);
 			i = ble_fp->TXTOG & BIT(0);
-			memcpy(hw->tx_buf[0], hw->tx[0], TX_PACKET_SIZE(hw->tx[0]));
-			memcpy(hw->tx_buf[1], hw->tx[1], TX_PACKET_SIZE(hw->tx[1]));
+			memcpy(hw->tx_buf[0], hw->tx[0], TX_PACKET_SIZE(hw->tx[0]->len));
+			memcpy(hw->tx_buf[1], hw->tx[1], TX_PACKET_SIZE(hw->tx[1]->len));
 			ble_hw_tx(hw, hw->tx_buf[0], i);
 			ble_hw_tx(hw, hw->tx_buf[1], !i);
-			/* ble_hw_tx(hw, hw->tx[0], i); */
-			/* ble_hw_tx(hw, hw->tx[1], !i); */
 			break;
 		case SCAN_ST:
 		case INIT_ST:
@@ -2290,8 +2297,8 @@ static void le_hw_scanning(struct ble_hw *hw, struct ble_scan *scan)
 	tx = __scan_req_pdu(hw, scan);
     /* hw->tx[0] = tx; */
     /* hw->tx[1] = tx; */
-	memcpy(hw->tx_buf[0], tx, TX_PACKET_SIZE(tx));
-	memcpy(hw->tx_buf[1], tx, TX_PACKET_SIZE(tx));
+	memcpy(hw->tx_buf[0], tx, TX_PACKET_SIZE(tx->len));
+	memcpy(hw->tx_buf[1], tx, TX_PACKET_SIZE(tx->len));
 	ble_hw_tx(hw, hw->tx_buf[0], 0);
 	ble_hw_tx(hw, hw->tx_buf[1], 1);
 
@@ -2324,8 +2331,8 @@ void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
     puts("conn req : ");
     printf_buf(hw->peer.addr, 6);
 	/* ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0))); */
-	memcpy(hw->tx_buf[0], tx, TX_PACKET_SIZE(tx));
-	memcpy(hw->tx_buf[1], tx, TX_PACKET_SIZE(tx));
+	memcpy(hw->tx_buf[0], tx, TX_PACKET_SIZE(tx->len));
+	memcpy(hw->tx_buf[1], tx, TX_PACKET_SIZE(tx->len));
 	ble_hw_tx(hw, hw->tx_buf[0], 0);
 	ble_hw_tx(hw, hw->tx_buf[1], 1);
 	/* ble_hw_tx(hw, tx, 0); */

@@ -3,9 +3,12 @@
 
 #include "lbuf.h"
 
+#define BLE_HW_MAX_RX_OCTETES	251
+#define BLE_HW_MAX_TX_OCTETES	251
+#define BLE_HW_MIN_RX_OCTETES	27
+#define BLE_HW_MIN_TX_OCTETES	27
 
-
-
+#define ENC_MIC_LEN		4
 
 enum {
 	BLE_SET_IV,
@@ -45,6 +48,9 @@ struct ble_rx {
 	u8 data[0];
 };
 
+#define RX_PACKET_IS_VALID(rx)          ((rx->llid != 1) || (rx->len != 0))
+#define RX_PACKET_SET_INVALID(rx)       ({rx->len = 0; rx->llid = 1;})
+#define RX_PACKET_SIZE(len)             (sizeof(struct ble_rx) + len + ENC_MIC_LEN)
 
 struct ble_tx {
 	u8 type;
@@ -59,6 +65,9 @@ struct ble_tx {
 
 	u8 data[0];
 };
+
+#define TX_PACKET_SIZE(len)         (sizeof(struct ble_tx) + len + ENC_MIC_LEN)
+
 
 
 // struct ble_conn_param{
