@@ -997,6 +997,7 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
             break;           
 
         case HCI_LE_SET_DATA_LENGTH:
+			hci_puts("HCI_LE_SET_DATA_LENGTH\n");
             le_hci_push_control_data(opcode, data);
             __hci_emit_event_of_cmd_complete(opcode, "12", 0,
                     READ_CONNECTION_HANDLE(data));

@@ -58,10 +58,10 @@ static const struct ll_data_pdu_length_read_only ll_data_pdu_length_ro = {
     /* .supportedMaxRxTime = 328, */
 
     /* if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION)) */
-    .supportedMaxTxOctets = 251,
+    .supportedMaxTxOctets = BLE_HW_MAX_RX_OCTETES,
     .supportedMaxTxTime = 2120,
 
-    .supportedMaxRxOctets = 251,
+    .supportedMaxRxOctets = BLE_HW_MAX_TX_OCTETES,
     .supportedMaxRxTime = 2120,
 };
 
@@ -1684,8 +1684,8 @@ static void __ll_set_data_length_auto(struct le_link *link)
 {
     if (LE_FEATURES_IS_SUPPORT(LE_DATA_PACKET_LENGTH_EXTENSION))
     {
-        if ((link->pdu_len.connMaxTxOctets != 27) 
-            || (link->pdu_len.connMaxRxOctets != 27))
+        if ((link->pdu_len.connMaxTxOctets != BLE_HW_MIN_TX_OCTETES) 
+            || (link->pdu_len.connMaxRxOctets != BLE_HW_MIN_RX_OCTETES))
         {
             puts("issuse Data Length Update Procedure 1\n");
             ll_send_control_data(link, LL_LENGTH_REQ,
@@ -1745,8 +1745,8 @@ static void __set_ll_data_length(struct le_link *link)
     link->pdu_len.connMaxRxTime = le_data_length.priv->supportedMaxRxTime;
 
     //connRemoteMaxTxOctets & connRemoteMaxRxOctets shall be 27
-    link->pdu_len.connRemoteMaxTxOctets = 27;
-    link->pdu_len.connRemoteMaxRxOctets = 27;
+    link->pdu_len.connRemoteMaxTxOctets = BLE_HW_MIN_TX_OCTETES;
+    link->pdu_len.connRemoteMaxRxOctets = BLE_HW_MIN_RX_OCTETES;
     //connRemoteMaxTxTime & connRemoteMaxRxTime shall be 328
     link->pdu_len.connRemoteMaxTxTime = 328;
     link->pdu_len.connRemoteMaxRxTime = 328;
@@ -4681,6 +4681,7 @@ void le_ll_push_control_data(u8 opcode, const u8 *param)
             /* le_ping(param); */
             /* break; */
         case HCI_LE_SET_DATA_LENGTH:
+			ll_puts("LL_SET_DATA_LENGTH\n");
             le_data_length_update(param);
             break;
     }

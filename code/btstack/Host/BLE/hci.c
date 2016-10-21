@@ -449,6 +449,8 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         int current_acl_data_packet_length = hci_stack->acl_fragmentation_total_size - hci_stack->acl_fragmentation_pos;
         int more_fragments = 0;
 
+		current_acl_data_packet_length -= 4;
+
         // if ACL packet is larger than Bluetooth packet buffer, only send max_acl_data_packet_length
         if (current_acl_data_packet_length > max_acl_data_packet_length){
             more_fragments = 1;
@@ -470,17 +472,18 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
 
         // send packet
         uint8_t * packet = &hci_stack->hci_packet_buffer[acl_header_pos];
-        printf_buf(packet, 0x8);
+        /* _printf_buf(packet, 0x8); */
         const int size = current_acl_data_packet_length + 4;
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);
 
-        printf("pos %x - size %x\n", acl_header_pos, size);
+        /* printf("pos %x - size 0x%x\n", acl_header_pos, size); */
         hci_puts("acl more ...");
         // done yet?
         if (!more_fragments) break;
 
         // update start of next fragment to send
         hci_stack->acl_fragmentation_pos += current_acl_data_packet_length;
+        hci_stack->acl_fragmentation_pos += 4;
 
         // can send more?
         if (!le_hci_can_send_prepared_acl_packet_now(connection->con_handle))
