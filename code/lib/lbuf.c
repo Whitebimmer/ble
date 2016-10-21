@@ -36,6 +36,39 @@ struct lbuff_head * lbuf_init(void *buf, u32 buf_len)
 	return head;
 }
 
+u32 lbuf_remain_len(struct lbuff_head *head, u32 len)
+{
+	struct hentry *entry;
+	struct hfree *p;
+	u32 res = 0;
+
+    CPU_SR_ALLOC();
+
+	len += sizeof(*entry);
+	if (len&0x03){
+		len += 4-(len&0x03);
+	}
+
+	CPU_INT_DIS();
+
+	list_for_each_entry(p, &head->free, entry)
+	{
+		if(p->len < len)
+		{
+			continue;
+		}
+		else
+		{
+			res = 1;	
+			break;
+		}
+	}
+
+	CPU_INT_EN();
+
+	return res;
+}
+
 void * lbuf_alloc(struct lbuff_head *head, u32 len)
 {
 	struct hentry *entry;

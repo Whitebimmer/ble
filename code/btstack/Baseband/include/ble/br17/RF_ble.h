@@ -5,6 +5,7 @@
 #include "typedef.h"
 #include "ble_regs.h"
 #include "list.h"
+#include "ble_interface.h"
 
 
 
@@ -133,6 +134,22 @@ struct ble_addr{
 	u8 addr[6];
 };
 
+
+#define BLE_HW_NUM    	1
+
+#define BLE_HW_RX_SIZE  (512*2)
+#define BLE_HW_TX_SIZE  (512*4)
+
+#define BLE_HW_MAX_RX_OCTETES	251
+#define BLE_HW_MAX_TX_OCTETES	251
+#define BLE_HW_MIN_RX_OCTETES	27
+#define BLE_HW_MIN_TX_OCTETES	27
+
+#define ENC_MIC_LEN		4
+
+#define BLE_HW_RX_BUF_SIZE		(((sizeof(struct ble_rx) + BLE_HW_MAX_RX_OCTETES + ENC_MIC_LEN)/4+1)*4)
+#define BLE_HW_TX_BUF_SIZE		(((sizeof(struct ble_tx) + BLE_HW_MAX_TX_OCTETES + ENC_MIC_LEN)/4+1)*4)
+
 struct ble_hw{
 	u8 rx_ack;
 	u8 tx_seqn;
@@ -147,7 +164,7 @@ struct ble_hw{
     struct ble_addr local;
     struct ble_addr peer;
 
-	struct ble_rx 			*rx[2];
+	// struct ble_rx 			*rx[2];
 	struct ble_tx 			*tx[2];
 	struct lbuff_head 		*lbuf_rx;
 	struct lbuff_head 		*lbuf_tx;
@@ -168,47 +185,25 @@ struct ble_hw{
 	const struct ble_handler *handler;
 	struct list_head entry;
 
-    u8 privacy_enable;
 	int is_init_enter_conn_pass;
 
     void *power_ctrl;
     u32 *regs;
 
-    u16 rx_octets;
+    u8 privacy_enable;
+	u8 tx_md_stop;
+    // u16 rx_octets;
     u16 tx_octets;
+
+    //4.2 0x1b-0xfb
+	u8 rx_buf[2][BLE_HW_RX_BUF_SIZE] __attribute__((aligned(0x4)));
+	u8 tx_buf[2][BLE_HW_TX_BUF_SIZE] __attribute__((aligned(0x4)));
 };
-
-#define BLE_HW_NUM    1
-
-#define BLE_HW_RX_SIZE  (512*1)
-#define BLE_HW_TX_SIZE  512
 
 struct ble_hw_base {
 	u16 inst[8];
 	struct ble_hw hw[BLE_HW_NUM];
-	u8 rx[BLE_HW_NUM][BLE_HW_RX_SIZE];
-	u8 tx[BLE_HW_NUM][BLE_HW_TX_SIZE];
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif
 
