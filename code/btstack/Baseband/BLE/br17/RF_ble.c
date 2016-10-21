@@ -123,9 +123,9 @@ static struct ble_tx * le_hw_alloc_tx(struct ble_hw *hw,
 	memset(tx, 0, sizeof(*tx));
 	tx->type = type;
 	tx->llid = llid;
-    printf("hw alloc tx : %x\n", tx->len);
+    /* printf("hw alloc tx : %x\n", tx->len); */
     tx->len = len;
-    printf("hw alloc tx 2 : %x\n", tx->len);
+    /* printf("hw alloc tx 2 : %x\n", tx->len); */
 
 	return tx;
 }
@@ -1734,21 +1734,31 @@ static void ble_rx_pdus_process(struct ble_hw *hw, struct ble_rx *rx)
 
 static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
 {
-    if (ble_rx_pdus_filter(hw, rx) == FALSE)
+    struct ble_rx empty;
+
+    if (rx)
     {
-        //ignore packet
-        putchar('~');
-        lbuf_free(rx);
-        return; 
+        if (ble_rx_pdus_filter(hw, rx) == FALSE)
+        {
+            //ignore packet
+            putchar('~');
+            lbuf_free(rx);
+            return; 
+        }
+
+        ble_rx_pdus_process(hw, rx);
+
+        //async PDUs upper to Link Layer
+        if (RX_PACKET_IS_VALID(rx))
+        {
+            /* printf_buf(rx, sizeof(*rx)+rx->len); */
+            lbuf_push(rx);
+        }
     }
-
-    ble_rx_pdus_process(hw, rx);
-
-    //async PDUs upper to Link Layer
-	if (RX_PACKET_IS_VALID(rx))
-    {
-        /* printf_buf(rx, sizeof(*rx)+rx->len); */
-        lbuf_push(rx);
+    else{
+        //clean timeout
+        rx = &empty; 
+        RX_PACKET_SET_INVALID(rx);
     }
 
     //sync PDUs upper to Link Layer
@@ -1855,12 +1865,11 @@ static void __hw_tx_process(struct ble_hw *hw)
 static struct ble_rx *ble_rx_buf_alloc(struct ble_hw *hw, struct ble_rx *rx, int ind)
 {
 	struct ble_rx *rx_alloc;
-	struct ble_rx temp_rx;
 
 	struct ble_param *ble_fp = &hw->ble_fp;
 
 	u16 *rxptr;
-	rxptr  =  (u16 *)&ble_fp->RXPTR0   + ind;
+	rxptr = (u16 *)&ble_fp->RXPTR0 + ind;
 
 	if (RX_PACKET_IS_VALID(rx))
     {
@@ -1869,33 +1878,34 @@ static struct ble_rx *ble_rx_buf_alloc(struct ble_hw *hw, struct ble_rx *rx, int
         {
 			if(NULL != *rxptr)
             {
-				/* putchar('a'); */
+                /* putchar('A'); */
 				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
 			}
 			else
             {
-                puts("overload -> underload\n");
+                puts("\nunderload...\n");
 				*rxptr = PHY_TO_BLE(hw->rx_buf[ind] + sizeof(*rx));
-				rx_alloc = &temp_rx;	
-                RX_PACKET_SET_INVALID(rx);
+				/* rx_alloc = &temp_rx;	 */
+                rx_alloc = NULL;
 			}
 		}
 		else{
 			if(NULL != *rxptr)
             {	
-                puts("underload -> overload\n");
+                puts("\noverload...\n");
 				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
 				*rxptr = NULL;
 			}
 			else{
-				/* putchar('d'); */
-				rx_alloc = &temp_rx;	
-                RX_PACKET_SET_INVALID(rx);
+                puts("\nunderloading\n");
+				/* rx_alloc = &temp_rx;	 */
+                rx_alloc = NULL;
 			}
 		}
 	}
 	else{
-		rx_alloc = &temp_rx;	
+		/* rx_alloc = &temp_rx;	 */
+        rx_alloc = NULL;
 	}
 
 	memcpy((u8 *)rx_alloc, (u8 *)rx, sizeof(*rx) + rx->len);

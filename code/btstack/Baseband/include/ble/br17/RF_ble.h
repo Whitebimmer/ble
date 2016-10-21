@@ -137,7 +137,7 @@ struct ble_addr{
 
 #define BLE_HW_NUM    	1
 
-#define BLE_HW_RX_SIZE  (512*2)
+#define BLE_HW_RX_SIZE  (512*2)//(512*2)
 #define BLE_HW_TX_SIZE  (512*4)
 
 #define BLE_HW_RX_BUF_SIZE		(((sizeof(struct ble_rx) + BLE_HW_MAX_RX_OCTETES + ENC_MIC_LEN)/4+1)*4)
