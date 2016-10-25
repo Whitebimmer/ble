@@ -307,50 +307,21 @@ int main()
     {
 		int c;
        //asm("idle");
-	   /*delay(100000);*/
 
         task_run_loop();
 
         while(1)
         {
             //asm("idle");
-#ifndef BLE_BQB_PROCESS_EN
             c = getchar();
 
-            /* puts("user cmd : ADV\n"); */
-            /* if (c) */
-            /* { */
-                /* putchar(c); */
-
-                /* stdin_process(c); */
-            /* } */
-            switch(c)
+            /* puts("user cmd : \n"); */
+            if (c)
             {
+                /* printf("user cmd = %s \n", c); */
 
-                case 'A':
-                    puts("user cmd : ADV\n");
-#ifndef BLE_PRIVACY_EN
-                    ble_set_adv();
-#else
-					ble_set_direct_RPA_adv();
-#endif
-                    break;
-                case 'S':
-                    puts("user cmd : SCAN\n");
-                    ble_set_scan();
-                    break;
-                case 'C':
-                    puts("user cmd : CONN\n");
-                    ble_set_conn();
-                    break;
-                case 'T':
-                    puts("user cmd : TEST\n");
-                    ble_test();
-                    break;
-                default:
-                    break;
+                stdin_process(c);
             }
-#endif
             if (TASK_IS_AWAKE())
                 break;
         }

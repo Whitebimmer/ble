@@ -559,7 +559,8 @@ static void gap_run(void){
     if (todos & SET_ADVERTISEMENT_DATA){
         printf("GAP_RUN: set advertisement data\n");
         todos &= ~SET_ADVERTISEMENT_DATA;
-        le_hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data);
+        /* printf_buf(adv_data, adv_data_len); */
+        le_hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data_len, adv_data);
         return;
     }    
 
@@ -587,7 +588,7 @@ static void gap_run(void){
     if (todos & SET_SCAN_RESPONSE_DATA){
         printf("GAP_RUN: set scan response data\n");
         todos &= ~SET_SCAN_RESPONSE_DATA;
-        le_hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data);
+        le_hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data_len, adv_data);
         // hack for menu
         if ((todos & ENABLE_ADVERTISEMENTS) == 0) show_usage();
         return;
@@ -603,14 +604,17 @@ static void gap_run(void){
     }
 }
 
-static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    
+static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)
+{
+    puts("Layer - app_packet_handler :");    
     switch (packet_type) {
             
         case HCI_EVENT_PACKET:
+            puts("HCI_EVENT_PACKET - ");
             switch (packet[0]) {
                 
                 case BTSTACK_EVENT_STATE:
+                    puts("BTSTACK_EVENT_STATE\n");
                     // bt stack activated, get started
                     if (packet[2] == HCI_STATE_WORKING) {
                         printf("SM Init completed\n");
@@ -621,6 +625,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
                 
                 case HCI_EVENT_LE_META:
+                    puts("HCI_EVENT_LE_META\n");
                     switch (packet[2]) {
                         case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
                             advertisements_enabled = 0;
@@ -636,6 +641,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
 
                 case HCI_EVENT_DISCONNECTION_COMPLETE:
+                    puts("HCI_EVENT_DISCONNECTION_COMPLETE\n");
                     if (!advertisements_enabled == 0 && gap_discoverable){
                         todos = ENABLE_ADVERTISEMENTS;
                     }
@@ -644,13 +650,14 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
                     
                 case SM_JUST_WORKS_REQUEST: {
-                    printf("SM_JUST_WORKS_REQUEST\n");
+                    puts("SM_JUST_WORKS_REQUEST\n");
                     sm_event_t * event = (sm_event_t *) packet;
                     sm_just_works_confirm(event->addr_type, event->address);
                     break;
                 }
 
                 case SM_PASSKEY_INPUT_NUMBER: {
+                    puts("SM_PASSKEY_INPUT_NUMBER\n");
                     // display number
                     sm_event_t * event = (sm_event_t *) packet;
                     memcpy(master_address, event->address, 6);
@@ -663,6 +670,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                 }
 
                 case SM_PASSKEY_DISPLAY_NUMBER: {
+                    puts("SM_PASSKEY_DISPLAY_NUMBER\n");
                     // display number
                     sm_event_t * event = (sm_event_t *) packet;
                     printf("\nGAP Bonding %s (%u): Display Passkey '%06u\n", bd_addr_to_str(master_address), master_addr_type, event->passkey);
@@ -674,6 +682,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
 
                 case SM_AUTHORIZATION_REQUEST: {
+                    puts("SM_AUTHORIZATION_REQUEST\n");
                     // auto-authorize connection if requested
                     sm_event_t * event = (sm_event_t *) packet;
                     sm_authorization_grant(event->addr_type, event->address);
@@ -684,6 +693,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
 
                 default:
+                    puts("\n");
                     break;
             }
     }
@@ -694,7 +704,7 @@ void show_usage(void){
     printf("\n--- CLI for LE Peripheral ---\n");
     printf("GAP: discoverable %u, connectable %u, bondable %u, directed connectable %u, random addr %u, ads enabled %u, adv type %u \n",
         gap_discoverable, gap_connectable, gap_bondable, gap_directed_connectable, gap_random, gap_advertisements, gap_adv_type());
-    printf("ADV: "); printf_hexdump(adv_data, adv_data_len);
+    printf("ADV: "); printf_buf(adv_data, adv_data_len);//printf_hexdump(adv_data, adv_data_len);
     printf("SM: %s, MITM protection %u, OOB data %u, key range [%u..16]\n",
         sm_io_capabilities, sm_mitm_protection, sm_have_oob_data, sm_min_key_size);
     printf("Default value: '%s'\n", att_default_value_long ? default_value_long : default_value_short);
@@ -1030,7 +1040,7 @@ int btstack_main()
 
     // setup ATT server
 	att_server_init(profile_data, att_read_callback, att_write_callback); 
-	att_server_register_packet_handler(NULL);// app_packet_handler);
+	att_server_register_packet_handler(app_packet_handler);
 	/*att_write_queue_init();*/
 	/*att_attributes_init();*/
 
@@ -1039,7 +1049,7 @@ int btstack_main()
 
 	/*gap_random_address_set_update_period(300000);
 	gap_random_address_set_mode(GAP_RANDOM_ADDRESS_RESOLVABLE);*/
-    strcpy(gap_device_name, "BTstack");
+    strcpy(gap_device_name, "BTstack-bq");
     sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
     /* sm_set_io_capabilities(IO_CAPABILITY_DISPLAY_ONLY); */
     /*sm_io_capabilities =  "IO_CAPABILITY_NO_INPUT_NO_OUTPUT";*/

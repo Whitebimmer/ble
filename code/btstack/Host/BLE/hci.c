@@ -1947,7 +1947,7 @@ int pc_h4_send_hci_cmd(void *data, u16 size)
 static void hci_emit_state()
 {
     log_info("BTSTACK_EVENT_STATE %u", hci_stack->state);
-    hci_deg("BTSTACK_EVENT_STATE %x", hci_stack->state);
+    hci_deg("BTSTACK_EVENT_STATE %x\n", hci_stack->state);
     uint8_t event[3];
     event[0] = BTSTACK_EVENT_STATE;
     event[1] = sizeof(event) - 2;
