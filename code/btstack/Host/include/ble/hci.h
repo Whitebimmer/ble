@@ -584,6 +584,7 @@ typedef enum hci_init_state{
     HCI_INIT_READ_WHITE_LIST_SIZE,
     HCI_INIT_W4_READ_WHITE_LIST_SIZE,
 
+#if 0
     HCI_INIT_LE_SET_ADV_PARAMETERS,
     HCI_INIT_W4_LE_SET_ADV_PARAMETERS,
     HCI_INIT_LE_SET_ADV_DATA,
@@ -602,6 +603,7 @@ typedef enum hci_init_state{
 
     HCI_INIT_LE_SET_ADV_EN,
     HCI_INIT_W4_LE_SET_ADV_EN,
+#endif
 
     HCI_INIT_DONE,
 

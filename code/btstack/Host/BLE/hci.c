@@ -808,6 +808,7 @@ static void hci_initializing_run()
             le_hci_send_cmd(&hci_le_read_white_list_size);
             break;
 
+#if 0
         case HCI_INIT_LE_SET_ADV_PARAMETERS:
                 hci_puts("HCI_INIT_LE_SET_ADV_PARAMETERS\n");
                 hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_PARAMETERS;
@@ -862,6 +863,7 @@ static void hci_initializing_run()
             hci_stack->substate = HCI_INIT_W4_LE_SET_ADV_EN;
             le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
             break;
+#endif
         // DONE
         case HCI_INIT_DONE:
             // done.

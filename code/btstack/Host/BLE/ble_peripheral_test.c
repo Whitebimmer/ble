@@ -545,6 +545,7 @@ static uint8_t gap_adv_type(void){
     return 0x00;
 }
 
+
 static void gap_run(void){
     if (!le_hci_can_send_command_packet_now()) return;
 
@@ -569,8 +570,9 @@ static void gap_run(void){
         uint8_t adv_type = gap_adv_type();
         bd_addr_t null_addr;
         memset(null_addr, 0, 6);
-        uint16_t adv_int_min = 0x800;
-        uint16_t adv_int_max = 0x800;
+        uint16_t adv_int_min = 0x320;
+        uint16_t adv_int_max = 0x320;
+        printf("GAP_RUN: set advertisement params\n");
         switch (adv_type){
             case 0:
             case 2:
@@ -590,7 +592,7 @@ static void gap_run(void){
         todos &= ~SET_SCAN_RESPONSE_DATA;
         le_hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data_len, adv_data);
         // hack for menu
-        if ((todos & ENABLE_ADVERTISEMENTS) == 0) show_usage();
+        /* if ((todos & ENABLE_ADVERTISEMENTS) == 0) show_usage(); */
         return;
     }    
 
@@ -693,7 +695,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
 
                 default:
-                    puts("\n");
+                    puts("default\n");
                     break;
             }
     }
@@ -704,7 +706,7 @@ void show_usage(void){
     printf("\n--- CLI for LE Peripheral ---\n");
     printf("GAP: discoverable %u, connectable %u, bondable %u, directed connectable %u, random addr %u, ads enabled %u, adv type %u \n",
         gap_discoverable, gap_connectable, gap_bondable, gap_directed_connectable, gap_random, gap_advertisements, gap_adv_type());
-    printf("ADV: "); printf_buf(adv_data, adv_data_len);//printf_hexdump(adv_data, adv_data_len);
+    printf("ADV Data: "); printf_buf(adv_data, adv_data_len);//printf_hexdump(adv_data, adv_data_len);
     printf("SM: %s, MITM protection %u, OOB data %u, key range [%u..16]\n",
         sm_io_capabilities, sm_mitm_protection, sm_have_oob_data, sm_min_key_size);
     printf("Default value: '%s'\n", att_default_value_long ? default_value_long : default_value_short);
@@ -937,7 +939,7 @@ int stdin_process(char cmd){
             show_usage();
             break;
         case 't':
-            printf("Terminating connection\n");
+            printf("Terminating connection : 0x%04x\n", handle);
             le_hci_send_cmd(&hci_disconnect, handle, 0x13);
             break;
         case 'z':
@@ -1079,397 +1081,15 @@ void ble_initial_setup(void)
     le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
 }
 
-
-
 /*******************************************************************/
 /*
  *-------------------HCI Tester Sample
  */
-static const u8 adv_ind_data[] = {
-	0x02, 0x01, 0x06,
-	//0x05, 0x12, 0x80, 0x02, 0x80, 0x02,
-	0x04, 0x0d, 0x00, 0x05, 0x10,
-	0x03, 0x03, 0x0d, 0x18,
+const char test_sequence1[] = {
+    {'C', 'A'},
 };
 
-//len, type, Manufacturer Specific data
-static const u8 scan_rsp_data[] = {
-    0x02, 0x0A, 0x00,
-#ifdef BT16
-	0x05, 0x09, 'b','t', '1', '6',
-#endif
-#ifdef BR16
-    #ifdef ROLE_MASTER
-	0x09, 0x09, 'b','r', '1', '6', 'M','4', '.', '1',
-    #endif
-    #ifdef ROLE_SLAVE
-	0x09, 0x09, 'b','r', '1', '6', 'S','4', '.', '1',
-    #endif
-#endif
-#ifdef BR17
-	0x09, 0x09, 'b','r', '1', '7', '-','b', 'l', 'e',
-#endif
+const char *test[] = {
+    test_sequence1,
 };
 
-#if 1
-void ble_set_adv(void)
-{
-    static u8 cnt = 0;
-
-    //check no other hw in adv state
-    //
-    switch(cnt++)
-    {
-    case 0:
-        le_hci_send_cmd(&hci_le_set_advertising_parameters,
-                0x0320, 0x0320, 0x00, 0x0, 0x0, NULL, 0x7, 0x0);
-        break;
-    case 1:
-        /* le_hci_send_cmd(&hci_le_read_advertising_channel_tx_power); */
-		/* le_hci_send_cmd(&hci_le_set_address_resolution_enable, 0); */
-        /* le_hci_send_cmd(&hci_le_write_suggested_default_data_length, 30, 338);  */
-        break;
-    case 2:
-        /* le_hci_send_cmd(&hci_le_set_advertising_data, */
-                /* sizeof(adv_ind_data),sizeof(adv_ind_data), */
-                /* adv_ind_data); */
-        le_hci_send_cmd(&hci_le_set_advertising_data,
-                0,0,
-                NULL);
-        break;
-    case 3:
-        le_hci_send_cmd(&hci_le_set_scan_response_data,
-                sizeof(scan_rsp_data),sizeof(scan_rsp_data),
-                scan_rsp_data);
-        break;
-    case 4:
-        le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
-        break;
-    case 5:
-        le_hci_send_cmd(&hci_le_set_advertise_enable, 0);
-        cnt = 0;
-        break;
-    default:
-        break;
-    }
-}
-#else
-void ble_set_adv(void)
-{
-    static u8 cnt = 0;
-	u8 master_peer_addr[] = {0x71, 0x11, 0x98, 0xBA, 0x3A, 0x3E};
-
-    //check no other hw in adv state
-    //
-    switch(cnt++)
-    {
-    case 0:
-        le_hci_send_cmd(&hci_le_set_advertising_parameters,
-                0x0020, 0x0020, 0x04, 0x0, 0x0, master_peer_addr, 0x1, 0x0);
-        break;
-    case 1:
-        le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
-		cnt = 0;
-        break;
-	}
-}
-#endif
-
-struct resolving_list_parameter{
-    u8 peer_identity_address_type;  
-    u8 peer_identity_address[6];
-    u8 peer_irk[16];
-    u8 local_irk[16];
-};
-
-
-#define IRK_0	{0x74, 0x01, 0x90, 0x4A, 0xF7, 0x35, 0xA4, 0x38, 0xD3, 0x20, 0x9A, 0xCD, 0x48, 0xC0, 0x54, 0x40}
-#define IRK_CYS	{0xC4, 0xE7, 0x99, 0x29, 0xE1, 0x3B, 0x78, 0xA3, 0x12, 0x4E, 0xC5, 0xF8, 0xBC, 0x77, 0x92, 0xF5}
-/* #define IRK_0	{0x7D, 0x8E, 0x5F, 0x13, 0x16, 0x88, 0xAA, 0x2D, 0x42, 0x48, 0xB0, 0xDD, 0xA4, 0x5E, 0xF7, 0x58} */
-#define IRK_1	{0xE6, 0xEA, 0xEE, 0x60, 0x31, 0x7B, 0xFC, 0xA2, 0x3F, 0xA5, 0x79, 0x59, 0xE7, 0x41, 0xCF, 0xC7}
-
-struct resolving_list_parameter adv_rpa[] = {
-   [0] = { 
-       .peer_identity_address_type = 0,
-       .peer_identity_address = {0x71, 0x11, 0x98, 0xBA, 0x3A, 0x3E},  //LSB->MSB
-       /* .peer_identity_address = {0x84, 0x7A, 0x88, 0xF5, 0xC9, 0xF6},  //LSB->MSB */
-       /* .peer_irk = IRK_0,  */
-       .peer_irk = IRK_CYS, 
-       .local_irk = IRK_1,
-   },
-};
-
-void ble_set_direct_RPA_adv(void)
-{
-    static u8 cnt = 0;
-
-    switch(cnt++)
-    {
-        case 0:
-            /* puts("HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST\n"); */
-            le_hci_send_cmd(&hci_le_add_device_to_resolving_list, 
-                    adv_rpa[0].peer_identity_address_type,
-                    adv_rpa[0].peer_identity_address,
-                    adv_rpa[0].peer_irk,
-                    adv_rpa[0].local_irk);
-            break;
-        case 1:
-            /* puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n"); */
-            le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0xa1b8);
-            break;
-        case 2:
-            /* puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n"); */
-            le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1);
-            break;
-		case 3:
-			le_hci_send_cmd(&hci_le_set_advertising_data,
-					sizeof(adv_ind_data),sizeof(adv_ind_data),
-					adv_ind_data);
-			break;
-		case 4:
-			le_hci_send_cmd(&hci_le_set_scan_response_data,
-					sizeof(scan_rsp_data),sizeof(scan_rsp_data),
-					scan_rsp_data);
-			break;
-		case 5:
-			le_hci_send_cmd(&hci_le_set_advertising_parameters,
-					0x0020, 0x0020, 0x00, 0x2,
-				   	adv_rpa[0].peer_identity_address_type,
-				   	adv_rpa[0].peer_identity_address, 
-					0x1, 0x0);
-			break;
-		case 6:
-			le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
-			cnt = 0;
-			break;
-	}
-
-}
-
-struct resolving_list_parameter scan_rpa[] = {
-   [0] = { 
-       .peer_identity_address_type = 0,
-       /* .peer_identity_address = {0x71, 0x22, 0x98, 0xBA, 0x3A, 0x3E},  //LSB->MSB */
-       .peer_identity_address = {0x8A,0x09,0xCD,0xC1,0x82,0x6A},
-       .peer_irk = IRK_1, 
-       .local_irk = IRK_0,
-   },
-};
-
-void ble_set_scan(void)
-{
-    static u8 cnt = 0;
-	u8 peer_addr[6];
-
-    //check no other hw in adv state
-    //
-    switch(cnt++)
-    {
-		case 1:
-			le_hci_send_cmd(&hci_le_set_scan_parameters, 
-					1, 0x050, 0x50, 0x2, 0x0);
-			break;
-		case 2:
-			le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
-			cnt = 0;
-			break;
-		default:
-			break;
-    }
-}
-void ble_set_scan_rpa(void)
-{
-    static u8 cnt = 0;
-	u8 peer_addr[6];
-
-    //check no other hw in adv state
-    //
-    switch(cnt++)
-    {
-        case 0:
-            /* puts("HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST\n"); */
-			swap48(scan_rpa[0].peer_identity_address, peer_addr);
-            le_hci_send_cmd(&hci_le_add_device_to_resolving_list, 
-                    scan_rpa[0].peer_identity_address_type,
-                    /* scan_rpa[0].peer_identity_address, */
-					peer_addr,
-                    scan_rpa[0].peer_irk,
-                    scan_rpa[0].local_irk);
-            break;
-        case 1:
-            /* puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n"); */
-            le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0xa1b8);
-            break;
-        case 2:
-            /* puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n"); */
-            le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1);
-            break;
-		case 3:
-			le_hci_send_cmd(&hci_le_set_scan_parameters, 
-					1, 0x050, 0x50, 0x2, 0x0);
-			break;
-		case 4:
-			le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
-			cnt = 0;
-			break;
-		default:
-			break;
-    }
-}
-
-u8 conn_peer_addr[6] = {0x71, 0x22, 0x98, 0xBA, 0x3A, 0x9E};
-/* u8 conn_peer_addr[6] = {0x84, 0xEB, 0x18, 0x77, 0xEC, 0x31}; */
-/* u8 conn_peer_addr[6] = {0x54, 0x36, 0x98, 0xba, 0x3a, 0x4e}; */
-
-#define CONNECTION_TERMINATED_BY_LOCAL_HOST         0x16
-void ble_set_conn(void)
-{
-    static u8 cnt = 0;
-
-    u8 peer_addr[6];
-    //check no other hw in adv state
-    //
-    switch (cnt++)
-    {
-    case 0:
-        /* swap48(conn_peer_addr, peer_addr); */
-        le_hci_send_cmd(&hci_le_create_connection, 
-                0x100, 0x0090, 0x0, 
-                0x0, conn_peer_addr,
-                0x0, 0x0050, 0x0050, 0x0, 0x320, 0x50, 0x50);
-        break;
-    case 1:
-        /* le_hci_send_cmd(&hci_le_read_remote_used_features, 0x0001); */
-        le_hci_send_cmd(&hci_le_set_data_length, 1, 251, 2120); 
-        break;
-    case 2:
-        le_hci_send_cmd(&hci_disconnect, 0x0001, CONNECTION_TERMINATED_BY_LOCAL_HOST);
-        cnt = 0;
-        break;
-
-    case 0xff:
-        le_hci_send_cmd(&hci_le_create_connection_cancel, 0);
-        break;
-    default:
-        break;
-    }
-}
-
-
-struct resolving_list_parameter conn_rpa[] = {
-   [0] = { 
-       .peer_identity_address_type = 2,
-       /* .peer_identity_address = {0x71, 0x22, 0x98, 0xBA, 0x3A, 0x3E},  //LSB->MSB */
-       .peer_identity_address = {0x8A,0x09,0xCD,0xC1,0x82,0x6A},
-       .peer_irk = IRK_1, 
-       .local_irk = IRK_0,
-   },
-};
-
-void ble_set_conn_rpa(void)
-{
-    static u8 cnt = 0;
-	u8 peer_addr[6];
-
-    switch (cnt++)
-    {
-        case 0:
-            /* puts("HCI_INIT_LE_ADD_DEVICE_TO_RESOLVING_LIST\n"); */
-            le_hci_send_cmd(&hci_le_add_device_to_resolving_list, 
-                    conn_rpa[0].peer_identity_address_type,
-                    conn_rpa[0].peer_identity_address,
-                    conn_rpa[0].peer_irk,
-                    conn_rpa[0].local_irk);
-            break;
-        case 1:
-            /* puts("HCI_INIT_LE_SET_RANDOM_PRIVATE_ADDRESS_TIMEOUT\n"); */
-            le_hci_send_cmd(&hci_le_set_resolvable_private_address_timeout, 0xa1b8);
-            break;
-        case 2:
-            /* puts("HCI_INIT_LE_ADDRESS_RESOLUTION_ENABLE\n"); */
-            le_hci_send_cmd(&hci_le_set_address_resolution_enable, 1);
-            break;
-		/* case 0: */
-		/* 	le_hci_send_cmd(&hci_le_set_scan_parameters,  */
-		/* 			1, 0x200, 0x50, 0x0, 0x0); */
-		/* 	break; */
-		/* case 1: */
-		/* 	le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0); */
-		/* 	break; */
-		/* case 2: */
-		/* 	le_hci_send_cmd(&hci_le_set_scan_enable, 0, 0); */
-		/* 	break; */
-		case 3:
-			puts("ready_to_connect\n");
-			swap48(conn_rpa[0].peer_identity_address, peer_addr);
-			le_hci_send_cmd(&hci_le_create_connection, 
-					0x100, 0x0050, 0x0, 
-                    conn_rpa[0].peer_identity_address_type,
-                    /* conn_rpa[0].peer_identity_address, */
-					peer_addr,
-					0x2, 0x50, 0x50, 0x0, 0x320, 0x50, 0x50);
-			cnt = 0;
-			break;
-	}
-}
-
-void ble_test(void)
-{
-    static u8 cnt = 0;
-
-    //
-    switch (cnt++)
-    {
-    case 0:
-        le_hci_send_cmd(&hci_le_read_remote_used_features, 0x01); 
-        break;
-    case 1:
-        le_hci_send_cmd(&hci_le_set_data_length, 1, 251, 2120); 
-        /* le_hci_send_cmd(&hci_le_set_data_length , 0x0001, 27, 328);  */
-        break;
-    case 2:
-        le_hci_send_cmd(&hci_le_read_suggested_default_data_length); 
-        break;
-    case 3:
-        le_hci_send_cmd(&hci_le_write_suggested_default_data_length, 30, 338); 
-        break;
-    case 4:
-        le_hci_send_cmd(&hci_le_read_suggested_default_data_length); 
-        break;
-    case 5:
-        le_hci_send_cmd(&hci_le_read_maximum_data_length); 
-        cnt = 0;
-        break;
-
-    default:
-        break;
-    }
-}
-
-u8 buf[0x400];
-
-void ble_send_data(void)
-{
-    static u8 cnt = 0;
-
-    u16 i;
-    for (i = 0; i < 0x100; i++)
-    {
-        buf[i] = i+cnt;
-        buf[i+0x100] = i+1;
-        buf[i+0x200] = i+2;
-        buf[i+0x300] = i+3;
-    }
-    switch(cnt++)
-    {
-    case 0:
-        puts("********my_acl_packet********\n");
-        printf_buf(buf, 0x400);
-        le_l2cap_send_connectionless(1, 0xff, buf, 0x100);
-        break;
-    default:
-        cnt = 0;
-        break;
-    }
-}
-/* EXAMPLE_END */

@@ -2854,7 +2854,8 @@ static void rx_adv_state_handler(struct le_link *link, struct ble_rx *rx)
     __ble_ops->ioctrl(link->hw, BLE_SET_RPA_RESOLVE_RESULT, rx, ADDR_IS_FAIL());
 }
 
-extern u8 conn_peer_addr[6]; 
+/* extern u8 conn_peer_addr[6];  */
+u8 conn_peer_addr[6] = {0x71, 0x22, 0x98, 0xBA, 0x3A, 0x9E};
 static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
 {
     //AdvA
@@ -3642,7 +3643,7 @@ static void le_version_exchange(
 
     hci_param_t->read_remote_version_param = __hci_param_malloc(malloc_len);
 
-    memcpy(le_param.read_remote_used_features_param, param, malloc_len);
+    memcpy(hci_param_t->read_remote_version_param, param, malloc_len);
 
     /* __hci_param_free(hci_param_t->read_remote_version_param); */
     
@@ -4136,6 +4137,8 @@ void le_disconnect(
         malloc_len = sizeof(struct disconnect_paramter);
 
         hci_param_t->disconn_param = __hci_param_malloc(malloc_len);
+
+        memcpy(hci_param_t->disconn_param, param, malloc_len);
 
         ll_control_data_step_start(disconnect_steps);
     }
@@ -5066,7 +5069,7 @@ static void ll_thread_process(struct thread *th)
             
             __free_link(link);
 
-            goto __re_adv;
+            /* goto __re_adv; */
 		}
 	}
 
@@ -5196,7 +5199,6 @@ static void ll_data_length_init(void)
 
 static void *ll_init(struct hci_parameter *hci_param)
 {
-	puts("ll_init X\n");
 
     /* printf("addr : %08x\n", mem_pool); */
 	/* lbuf_init(mem_pool, sizeof(mem_pool)); */
@@ -5205,6 +5207,7 @@ static void *ll_init(struct hci_parameter *hci_param)
 
     if (!bt_power_is_poweroff_post())
     {
+        puts("ll_init X\n");
         ll.handle = 0x00;   //bitmap index - HW_ID
         ll.handler = NULL;
 

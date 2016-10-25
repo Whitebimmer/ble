@@ -54,7 +54,7 @@
 
 #include <stdio.h>
 
-#define L2CAP_DEBUG_EN
+/* #define L2CAP_DEBUG_EN */
 
 #ifdef L2CAP_DEBUG_EN
 #define l2cap_putchar(x)        putchar(x)
