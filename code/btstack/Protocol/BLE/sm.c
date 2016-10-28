@@ -40,8 +40,8 @@
 
 #include <ble/btstack_run_loop.h>
 #include "ble/debug.h"
-#include "ble/hci.h"
-#include "ble/l2cap.h"
+#include "hci.h"
+#include "l2cap.h"
 #include "ble/le_device_db.h"
 #include "ble/sm.h"
 #include "ble/gap_le.h"
@@ -2168,11 +2168,11 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
 				case HCI_EVENT_COMMAND_COMPLETE:
 					/*sm_puts("\ncommand_complete:\n");
 					printf_buf(packet, size);*/
-                    if (COMMAND_COMPLETE_EVENT(packet, hci_le_encrypt)){
+                    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_encrypt)){
                         sm_handle_encryption_result(&packet[6]);
                         break;
                     }
-                    if (COMMAND_COMPLETE_EVENT(packet, hci_le_rand)){
+                    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_rand)){
                         sm_handle_random_result(&packet[6]);
                         break;
                     }

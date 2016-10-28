@@ -54,10 +54,10 @@
 #include <ble/btstack_run_loop.h>
 #include "ble/debug.h"
 #include "ble/btstack_memory.h"
-#include "ble/hci.h"
+#include "hci.h"
 #include "ble/hci_dump.h"
 
-#include "ble/l2cap.h"
+#include "l2cap.h"
 
 #include "ble/sm.h"
 #include "ble/att.h"

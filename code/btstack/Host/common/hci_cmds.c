@@ -47,7 +47,7 @@
 
 /*#include <btstack/sdp_util.h>*/
 #include "ble/btstack-config.h"
-#include "ble/hci.h"
+#include "hci.h"
 
 // calculate combined ogf/ocf value
 #define OPCODE(ogf, ocf) (ocf | ogf << 10)
@@ -710,6 +710,10 @@ OPCODE(OGF_CONTROLLER_BASEBAND, 0x6d), "11"
 #ifndef BREDR 
 const hci_cmd_t hci_read_local_version_information = {
 OPCODE(OGF_INFORMATIONAL_PARAMETERS, 0x01), ""
+};
+
+const hci_cmd_t hci_read_local_supported_commands = {
+OPCODE(OGF_INFORMATIONAL_PARAMETERS, 0x02), ""
 };
 const hci_cmd_t hci_read_local_supported_features = {
 OPCODE(OGF_INFORMATIONAL_PARAMETERS, 0x03), ""

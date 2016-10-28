@@ -46,7 +46,7 @@
 #ifndef __L2CAP_H
 #define __L2CAP_H
 
-#include "ble/hci.h"
+#include "hci.h"
 #include "ble/l2cap_signaling.h"
 #include <utils.h>
 #include <ble/btstack.h>

@@ -54,8 +54,8 @@ extern "C" {
 
 #include "ble/btstack-config.h"
     
-#include "ble/hci.h"
-#include "ble/l2cap.h"
+#include "hci.h"
+#include "l2cap.h"
 #include "bredr/rfcomm.h"
 #include "bredr/bnep.h"
 #include "ble/remote_device_db.h"

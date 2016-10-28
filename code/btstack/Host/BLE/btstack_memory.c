@@ -50,8 +50,8 @@
 #include <memory_pool.h>
 
 #include "ble/btstack-config.h"
-#include "ble/hci.h"
-#include "ble/l2cap.h"
+#include "hci.h"
+#include "l2cap.h"
 
 
 // MARK: hci_connection_t

@@ -39,7 +39,7 @@
 #ifndef btstack_gatt_client_h
 #define btstack_gatt_client_h
 
-#include "ble/hci.h"
+#include "hci.h"
 
 #if defined __cplusplus
 extern "C" {

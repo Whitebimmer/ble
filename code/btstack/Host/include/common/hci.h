@@ -58,6 +58,7 @@
 #include <stdarg.h>
 #include <linked_list.h>
 #include <ble/btstack_run_loop.h>
+#include "classic/btstack_link_key_db.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -240,6 +241,9 @@ extern "C" {
 // 
 #define IS_COMMAND(packet, command) (READ_BT_16(packet,0) == command.opcode)
 
+// check if command complete event for given command
+#define HCI_EVENT_IS_COMMAND_COMPLETE(event,cmd) ( event[0] == HCI_EVENT_COMMAND_COMPLETE && READ_BT_16(event,3) == cmd.opcode)
+#define HCI_EVENT_IS_COMMAND_STATUS(event,cmd) ( event[0] == HCI_EVENT_COMMAND_STATUS && READ_BT_16(event,4) == cmd.opcode)
 
 /**
  * LE connection parameter update state
@@ -643,6 +647,24 @@ typedef struct {
     hci_transport_t  * hci_transport;
     void             * config;
     
+    //chipset driver
+    // const btstack_chipset_t * chipset;
+
+    // hardware power controller
+    const bt_control_t     * control;
+
+    //link key db
+    const btstack_link_key_db_t * link_key_db;
+
+    // list of existing baseband connections
+    linked_list_t     connections;
+    
+    // local version information callback
+    void (*local_version_information_callback)(uint8_t * local_version_information);
+
+    // hardware error callback
+    void (*hardware_error_callback)(uint8_t error);
+
     // basic configuration
     const char         * local_name;
     uint32_t           class_of_device;
@@ -651,12 +673,6 @@ typedef struct {
     uint8_t            ssp_io_capability;
     uint8_t            ssp_authentication_requirement;
     uint8_t            ssp_auto_accept;
-
-    // hardware power controller
-    bt_control_t     * control;
-    
-    // list of existing baseband connections
-    linked_list_t     connections;
 
     // single buffer for HCI packet assembly + additional prebuffer for H4 drivers
     uint8_t   hci_packet_buffer_prefix[HCI_OUTGOING_PRE_BUFFER_SIZE];
@@ -671,11 +687,18 @@ typedef struct {
     uint16_t acl_data_packet_length;
     uint8_t  sco_packets_total_num;
     uint8_t  sco_data_packet_length;
+    uint8_t  synchronous_flow_control_enabled;
     uint8_t  le_acl_packets_total_num;
     uint16_t le_data_packets_length;
+    uint8_t  sco_waiting_for_can_send_now;
 
     /* local supported features */
     uint8_t local_supported_features[8];
+
+    /* local supported commands summary - complete info is 64 bytes */
+    /* 0 - read buffer size */
+    /* 1 - write le host supported */
+    uint8_t local_supported_commands[1];
 
     /* bluetooth device information from hci read local version information */
     // uint16_t hci_version;

@@ -44,7 +44,7 @@
 
 #include "ble/btstack-config.h"
 
-#include "ble/hci.h"
+#include "hci.h"
 #include "ble/gap.h"
 
 #include <stdarg.h>
@@ -908,7 +908,127 @@ static void hci_initializing_event_handler(uint8_t * packet, uint16_t size)
     hci_initializing_next_state();
 }
 
+static void event_command_complete_handler(uint8_t *packet, int size)
+{
+#if 0
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_bd_addr)){
+        bt_flip_addr(hci_stack->local_bd_addr, 
+                &packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1]);
+        hci_puts("hci_read_bd_addr");hci_pbuf(hci_stack->local_bd_addr, 6);
+    }
+
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_buffer_size)){
+        // from offset 5
+        // status 
+        // "The HC_ACL_Data_Packet_Length return parameter will be used to determine the size of the L2CAP segments contained in ACL Data Packets"
+        hci_stack->acl_data_packet_length = READ_BT_16(packet, 6);
+        hci_stack->sco_data_packet_length = packet[8];
+        hci_stack->acl_packets_total_num  = READ_BT_16(packet, 9);
+        hci_stack->sco_packets_total_num  = READ_BT_16(packet, 11); 
+
+        if (hci_stack->state == HCI_STATE_INITIALIZING){
+            // determine usable ACL payload size
+            if (HCI_ACL_PAYLOAD_SIZE < hci_stack->acl_data_packet_length){
+                hci_stack->acl_data_packet_length = HCI_ACL_PAYLOAD_SIZE;
+            }
+            log_info("hci_read_buffer_size: acl used size %u, count %u / sco size %u, count %u",
+                     hci_stack->acl_data_packet_length, hci_stack->acl_packets_total_num,
+                     hci_stack->sco_data_packet_length, hci_stack->sco_packets_total_num); 
+        }
+    }
+
+    // Dump local address
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_bd_addr)) {
+        reverse_bd_addr(&packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE + 1],
+        hci_stack->local_bd_addr);
+        log_info("Local Address, Status: 0x%02x: Addr: %s",
+            packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE], bd_addr_to_str(hci_stack->local_bd_addr));
+        if (hci_stack->link_key_db){
+            hci_stack->link_key_db->set_local_bd_addr(hci_stack->local_bd_addr);
+        }
+    }
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_write_scan_enable)){
+        hci_emit_discoverable_enabled(hci_stack->discoverable);
+    }
+    // Note: HCI init checks 
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_local_supported_features)){
+        memcpy(hci_stack->local_supported_features, &packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1], 8);
+
+        // determine usable ACL packet types based on host buffer size and supported features
+        hci_stack->packet_types = hci_acl_packet_types_for_buffer_size_and_local_features(HCI_ACL_PAYLOAD_SIZE, &hci_stack->local_supported_features[0]);
+        log_info("packet types %04x", hci_stack->packet_types); 
+
+        // Classic/LE
+        log_info("BR/EDR support %u, LE support %u", hci_classic_supported(), hci_le_supported());
+    }
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_local_version_information)){
+        // hci_stack->hci_version    = READ_BT_16(packet, 4);
+        // hci_stack->hci_revision   = READ_BT_16(packet, 6);
+        // hci_stack->lmp_version    = READ_BT_16(packet, 8);
+        hci_stack->manufacturer   = READ_BT_16(packet, 10);
+        // hci_stack->lmp_subversion = READ_BT_16(packet, 12);
+        log_info("Manufacturer: 0x%04x", hci_stack->manufacturer);
+        // notify app
+        if (hci_stack->local_version_information_callback){
+            hci_stack->local_version_information_callback(packet);
+        }
+    }
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_local_supported_commands)){
+        hci_stack->local_supported_commands[0] =
+            (packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1+14] & 0X80) >> 7 |  // Octet 14, bit 7
+            (packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1+24] & 0x40) >> 5;   // Octet 24, bit 6 
+    }
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_write_synchronous_flow_control_enable)){
+        if (packet[5] == 0){
+            hci_stack->synchronous_flow_control_enabled = 1;
+        }
+    } 
+#endif
+}
 // avoid huge local variables
+static void le_event_command_complete_handler(uint8_t *packet, int size)
+{
+    //
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_read_buffer_size)){
+        hci_stack->le_data_packets_length = READ_BT_16(packet, 6);
+        hci_stack->le_acl_packets_total_num  = packet[8];
+        // determine usable ACL payload size
+        if (HCI_ACL_PAYLOAD_SIZE < hci_stack->le_data_packets_length){
+            hci_stack->le_data_packets_length = HCI_ACL_PAYLOAD_SIZE;
+        }
+        if (hci_stack->le_data_packets_length < 27)
+        {
+            //spec 4.2 Vol 2 Part E
+            hci_puts("Host shall not fragment HCI ACL Data Packets on an LE-U logial link\n");
+        }
+        printf("le_data_packets_length : %x\n", hci_stack->le_data_packets_length);
+        printf("le_acl_packets_total_num : %x\n", hci_stack->le_acl_packets_total_num);
+    }
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_read_white_list_size)){
+        hci_stack->le_whitelist_capacity = READ_BT_16(packet, 6);
+        hci_deg("le_whitelist_capacity %x\n", hci_stack->le_whitelist_capacity);
+        log_info("hci_le_read_white_list_size: size %u", hci_stack->le_whitelist_capacity);
+    }   
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_read_resolving_list_size)){
+        hci_stack->le_resolvinglist_capacity = READ_BT_16(packet, 6);
+        hci_deg("le_resolvinglist_capacit %x\n", hci_stack->le_resolvinglist_capacity);
+    }
+    //data length extension begin
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_read_suggested_default_data_length))
+    {
+        hci_deg("suggestedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
+        hci_deg("suggestedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
+    }
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_read_maximum_data_length))
+    {
+        hci_deg("supportedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
+        hci_deg("supportedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
+        hci_deg("supportedMaxRxOctets: %04x\n",  READ_BT_16(packet, 10));
+        hci_deg("supportedMaxRxTime: %04x\n",    READ_BT_16(packet, 12));
+    }
+    //data length extension end
+}
+
 static void event_handler(uint8_t *packet, int size)
 {
 	uint16_t event_length = packet[1];
@@ -928,53 +1048,12 @@ static void event_handler(uint8_t *packet, int size)
 
 	switch (hci_event_packet_get_type(packet)) {
 		case HCI_EVENT_COMMAND_COMPLETE:
-			// get num cmd packets
-			hci_stack->num_cmd_packets = packet[2];
-
-            //data length extension begin
-			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_suggested_default_data_length)){
-
-                    hci_deg("suggestedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
-                    hci_deg("suggestedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
-            }
-			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_maximum_data_length)){
-
-                    hci_deg("supportedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
-                    hci_deg("supportedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
-                    hci_deg("supportedMaxRxOctets: %04x\n",  READ_BT_16(packet, 10));
-                    hci_deg("supportedMaxRxTime: %04x\n",    READ_BT_16(packet, 12));
-            }
-            //data length extension end
-            //
-			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_buffer_size)){
-				hci_stack->le_data_packets_length = READ_BT_16(packet, 6);
-				hci_stack->le_acl_packets_total_num  = packet[8];
-				// determine usable ACL payload size
-				if (HCI_ACL_PAYLOAD_SIZE < hci_stack->le_data_packets_length){
-					hci_stack->le_data_packets_length = HCI_ACL_PAYLOAD_SIZE;
-				}
-                if (hci_stack->le_data_packets_length < 27)
-                {
-                    //spec 4.2 Vol 2 Part E
-                    hci_puts("Host shall not fragment HCI ACL Data Packets on an LE-U logial link\n");
-                }
-                hci_deg("le_data_packets_length : %x\n", hci_stack->le_data_packets_length);
-                hci_deg("le_acl_packets_total_num : %x\n", hci_stack->le_acl_packets_total_num);
-			}
-            if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_white_list_size)){
-                hci_stack->le_whitelist_capacity = READ_BT_16(packet, 6);
-                hci_deg("le_whitelist_capacity %x\n", hci_stack->le_whitelist_capacity);
-                log_info("hci_le_read_white_list_size: size %u", hci_stack->le_whitelist_capacity);
-            }   
-			if (COMMAND_COMPLETE_EVENT(packet, hci_read_bd_addr)){
-				bt_flip_addr(hci_stack->local_bd_addr, 
-						&packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1]);
-                hci_puts("hci_read_bd_addr");hci_pbuf(hci_stack->local_bd_addr, 6);
-			}
-			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_resolving_list_size)){
-                hci_stack->le_resolvinglist_capacity = READ_BT_16(packet, 6);
-                hci_deg("le_resolvinglist_capacit %x\n", hci_stack->le_resolvinglist_capacity);
-            }
+            // get num cmd packets
+            hci_stack->num_cmd_packets = packet[2];
+            //for Classic
+            event_command_complete_handler(packet, size);
+            //for BLE
+            le_event_command_complete_handler(packet, size);
 			break;
 
 		case HCI_EVENT_COMMAND_STATUS:
@@ -1157,7 +1236,7 @@ static void event_handler(uint8_t *packet, int size)
 	// help with BT sleep
 	if (hci_stack->state == HCI_STATE_FALLING_ASLEEP
 			&& hci_stack->substate == HCI_FALLING_ASLEEP_W4_WRITE_SCAN_ENABLE
-			&& COMMAND_COMPLETE_EVENT(packet, hci_write_scan_enable)){
+			&& HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_write_scan_enable)){
 		hci_initializing_next_state();
 	}
 #endif

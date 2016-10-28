@@ -1,4 +1,4 @@
-#include "ble/hci.h"
+#include "hci.h"
 #include "ble/hci_transport.h"
 #include "thread.h"
 #include "ble/ble_h4_transport.h"

@@ -43,8 +43,8 @@
  *  Created by Matthias Ringwald on 5/16/09.
  */
 
-#include "ble/l2cap.h"
-#include "ble/hci.h"
+#include "l2cap.h"
+#include "hci.h"
 #include "ble/hci_dump.h"
 #include "ble/debug.h"
 #include "ble/btstack_memory.h"
