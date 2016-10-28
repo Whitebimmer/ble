@@ -64,6 +64,7 @@
 #include "ble/att_server.h"
 #include "ble/gap_le.h"
 #include "ble/le_device_db.h"
+#include "btstack_event.h"
 /*#include "stdin_support.h"*/
  
 static u8 test_buf[32]={0x04, 'a', 'b', 'c', 'd'};
@@ -549,6 +550,7 @@ static uint8_t gap_adv_type(void){
 static void gap_run(void){
     if (!le_hci_can_send_command_packet_now()) return;
 
+    printf("todos : %x\n", todos);
     if (todos & DISABLE_ADVERTISEMENTS){
         todos &= ~DISABLE_ADVERTISEMENTS;
         printf("GAP_RUN: disable advertisements\n");
@@ -618,7 +620,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                 case BTSTACK_EVENT_STATE:
                     puts("BTSTACK_EVENT_STATE\n");
                     // bt stack activated, get started
-                    if (packet[2] == HCI_STATE_WORKING) {
+                    if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
                         printf("SM Init completed\n");
                         todos = SET_ADVERTISEMENT_PARAMS | SET_ADVERTISEMENT_DATA | SET_SCAN_RESPONSE_DATA | ENABLE_ADVERTISEMENTS;
                         update_advertisements();
@@ -628,7 +630,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                 
                 case HCI_EVENT_LE_META:
                     puts("HCI_EVENT_LE_META\n");
-                    switch (packet[2]) {
+                    switch (hci_event_le_meta_get_subevent_code(packet)) {
                         case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
                             advertisements_enabled = 0;
                             handle = READ_BT_16(packet, 4);

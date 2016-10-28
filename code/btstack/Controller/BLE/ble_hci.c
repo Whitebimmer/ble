@@ -3,7 +3,7 @@
 #include "stdarg.h"
 #include "ble/ble_h4_transport.h"
 
-#define HCI_DEBUG_EN
+/* #define HCI_DEBUG_EN */
 
 #ifdef HCI_DEBUG_EN
 #define hci_putchar(x)        putchar(x)
@@ -859,10 +859,10 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
 			break;
 		case HCI_LE_SET_ADVERTISE_ENABLE:
 			if (data[0]){
-                puts("ll adversting enable\n");
+                hci_puts("ll adversting enable\n");
 				__ll_api->open(LL_ADVERTISING);
 			} else {
-                puts("ll adversting disable\n");
+                hci_puts("ll adversting disable\n");
                 __ll_api->close(LL_ADVERTISING);
 			}
 			__hci_emit_event_of_cmd_complete(opcode, "1", 0);
@@ -1221,8 +1221,8 @@ static int ble_hci_h4_upload_data()
 
 	event = lbuf_pop(hci_event_buf);
 	if (event){
-        /* hci_puts("\nEMIT : EVENT "); */
-        /* hci_buf(event, sizeof(*event)+event->len); */
+        puts("\nEMIT : EVENT ");
+        printf_buf(event, sizeof(*event)+event->len);
 		ble_h4_packet_handler(HCI_EVENT_PACKET, event, sizeof(*event)+event->len);
 		lbuf_free(event);
 	}

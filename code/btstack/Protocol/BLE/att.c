@@ -43,6 +43,21 @@
 #include "ble/debug.h"
 #include <utils.h>
 
+/************************ATT DEBUG CONTROL**************************/
+/* #define ATT_DEBUG */
+
+#ifdef ATT_DEBUG
+#define att_puts     puts
+#define att_deg      printf
+#define att_buf(x,y) printf_buf(x,y)
+
+#else
+#define att_puts(...)     
+#define att_deg(...)      
+#define att_buf(...)
+
+#endif
+
 // Buetooth Base UUID 00000000-0000-1000-8000-00805F9B34FB in little endian
 static const uint8_t bluetooth_base_uuid[] = { 0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
@@ -315,9 +330,11 @@ static uint16_t handle_find_information_request2(att_connection_t * att_connecti
                                            uint16_t start_handle, uint16_t end_handle){
     
     log_info("ATT_FIND_INFORMATION_REQUEST: from %04X to %04X", start_handle, end_handle);
+    att_deg("ATT_FIND_INFORMATION_REQUEST: from %04X to %04X\n", start_handle, end_handle);
+
     uint8_t request_type = ATT_FIND_INFORMATION_REQUEST;
     
-    puts("find_information_reequest2\n");
+    /* puts("find_information_reequest2\n"); */
     if (start_handle > end_handle || start_handle == 0){
         return setup_error_invalid_handle(response_buffer, request_type, start_handle);
     }
@@ -1029,40 +1046,51 @@ uint16_t att_handle_request(att_connection_t * att_connection,
     
     switch (request_buffer[0]){
         case ATT_EXCHANGE_MTU_REQUEST:
+			att_puts("ATT_EXCHANGE_MTU_REQUEST\n");
             response_len = handle_exchange_mtu_request(att_connection, request_buffer, request_len, response_buffer);
             break;
         case ATT_FIND_INFORMATION_REQUEST:
+			att_puts("ATT_FIND_INFORMATION_REQUEST\n");
             response_len = handle_find_information_request(att_connection, request_buffer, request_len,response_buffer, response_buffer_size);
             break;
         case ATT_FIND_BY_TYPE_VALUE_REQUEST:
+			att_puts("ATT_FIND_BY_TYPE_VALUE_REQUEST\n");
             response_len = handle_find_by_type_value_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_READ_BY_TYPE_REQUEST:  
+			att_puts("ATT_READ_BY_TYPE_REQUEST\n");
             response_len = handle_read_by_type_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_READ_REQUEST:  
+			att_puts("ATT_READ_REQUEST\n");
             response_len = handle_read_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_READ_BLOB_REQUEST:  
+			att_puts("ATT_READ_BLOB_REQUEST\n");
             response_len = handle_read_blob_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_READ_MULTIPLE_REQUEST:  
+			att_puts("ATT_READ_MULTIPLE_REQUEST\n");
             response_len = handle_read_multiple_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_READ_BY_GROUP_TYPE_REQUEST:  
-			puts("read_by_group_type_request\n");
+			att_puts("ATT_READ_BY_GROUP_TYPE_REQUEST\n");
             response_len = handle_read_by_group_type_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_WRITE_REQUEST:
+			att_puts("ATT_WRITE_REQUEST\n");
             response_len = handle_write_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_PREPARE_WRITE_REQUEST:
+			att_puts("ATT_PREPARE_WRITE_REQUEST\n");
             response_len = handle_prepare_write_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_EXECUTE_WRITE_REQUEST:
+			att_puts("ATT_EXECUTE_WRITE_REQUEST\n");
             response_len = handle_execute_write_request(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_WRITE_COMMAND:
+			att_puts("ATT_WRITE_COMMAND\n");
             handle_write_command(att_connection, request_buffer, request_len, response_buffer, response_buffer_size);
             break;
         case ATT_SIGNED_WRITE_COMMAND:

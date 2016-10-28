@@ -59,17 +59,20 @@
 #include <linked_list.h>
 #include <hci_cmds.h>
 #include "bt_memory.h"
+#include "btstack_event.h"
 
 /************************HCI DEBUG CONTROL**************************/
-#define HCI_DEBUG
+/* #define HCI_DEBUG */
 
 #ifdef HCI_DEBUG
-#define hci_puts     puts
-#define hci_deg      printf
+#define hci_puts        puts
+#define hci_deg         printf
+#define hci_pbuf(x,y)   printf_buf(x,y)
 
 #else
 #define hci_puts(...)     
 #define hci_deg(...)      
+#define hci_pbuf(...)
 
 #endif
 
@@ -435,7 +438,7 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         /* hci_deg("max_acl_data_packet_length use le: %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
     }
     /* hci_deg("max_acl_data_packet_length : %x - %x\n", hci_stack->le_data_packets_length, max_acl_data_packet_length ); */
-	/* puts("hci_send_acl\n"); */
+	/* hci_puts("hci_send_acl\n"); */
 
     // testing: reduce buffer to minimum
     // max_acl_data_packet_length = 52;
@@ -476,7 +479,7 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         const int size = current_acl_data_packet_length + 4;
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);
 
-        /* printf("pos %x - size 0x%x\n", acl_header_pos, size); */
+        /* hci_deg("pos %x - size 0x%x\n", acl_header_pos, size); */
         hci_puts("acl more ...");
         // done yet?
         if (!more_fragments) break;
@@ -503,14 +506,14 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         hci_stack->packet_handler(HCI_EVENT_PACKET, 
 				&event[0], sizeof(event));
     }
-	/* puts("exit2\n"); */
+	/* hci_puts("exit2\n"); */
 
     return err;
 }
 
 // pre: caller has reserved the packet buffer
 int le_hci_send_acl_packet_buffer(int size){
-	/* puts("le_send_acl\n"); */
+	/* hci_puts("le_send_acl\n"); */
 
     // log_info("hci_send_acl_packet_buffer size %u", size);
 
@@ -688,14 +691,14 @@ int hci_classic_supported(void){
 // get addr type and address used in advertisement packets
 void hci_le_advertisement_address(uint8_t * addr_type, bd_addr_t  addr){
     *addr_type = hci_stack->adv_addr_type;
-    /* puts(__func__); */
+    /* hci_puts(__func__); */
     if (hci_stack->adv_addr_type){
         memcpy(addr, hci_stack->adv_address, 6);
-        /* puts("****random addr \n"); */
+        /* hci_puts("****random addr \n"); */
     } else 
     {
         memcpy(addr, hci_stack->local_bd_addr, 6);
-        /* puts("****public\n"); */
+        /* hci_puts("****public\n"); */
     }
     /* printf_buf(addr ,6); */
 }
@@ -730,7 +733,7 @@ void le_handle_advertisement_report(uint8_t *packet, int size)
 
 static void hci_initializing_next_state(){
     hci_stack->substate = (hci_substate_t )( ((int) hci_stack->substate) + 1);
-	/* puts("next_substate\n"); */
+	/* hci_puts("next_substate\n"); */
 }
 
 static const u8 adv_ind_data[] = {
@@ -908,20 +911,22 @@ static void hci_initializing_event_handler(uint8_t * packet, uint16_t size)
 // avoid huge local variables
 static void event_handler(uint8_t *packet, int size)
 {
+	uint16_t event_length = packet[1];
+
+	// assert packet is complete
+	if (size != event_length + 2){
+        hci_puts("event_handler : packet is incomplete\n");
+		return;
+	}
+
 	bd_addr_t addr;
 	bd_addr_type_t addr_type;
 	uint8_t link_type;
 	hci_con_handle_t handle;
 	hci_connection_t * conn;
 	int i;
-	uint16_t event_length = packet[1];
 
-	// assert packet is complete
-	if (size != event_length + 2){
-		return;
-	}
-
-	switch (packet[0]) {
+	switch (hci_event_packet_get_type(packet)) {
 		case HCI_EVENT_COMMAND_COMPLETE:
 			// get num cmd packets
 			hci_stack->num_cmd_packets = packet[2];
@@ -929,15 +934,15 @@ static void event_handler(uint8_t *packet, int size)
             //data length extension begin
 			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_suggested_default_data_length)){
 
-                    printf("suggestedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
-                    printf("suggestedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
+                    hci_deg("suggestedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
+                    hci_deg("suggestedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
             }
 			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_maximum_data_length)){
 
-                    printf("supportedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
-                    printf("supportedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
-                    printf("supportedMaxRxOctets: %04x\n",  READ_BT_16(packet, 10));
-                    printf("supportedMaxRxTime: %04x\n",    READ_BT_16(packet, 12));
+                    hci_deg("supportedMaxTxOctets: %04x\n",  READ_BT_16(packet, 6));
+                    hci_deg("supportedMaxTxTime: %04x\n",    READ_BT_16(packet, 8));
+                    hci_deg("supportedMaxRxOctets: %04x\n",  READ_BT_16(packet, 10));
+                    hci_deg("supportedMaxRxTime: %04x\n",    READ_BT_16(packet, 12));
             }
             //data length extension end
             //
@@ -951,20 +956,20 @@ static void event_handler(uint8_t *packet, int size)
                 if (hci_stack->le_data_packets_length < 27)
                 {
                     //spec 4.2 Vol 2 Part E
-                    puts("Host shall not fragment HCI ACL Data Packets on an LE-U logial link\n");
+                    hci_puts("Host shall not fragment HCI ACL Data Packets on an LE-U logial link\n");
                 }
-                printf("le_data_packets_length : %x\n", hci_stack->le_data_packets_length);
-                printf("le_acl_packets_total_num : %x\n", hci_stack->le_acl_packets_total_num);
+                hci_deg("le_data_packets_length : %x\n", hci_stack->le_data_packets_length);
+                hci_deg("le_acl_packets_total_num : %x\n", hci_stack->le_acl_packets_total_num);
 			}
             if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_white_list_size)){
                 hci_stack->le_whitelist_capacity = READ_BT_16(packet, 6);
-                printf("le_whitelist_capacity %x\n", hci_stack->le_whitelist_capacity);
+                hci_deg("le_whitelist_capacity %x\n", hci_stack->le_whitelist_capacity);
                 log_info("hci_le_read_white_list_size: size %u", hci_stack->le_whitelist_capacity);
             }   
 			if (COMMAND_COMPLETE_EVENT(packet, hci_read_bd_addr)){
 				bt_flip_addr(hci_stack->local_bd_addr, 
 						&packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1]);
-                puts("hci_read_bd_addr");printf_buf(hci_stack->local_bd_addr, 6);
+                hci_puts("hci_read_bd_addr");hci_pbuf(hci_stack->local_bd_addr, 6);
 			}
 			if (COMMAND_COMPLETE_EVENT(packet, hci_le_read_resolving_list_size)){
                 hci_stack->le_resolvinglist_capacity = READ_BT_16(packet, 6);
@@ -978,7 +983,7 @@ static void event_handler(uint8_t *packet, int size)
 			break;
 
 		case HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS:
-            puts("HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS\n");
+            hci_puts("HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS\n");
 			{
 				int offset = 3;
 
@@ -1045,7 +1050,7 @@ static void event_handler(uint8_t *packet, int size)
 		case HCI_EVENT_DISCONNECTION_COMPLETE:
 			if (packet[2]) break;   // status != 0
 			handle = READ_BT_16(packet, 3);
-			printf("hci_event_disconnect: %x\n", handle);
+			hci_deg("hci_event_disconnect: %x\n", handle);
 			conn = le_hci_connection_for_handle(handle);
 			if (!conn) break;       // no conn struct anymore
 			conn->state = RECEIVED_DISCONNECTION_COMPLETE;
@@ -1055,30 +1060,30 @@ static void event_handler(uint8_t *packet, int size)
 			switch (packet[2])
 			{
                 case HCI_SUBEVENT_LE_DATA_LENGTH_CHANGE:
-					puts("le_data_length_change\n");
-                    printf("connEffectiveMaxTxOctets: %04x\n",    packet[5]<<8|packet[4]);
-                    printf("connEffectiveMaxTxTime:   %04x\n",    packet[7]<<8|packet[6]);
-                    printf("connEffectiveMaxRxOctets: %04x\n",    packet[9]<<8|packet[8]);
-                    printf("connEffectiveMaxRxTime:   %04x\n",    packet[11]<<8|packet[10]);
+					hci_puts("le_data_length_change\n");
+                    hci_deg("connEffectiveMaxTxOctets: %04x\n",    packet[5]<<8|packet[4]);
+                    hci_deg("connEffectiveMaxTxTime:   %04x\n",    packet[7]<<8|packet[6]);
+                    hci_deg("connEffectiveMaxRxOctets: %04x\n",    packet[9]<<8|packet[8]);
+                    hci_deg("connEffectiveMaxRxTime:   %04x\n",    packet[11]<<8|packet[10]);
                     break;
 				case HCI_SUBEVENT_LE_ADVERTISING_REPORT:
-					puts("advertising report received");
+					hci_puts("advertising report received");
 					if (hci_stack->le_scanning_state != LE_SCANNING)
 					   	break;
 					le_handle_advertisement_report(packet, size);
 					break;
 
                 case HCI_SUBEVENT_LE_ENHANCED_CONNECTION_COMPLETE_EVENT:
-					puts("le_enhanced_connection_complete\n");
-                    printf("interval: %04x\n",    packet[27]<<8|packet[26]);
-                    printf("latency : %04x\n",    packet[29]<<8|packet[28]);
-                    printf("timeout : %04x\n",    packet[31]<<8|packet[30]);
-                    puts("local RPA : "); printf_buf(&packet[14], 6); bt_flip_addr(hci_stack->adv_address, &packet[14]);
-                    puts("peer RPA : "); printf_buf(&packet[20], 6);
-                    puts("\n");
+					hci_puts("le_enhanced_connection_complete\n");
+                    hci_deg("interval: %04x\n",    packet[27]<<8|packet[26]);
+                    hci_deg("latency : %04x\n",    packet[29]<<8|packet[28]);
+                    hci_deg("timeout : %04x\n",    packet[31]<<8|packet[30]);
+                    hci_puts("local RPA : "); printf_buf(&packet[14], 6); bt_flip_addr(hci_stack->adv_address, &packet[14]);
+                    hci_puts("peer RPA : "); printf_buf(&packet[20], 6);
+                    hci_puts("\n");
 				case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
 					// Connection management
-					puts("le_connection_complete\n");
+					hci_puts("le_connection_complete\n");
 					bt_flip_addr(addr, &packet[8]);
 					addr_type = (bd_addr_type_t)packet[7];
 
@@ -1106,7 +1111,6 @@ static void event_handler(uint8_t *packet, int size)
                         }
 						break;
 					}
-					puts("le_connection_complete\n");
 					// on success, both hosts receive connection complete event
                     if (packet[6] == HCI_ROLE_MASTER){
                         // if we're master, it was an outgoing connection and we're done with it
@@ -1167,9 +1171,9 @@ static void event_handler(uint8_t *packet, int size)
 			handle = READ_BT_16(packet, 3);
 			hci_connection_t * conn = le_hci_connection_for_handle(handle);
 
-            /* printf("conn handle %x\n", handle); */
+            /* hci_deg("conn handle %x\n", handle); */
 			if (conn) {
-                /* printf("conn->addr %02x - %02x - %02x - %02x - %02x - %02x \n", conn->address[0], conn->address[1],conn->address[2],conn->address[3],conn->address[4],conn->address[5]); */
+                /* hci_deg("conn->addr %02x - %02x - %02x - %02x - %02x - %02x \n", conn->address[0], conn->address[1],conn->address[2],conn->address[3],conn->address[4],conn->address[5]); */
 				/*uint8_t status = conn->bonding_status;
 				  uint16_t flags = conn->bonding_flags;
 				bd_addr_t bd_address;
@@ -1191,22 +1195,22 @@ static void event_handler(uint8_t *packet, int size)
 }
 
 
-static void packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size)
+static void hci_packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size)
 {
-    /* puts("--HCI PH "); */
+    /* hci_puts("--HCI PH "); */
     switch (packet_type) 
 	{
         case HCI_EVENT_PACKET:
             event_handler(packet, size);
             break;
         case HCI_ACL_DATA_PACKET:
-            puts("HCI_ACL_DATA_PACKET\n");
+            hci_puts("HCI_ACL_DATA_PACKET\n");
             acl_handler(packet, size);
             break;
         default:
             break;
     }
-    /* puts("\nHCI exit "); */
+    /* hci_puts("\nHCI exit "); */
 }
 
 /** Register HCI packet handlers */
@@ -1281,7 +1285,7 @@ void le_hci_init(hci_transport_t *transport, void *config, bt_control_t *control
     hci_stack->acl_data_packet_length = HCI_ACL_PAYLOAD_SIZE;
     
     // register packet handlers with transport
-    transport->register_packet_handler(&packet_handler);
+    transport->register_packet_handler(&hci_packet_handler);
 
     hci_stack->state = HCI_STATE_OFF;
 
@@ -1757,7 +1761,7 @@ void le_hci_run(void)
 
 				// send disconnect
                 if (!le_hci_can_send_command_packet_now()) {
-                    puts("le_hci_run2 - le_hci_can_send_command_packet_now\n");
+                    hci_puts("le_hci_run2 - le_hci_can_send_command_packet_now\n");
                     return;   
                 }
 
@@ -1917,7 +1921,7 @@ int le_hci_send_cmd(const hci_cmd_t *cmd, ...)
 
     // for HCI INITIALIZATION
     // log_info("hci_send_cmd: opcode %04x", cmd->opcode);
-    /* printf("hci_send_cmd: ogf %04x- ocf %04x\n", cmd->opcode>>10, cmd->opcode & 0x3ff); */
+    /* hci_deg("hci_send_cmd: ogf %04x- ocf %04x\n", cmd->opcode>>10, cmd->opcode & 0x3ff); */
     
     hci_stack->last_cmd_opcode = cmd->opcode;
 

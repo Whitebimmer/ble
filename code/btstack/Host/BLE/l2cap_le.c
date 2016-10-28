@@ -183,12 +183,10 @@ static void l2cap_event_handler( uint8_t *packet, uint16_t size ){
     }
     if (attribute_protocol_packet_handler){
         /* l2cap_puts("l2cap_attribute_handler\n"); */
-        l2cap_puts("att_event\n");
         (*attribute_protocol_packet_handler)(HCI_EVENT_PACKET, 0, packet, size);
     } 
     if (security_protocol_packet_handler) {
         /* l2cap_puts("l2cap_security_handler\n"); */
-        l2cap_puts("sm_event\n");
         (*security_protocol_packet_handler)(HCI_EVENT_PACKET, 0, packet, size);
     }
 }
@@ -203,14 +201,14 @@ static void l2cap_acl_handler( uint8_t *packet, uint16_t size ){
             
         case L2CAP_CID_ATTRIBUTE_PROTOCOL:
             if (attribute_protocol_packet_handler) {
-                l2cap_puts("att_acl_packet\n");
+                l2cap_puts("L2CAP_CID_ATTRIBUTE_PROTOCOL\n");
                 (*attribute_protocol_packet_handler)(ATT_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
             }
             break;
 
         case L2CAP_CID_SECURITY_MANAGER_PROTOCOL:
             if (security_protocol_packet_handler) {
-                l2cap_puts("sm_acl_packet\n");
+                l2cap_puts("L2CAP_CID_SECURITY_MANAGER_PROTOCOL\n");
                 (*security_protocol_packet_handler)(SM_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
             }
             break;

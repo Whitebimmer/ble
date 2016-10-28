@@ -9,6 +9,26 @@
 #include "bt_power.h"
 #include "bt_memory.h"
 
+/************************RF DEBUG CONTROL**************************/
+/* #define RF_DEBUG */
+
+#ifdef RF_DEBUG
+#define rf_putchar(x)   putchar(x)
+#define rf_puts         puts
+#define rf_u32hex(x)    put_u32hex(x)
+#define rf_u8hex(x)     put_u8hex(x)
+#define rf_deg          printf
+#define rf_buf(x,y)     printf_buf(x,y)
+
+#else
+#define rf_putchar(x) 
+#define rf_puts(...)     
+#define rf_u32hex(x)    
+#define rf_u8hex(x)     
+#define rf_deg(...)      
+#define rf_buf(...)
+
+#endif
 
 static volatile int ble_debug_signal[BLE_HW_NUM];
 
@@ -95,8 +115,8 @@ struct ble_rx * ble_hw_alloc_rx(struct ble_hw *hw, int len)
     if(rx == NULL)
     {
         /* ASSERT(rx != NULL, "%s\n", "rx alloc err\n"); */
-        /* puts("flow control reasons : lack of receive buffer space\n"); */
-        putchar('>');
+        /* rf_puts("flow control reasons : lack of receive buffer space\n"); */
+        rf_putchar('>');
         return NULL;
     }
 	ASSERT(((u32)rx & 0x03) == 0, "%s\n", "rx not align\n");
@@ -123,9 +143,9 @@ static struct ble_tx * le_hw_alloc_tx(struct ble_hw *hw,
 	memset(tx, 0, sizeof(*tx));
 	tx->type = type;
 	tx->llid = llid;
-    /* printf("hw alloc tx : %x\n", tx->len); */
+    /* rf_deg("hw alloc tx : %x\n", tx->len); */
     tx->len = len;
-    /* printf("hw alloc tx 2 : %x\n", tx->len); */
+    /* rf_deg("hw alloc tx 2 : %x\n", tx->len); */
 
 	return tx;
 }
@@ -305,10 +325,10 @@ static void ble_hw_disable(struct ble_hw *hw)
 void __debug_interval(struct ble_hw *hw)
 {
     BLE_ANCHOR_CON0 = (1<<12) | (HW_ID(hw)<<8) | BIT(1);
-    printf("1 - BLE_ANCHOR_CON0 : %02x - %04x\n", HW_ID(hw), BLE_ANCHOR_CON2);
-    printf("ADVIDX : %04x\n", hw->ble_fp.ADVIDX);
+    rf_deg("1 - BLE_ANCHOR_CON0 : %02x - %04x\n", HW_ID(hw), BLE_ANCHOR_CON2);
+    rf_deg("ADVIDX : %04x\n", hw->ble_fp.ADVIDX);
 	BLE_ANCHOR_CON0 = (0<<12) | (HW_ID(hw)<<8) | BIT(1);
-    printf("0 - BLE_ANCHOR_CON0 : %04x\n", BLE_ANCHOR_CON2 & 0x7fff);
+    rf_deg("0 - BLE_ANCHOR_CON0 : %04x\n", BLE_ANCHOR_CON2 & 0x7fff);
 }
 
 static void __store_ble_regs(struct ble_hw *hw)
@@ -364,11 +384,11 @@ static u32 __power_get_timeout(void *priv)
 	//hw busy
 	if (BLE_DEEPSL_CON & BIT(1))
 	{
-		putchar('~');
+		rf_putchar('~');
 		return 0;
 	}
 	BLE_ANCHOR_CON0 = (0<<12) | (HW_ID(hw)<<8) | BIT(1);
-    /* printf("0 - BLE_ANCHOR_CON0 : %04x\n", BLE_ANCHOR_CON2 & 0x7fff); */
+    /* rf_deg("0 - BLE_ANCHOR_CON0 : %04x\n", BLE_ANCHOR_CON2 & 0x7fff); */
 
 	//BLE_ANCHOR_CON0 = (0<<12) | (HW_ID(hw)<<8) | BIT(1);
 	clkn_cnt = BLE_ANCHOR_CON2 & 0x7fff;
@@ -382,7 +402,7 @@ static u32 __get_slots_before_next_instant(void *priv)
 	struct ble_hw *hw = (struct ble_hw *)priv;
 
 	BLE_ANCHOR_CON0 = (0<<12) | (HW_ID(hw)<<8) | BIT(1);
-    /* printf("0 - BLE_ANCHOR_CON0 : %04x\n", BLE_ANCHOR_CON2 & 0x7fff); */
+    /* rf_deg("0 - BLE_ANCHOR_CON0 : %04x\n", BLE_ANCHOR_CON2 & 0x7fff); */
 
 	//BLE_ANCHOR_CON0 = (0<<12) | (HW_ID(hw)<<8) | BIT(1);
 	clkn_cnt = BLE_ANCHOR_CON2 & 0x7fff;
@@ -398,11 +418,11 @@ static void __power_suspend_probe(void *priv)
 
 static void __power_suspend_post(void *priv, u32 usec)
 {
-        /* putchar('a'); */
+        /* rf_putchar('a'); */
 	struct ble_hw *hw = (struct ble_hw *)priv;
 
 	while(!(BLE_DEEPSL_CON & BIT(3)));  // baseband stop
-        /* putchar('b'); */
+        /* rf_putchar('b'); */
     DEBUG_IO_1(0);
     DEBUG_IO_1(1);
 	while(BT_PHCOM_CNT & BIT(11));
@@ -413,7 +433,7 @@ static void __power_suspend_post(void *priv, u32 usec)
 	BLE_ANCHOR_CON0 = (0<<12) | (HW_ID(hw)<<8) | BIT(1);
 	clkn_cnt = (BLE_ANCHOR_CON2 & 0x7fff)*SLOT_UNIT_US;
 
-    /* printf("clk_cnt : %08d / fine_cnt - %08d / usec - %08d\n", clkn_cnt, __this->fine_cnt, usec); */
+    /* rf_deg("clk_cnt : %08d / fine_cnt - %08d / usec - %08d\n", clkn_cnt, __this->fine_cnt, usec); */
 
     ASSERT((clkn_cnt > __this->fine_cnt), "%s\n", __func__);
 
@@ -449,7 +469,7 @@ static void __power_off_post(void *priv, u32 usec)
 
 static void __power_on(void *priv)
 {
-    /* puts("__power_on\n"); */
+    /* rf_puts("__power_on\n"); */
 	struct ble_hw *hw = (struct ble_hw *)priv;
 
 	BLE_DEEPSL_CON = BIT(5)|BIT(0);
@@ -511,7 +531,7 @@ static inline void ble_all_power_on()
 
 static void __set_winsize(struct ble_hw *hw, int winsize, int nwinsize)
 {
-    /* printf("\nwinsize : %x - 1 : %x \n", winsize, nwinsize); */
+    /* rf_deg("\nwinsize : %x - 1 : %x \n", winsize, nwinsize); */
 	hw->ble_fp.WINCNTL0 = nwinsize;//N*us 
     //50us Active Clock Accuracy / Sleep Clock Accuracy
 	hw->ble_fp.WINCNTL1 = (winsize<<8)|(nwinsize>>16);    //50 depend on 
@@ -537,12 +557,12 @@ static void __set_widen(struct ble_hw *hw, int widen)
     //[12:15] only establish connetion & winoffset
     //[11:0] connetion interval
     hw->ble_fp.WIDEN1 = (5<<12) | us; //[15:12]slave_Rx_first_bitoffset
-    /* printf("\nwiden0 : %x - 1 : %x \n", hw->ble_fp.WIDEN0, hw->ble_fp.WIDEN1); */
+    /* rf_deg("\nwiden0 : %x - 1 : %x \n", hw->ble_fp.WIDEN0, hw->ble_fp.WIDEN1); */
 }
 
 static void __set_local_addr(struct ble_hw *hw, u8 addr_type, const u8 *addr)
 {
-    puts(__func__);printf_buf(addr, 6);
+    rf_puts(__func__);rf_buf(addr, 6);
     hw->ble_fp.FORMAT |= BIT(3);    //set AdvA/ScanA/InitA from LOCALADR
 
     hw->local.addr_type = (addr_type) ? 1 : 0;
@@ -560,18 +580,18 @@ static void __set_local_addr_ram(struct ble_hw *hw, u8 addr_type, const u8 *addr
     hw->local.addr_type = (addr_type) ? 1 : 0;
 
 	memcpy(hw->local.addr, addr, 6);
-	printf("\n--func=%s\n", __FUNCTION__);
-	printf_buf(hw->local.addr, 6);
+	rf_deg("\n--func=%s\n", __FUNCTION__);
+	rf_buf(hw->local.addr, 6);
 
     //next tx buf to be send
     u16 *ptr;
 
     ptr = (u32)hw->ble_fp.TXPTR0 + ((u32)&ble_base);
-	//printf("ptr0=0x%x\n", ptr);
+	//rf_deg("ptr0=0x%x\n", ptr);
 	memcpy(ptr, addr, 6);
 
     ptr = (u32)hw->ble_fp.TXPTR1 + ((u32)&ble_base);
-	//printf("ptr1=0x%x\n", ptr);
+	//rf_deg("ptr1=0x%x\n", ptr);
 	memcpy(ptr, addr, 6);
 }
 
@@ -657,7 +677,7 @@ static void __set_adv_channel_map_patch(struct ble_hw *hw, u8 channel_map)
 
     if (channel_map != 0x5)
         return;
-    puts("****adv channel map patch***\n");
+    rf_puts("****adv channel map patch***\n");
     for (i=0; i<3; i++)
     {
         int j = m[i];
@@ -731,7 +751,7 @@ static void __set_connection_param(struct ble_hw *hw,
         __disable_adv_random(hw);
         //----Winoffset
         __set_winoffset(hw, (conn_param->winoffset) ? conn_param->winoffset*2-1 : 0);
-        /* puts("winoffset : ");put_u8hex(winoffset); */
+        /* rf_puts("winoffset : ");rf_u8hex(winoffset); */
         //----HW state 
 		__set_hw_state(hw, SLAVE_CONN_ST, !!conn_param->latency, conn_param->latency);
         //----Channel map
@@ -747,7 +767,7 @@ static void __set_connection_param(struct ble_hw *hw,
     __set_conn_channel_index(hw, (conn_param->hop<<8)|conn_param->hop);
     //BLE_ANCHOR_CON0 = (7<<12)|(HW_ID(hw)<<8)|(1<<1)|0;
 
-    /* puts("\nbitoffset : ");put_u16hex(BLE_ANCHOR_CON2); */
+    /* rf_puts("\nbitoffset : ");put_u16hex(BLE_ANCHOR_CON2); */
 }
 
 static void __connection_update(struct ble_hw *hw, struct ble_conn_param *param)
@@ -774,7 +794,7 @@ static void __set_white_list_addr(struct ble_hw *hw, u8 addr_type, const u8 *add
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
 
-    puts(__func__);
+    rf_puts(__func__);
 
     addr_type = (addr_type) ? 1 : 0;
     ble_fp->FILTERCNTL = ble_fp->FILTERCNTL & 0x7f | (addr_type&0x1)<<8 | 1;
@@ -784,11 +804,11 @@ static void __set_white_list_addr(struct ble_hw *hw, u8 addr_type, const u8 *add
 	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
 	ble_fp->WHITELIST0U = (addr[5] << 8) | addr[4];
 
-    printf("addr type %x\n", addr_type);
+    rf_deg("addr type %x\n", addr_type);
 
-    printf("addr L %x\n", ble_fp->WHITELIST0L);
-    printf("addr M %x\n", ble_fp->WHITELIST0M);
-    printf("addr U %x\n", ble_fp->WHITELIST0U);
+    rf_deg("addr L %x\n", ble_fp->WHITELIST0L);
+    rf_deg("addr M %x\n", ble_fp->WHITELIST0M);
+    rf_deg("addr U %x\n", ble_fp->WHITELIST0U);
 }
 
 static void __set_receive_encrypted(struct ble_hw *hw, u8 rx_enable)
@@ -840,11 +860,11 @@ static void __set_privacy_enable(struct ble_hw *hw, u8 enable)
     hw->privacy_enable = enable;
     
     //disable auto tx scan_rsp/conn_req/data
-    puts("lock scan_rsp\n");
+    rf_puts("lock scan_rsp\n");
     __set_hw_tx_disable(&hw->ble_fp);
 
     //disable auto tx scan_req
-    puts("lock scan_req\n");
+    rf_puts("lock scan_req\n");
     __set_scan_req_disable(&hw->ble_fp);
 }
 
@@ -852,8 +872,8 @@ static void __set_hw_adv_expect_scan_rpa(struct ble_hw *hw, struct ble_rx *rx)
 {
 	struct ble_param *ble_fp = &hw->ble_fp;
     const u8 *addr;
-    puts(__func__);
-    printf_buf(addr, 6);
+    rf_puts(__func__);
+    rf_buf(addr, 6);
 
     //ScanA
     addr = rx->data;
@@ -864,7 +884,7 @@ static void __set_hw_adv_expect_scan_rpa(struct ble_hw *hw, struct ble_rx *rx)
     ble_fp->FILTERCNTL |= BIT(8);             //rxadd = random
     ble_fp->FILTERCNTL |= (BIT(3));          //white list enable scan_en
 
-    puts("unlock scan_rsp\n");
+    rf_puts("unlock scan_rsp\n");
     __set_scan_rsp_enable(ble_fp);
 }
 
@@ -890,10 +910,10 @@ static void __set_hw_scan_expect_adv_rpa(struct ble_hw *hw, struct ble_rx *rx)
     if (hw->backoff.active == 0)
         return;
 
-    puts(__func__);
+    rf_puts(__func__);
     //AdvA
     addr = rx->data;
-    printf_buf(addr, 6);
+    rf_buf(addr, 6);
 
 	ble_fp->WHITELIST0L = (addr[1] << 8) | addr[0];
 	ble_fp->WHITELIST0M = (addr[3] << 8) | addr[2];
@@ -924,10 +944,10 @@ static void __set_hw_init_expect_adv_rpa(struct ble_hw *hw, struct ble_rx *rx)
 	struct ble_param *ble_fp = &hw->ble_fp;
     const u8 *addr;
 
-    puts(__func__);
+    rf_puts(__func__);
     //AdvA
     addr = rx->data;
-    printf_buf(addr, 6);
+    rf_buf(addr, 6);
 
 	hw->is_init_enter_conn_pass = 1;
 
@@ -984,22 +1004,22 @@ static void __set_rpa_resolve_result(struct ble_hw *hw, struct ble_rx *rx, u8 re
     switch(hw->state)
     {
     case ADV_ST:
-        /* puts("ADV_ST\n"); */
+        /* rf_puts("ADV_ST\n"); */
         __adv_state_handler(hw, rx);
         break;
     case SCAN_ST:
-        puts("SCAN_ST\n");
+        rf_puts("SCAN_ST\n");
         __scan_state_handler(hw, rx);
         break;
     case INIT_ST:
-        puts("INIT_ST\n");
+        rf_puts("INIT_ST\n");
         __init_state_handler(hw, rx);
         break;
     case MASTER_CONN_ST:
-        puts("MASTER_CONN_ST\n");
+        rf_puts("MASTER_CONN_ST\n");
         break;
     case SLAVE_CONN_ST:
-        /* puts("SLAVE_CONN_ST\n"); */
+        /* rf_puts("SLAVE_CONN_ST\n"); */
         __slave_conn_state_handler(hw, rx);
         break;
     }
@@ -1024,14 +1044,14 @@ static void __set_rx_length(struct ble_hw *hw, u16 len)
 
     /* hw->rx_octets = len; */
 
-    /* printf("rx_octets : %x\n", hw->rx_octets); */
+    /* rf_deg("rx_octets : %x\n", hw->rx_octets); */
 }
 
 static void __set_tx_length(struct ble_hw *hw, u16 len)
 {
     hw->tx_octets = len;
 
-    printf("tx_octets : %x\n", hw->tx_octets);
+    rf_deg("tx_octets : %x\n", hw->tx_octets);
 }
 
 #ifdef FPGA
@@ -1269,7 +1289,7 @@ static void __set_adv_device_filter_param(struct ble_hw *hw, u8 filter_policy)
     //[4] conn en
     ble_fp->FILTERCNTL = ble_fp->FILTERCNTL & 0xef | (conn_en&0x1)<<4;
 
-    /* printf("FILTERCNTL %x\n", ble_fp->FILTERCNTL); */
+    /* rf_deg("FILTERCNTL %x\n", ble_fp->FILTERCNTL); */
 }
 
 static void __set_scan_device_filter_param(struct ble_hw *hw, u8 filter_policy)
@@ -1298,7 +1318,7 @@ static void __set_scan_device_filter_param(struct ble_hw *hw, u8 filter_policy)
     //[3] scan en
     ble_fp->FILTERCNTL = ble_fp->FILTERCNTL & 0xf7 | (scan_en&0x1)<<3;
 
-    /* printf("FILTERCNTL %x\n", ble_fp->FILTERCNTL); */
+    /* rf_deg("FILTERCNTL %x\n", ble_fp->FILTERCNTL); */
 }
 
 static void __set_init_device_filter_param(struct ble_hw *hw, u8 filter_policy)
@@ -1321,7 +1341,7 @@ static void __set_init_device_filter_param(struct ble_hw *hw, u8 filter_policy)
     //[4] conn en
     ble_fp->FILTERCNTL = ble_fp->FILTERCNTL & 0xef | (conn_en&0x1)<<4;
 
-    /* printf("FILTERCNTL %x\n", ble_fp->FILTERCNTL); */
+    /* rf_deg("FILTERCNTL %x\n", ble_fp->FILTERCNTL); */
 }
 
 static void ble_hw_encrypt_check(struct ble_hw *hw)
@@ -1412,7 +1432,7 @@ static void ble_hw_txdecrypt(struct ble_hw *hw, struct ble_tx *tx)
 		ccm_memory(nonce, &head, 1, pt, tx->len, tx->data,  tag, 1);
 		memcpy(tx->data, pt, tx->len);
 		if (memcmp(tag, tx->data+tx->len, 4)){
-			printf("no_match: %d\n", tx->llid);
+			rf_deg("no_match: %d\n", tx->llid);
 		}
 	}
 }
@@ -1449,7 +1469,7 @@ static void ble_hw_decrypt(struct ble_hw *hw, struct ble_rx *rx)
 		ccm_memory(nonce, &head, 1, pt, rx->len, rx->data,  tag, 1);
 		memcpy(rx->data, pt, rx->len);
 		if (memcmp(tag, rx->data+rx->len, 4)){
-			printf("no_match: %d\n", rx->llid);
+			rf_deg("no_match: %d\n", rx->llid);
 		}
 	}
 }
@@ -1536,13 +1556,13 @@ static bool ble_rx_pdus_filter(struct ble_hw *hw, struct ble_rx *rx)
                     if ((hw->peer.addr_type != rx->txadd) 
                         || (memcmp(hw->peer.addr, rx->data, 6)))
                     {
-                        /* put_u8hex(hw->peer.addr_type); */
-                        /* printf_buf(hw->peer.addr, 6); */
-                        /* put_u8hex(rx->txadd); */
-                        /* printf_buf(rx->data, 6); */
+                        /* rf_u8hex(hw->peer.addr_type); */
+                        /* rf_buf(hw->peer.addr, 6); */
+                        /* rf_u8hex(rx->txadd); */
+                        /* rf_buf(rx->data, 6); */
 
-                        /* put_u8hex((hw->peer.addr_type != rx->txadd)); */
-                        /* put_u8hex(memcmp(hw->peer.addr, rx->data, 6)); */
+                        /* rf_u8hex((hw->peer.addr_type != rx->txadd)); */
+                        /* rf_u8hex(memcmp(hw->peer.addr, rx->data, 6)); */
                         return FALSE;
                     }
                     //privacy RPA bypass
@@ -1570,7 +1590,7 @@ static void ble_rx_adv_process(struct ble_hw *hw, struct ble_rx *rx)
     if (rx->type == SCAN_REQ)
     {
         __set_peer_addr(hw, rx->txadd, rx->data);
-        putchar('S');
+        rf_putchar('S');
     }
     else if (rx->type == CONNECT_REQ)
     {
@@ -1616,7 +1636,7 @@ static void ble_rx_scan_process(struct ble_hw *hw, struct ble_rx *rx)
 
     if((rx->type == ADV_IND) || (rx->type == ADV_SCAN_IND))
     {
-        putchar('Q');
+        rf_putchar('Q');
         if (--hw->backoff.backoff_count == 0) 
         {
             //nack
@@ -1633,7 +1653,7 @@ static void ble_rx_scan_process(struct ble_hw *hw, struct ble_rx *rx)
                     hw->backoff.upper_limit = (hw->backoff.upper_limit == 256) ? 256 : hw->backoff.upper_limit<<1;
                     backoff_pseudo(hw);
                     hw->backoff.consecutive_fail = 0;
-                    puts("++");
+                    rf_puts("++");
                 }
             }
             hw->backoff.send = 1;
@@ -1654,11 +1674,11 @@ static void ble_rx_scan_process(struct ble_hw *hw, struct ble_rx *rx)
         /* __set_remote_addr(hw, rx->data); */
         /* __set_scan_req_remote_addr(hw, rx->data); */
         /* __show_remote_addr(hw); */
-        /* printf_buf(rx->data, 6); */
+        /* rf_buf(rx->data, 6); */
     }
     else if(rx->type == SCAN_RSP)
     {
-        putchar('P');
+        rf_putchar('P');
         //ack
         hw->backoff.send = 0;
         hw->backoff.consecutive_succ++;
@@ -1673,7 +1693,7 @@ static void ble_rx_scan_process(struct ble_hw *hw, struct ble_rx *rx)
             backoff_pseudo(hw);
             hw->backoff.backoff_count = hw->backoff.backoff_pseudo_cnt;
             hw->backoff.consecutive_succ = 0;
-            puts("--");
+            rf_puts("--");
         }
      }
 }
@@ -1741,7 +1761,7 @@ static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
         if (ble_rx_pdus_filter(hw, rx) == FALSE)
         {
             //ignore packet
-            putchar('~');
+            rf_putchar('~');
             lbuf_free(rx);
             return; 
         }
@@ -1751,7 +1771,7 @@ static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
         //async PDUs upper to Link Layer
         if (RX_PACKET_IS_VALID(rx))
         {
-            /* printf_buf(rx, sizeof(*rx)+rx->len); */
+            /* rf_buf(rx, sizeof(*rx)+rx->len); */
             lbuf_push(rx);
         }
     }
@@ -1779,8 +1799,8 @@ static void le_hw_upload_data(void (*handler)(void *priv, struct ble_rx *rx))
         rx = lbuf_pop(hw->lbuf_rx);
         if (rx)
         {
-			/* puts("le_hw_upload_data"); */
-            /* printf_buf(rx, sizeof(*rx)+rx->len); */
+			/* rf_puts("le_hw_upload_data"); */
+            /* rf_buf(rx, sizeof(*rx)+rx->len); */
             handler(hw->priv, rx);
             lbuf_free(rx);
         }
@@ -1810,12 +1830,12 @@ static void __hw_tx_process(struct ble_hw *hw)
 	if (hw->state == SLAVE_CONN_ST || hw->state == MASTER_CONN_ST)
 	{
 		if (!hw->rx_ack){
-			putchar('N');
+			rf_putchar('N');
 			return;
 		}
 
 		i = !(ble_fp->TXTOG & BIT(0));
-        /* putchar('0'+i); */
+        /* rf_putchar('0'+i); */
 
 		if (hw->tx[i]){
             if (hw->handler && hw->handler->tx_probe_handler){
@@ -1831,11 +1851,11 @@ static void __hw_tx_process(struct ble_hw *hw)
 			empty.llid = 1;
 			tx = &empty;
 			hw->tx[i] = NULL;
-            /* printf_buf(&empty, sizeof(empty)); */
+            /* rf_buf(&empty, sizeof(empty)); */
             tx_buf = tx;
 		} else {
-			/* putchar('$'); */
-			put_u8hex(tx->data[0]);
+			/* rf_putchar('$'); */
+			rf_u8hex(tx->data[0]);
             tx_buf = hw->tx_buf[i];
 			hw->tx[i] = tx;
             memcpy(tx_buf, tx, sizeof(*tx)+tx->len+4);
@@ -1845,13 +1865,13 @@ static void __hw_tx_process(struct ble_hw *hw)
         tx_buf->md = lbuf_have_next(hw->lbuf_tx);
 		if(!__get_slots_before_next_instant(hw)){
 			if((tx_buf->md == 1) && (hw->tx_md_stop == 0)){	
-				/* putchar('%'); */
+				/* rf_putchar('%'); */
 				tx_buf->md = 0;	
 				hw->tx_md_stop = 1;
 			}
 		}
 		else{
-			/* putchar('='); */
+			/* rf_putchar('='); */
 			hw->tx_md_stop = 0;	
 		}
 
@@ -1873,17 +1893,17 @@ static struct ble_rx *ble_rx_buf_alloc(struct ble_hw *hw, struct ble_rx *rx, int
 
 	if (RX_PACKET_IS_VALID(rx))
     {
-		putchar('R');
+		rf_putchar('R');
 		if(ble_hw_rx_underload(hw))
         {
 			if(NULL != *rxptr)
             {
-                /* putchar('A'); */
+                /* rf_putchar('A'); */
 				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
 			}
 			else
             {
-                puts("\nunderload...\n");
+                rf_puts("\nunderload...\n");
 				*rxptr = PHY_TO_BLE(hw->rx_buf[ind] + sizeof(*rx));
 				/* rx_alloc = &temp_rx;	 */
                 rx_alloc = NULL;
@@ -1892,12 +1912,12 @@ static struct ble_rx *ble_rx_buf_alloc(struct ble_hw *hw, struct ble_rx *rx, int
 		else{
 			if(NULL != *rxptr)
             {	
-                puts("\noverload...\n");
+                rf_puts("\noverload...\n");
 				rx_alloc = ble_hw_alloc_rx(hw, rx->len);
 				*rxptr = NULL;
 			}
 			else{
-                puts("\nunderloading\n");
+                rf_puts("\nunderloading\n");
 				/* rx_alloc = &temp_rx;	 */
                 rx_alloc = NULL;
 			}
@@ -1924,12 +1944,12 @@ static void __hw_rx_process(struct ble_hw *hw)
 
     if (BLE_CON0 & BIT(5))
     {
-        /* puts("XXXX\n"); */
+        /* rf_puts("XXXX\n"); */
         /* trig_fun(); */
         /* while(1) */
         /* { */
              /* ADC_CON = 0; */
-            /* [> puts("\n---------------------"); <] */
+            /* [> rf_puts("\n---------------------"); <] */
         /* } */
     }
 
@@ -1964,7 +1984,7 @@ static void __hw_rx_process(struct ble_hw *hw)
 	rx->event_count = ble_fp->EVTCOUNT;
 
 	if (rx_check != 0x01){
-		putchar('E');put_u8hex(rx_check); putchar('\n');
+		rf_putchar('E');rf_u8hex(rx_check); rf_putchar('\n');
         //TO*DO
         return;
 	}
@@ -1973,7 +1993,7 @@ static void __hw_rx_process(struct ble_hw *hw)
 #endif
 	ble_hw_encrypt_check(hw);
 
-	/* putchar('r'); */
+	/* rf_putchar('r'); */
     //baseband loop buf switch
     rx_alloc = ble_rx_buf_alloc(hw, rx, ind);
 	ble_rx_probe(hw, rx_alloc);
@@ -2000,7 +2020,7 @@ static void __hw_event_process(struct ble_hw *hw)
 			break;
 		case SCAN_ST:
 		case INIT_ST:
-            /* putchar('#'); */
+            /* rf_putchar('#'); */
             __set_scan_channel_index(hw, hw->adv_channel);
             if (++hw->adv_channel > 39)
             {
@@ -2009,7 +2029,7 @@ static void __hw_event_process(struct ble_hw *hw)
 			break;
 		case SLAVE_CONN_ST:
 		case MASTER_CONN_ST:
-            /* putchar('@'); */
+            /* rf_putchar('@'); */
             /* put_u16hex(ble_fp->EVTCOUNT); */
             /* ble_debug_signal[HW_ID(hw)]++; */
             if (ble_debug_signal[HW_ID(hw)] == 10)
@@ -2017,7 +2037,7 @@ static void __hw_event_process(struct ble_hw *hw)
                 /* trig_fun(); */
                 /* PORTA_DIR &= ~BIT(0); */
                 /* PORTA_OUT |= BIT(0); */
-                puts("----X------\n");
+                rf_puts("----X------\n");
                 put_u16hex(ble_fp->EVTCOUNT);
                 /* PORTA_OUT &= ~BIT(0); */
             }
@@ -2078,12 +2098,12 @@ static void ble_irq_handler()
 		BLE_FINECNTCORR = __this->fine_cnt%SLOT_UNIT_US;
         DEBUG_IO_0(0);
 
-        /* printf("fine_cnt : %04d\n",__this->fine_cnt); */
+        /* rf_deg("fine_cnt : %04d\n",__this->fine_cnt); */
         BT_LP_CON |= BIT(1);
 		BLE_DEEPSL_CON |= BIT(2);
 
         DEBUG_IO_0(1);
-		putchar('W');
+		rf_putchar('W');
         /* while(1); */
 
 		ble_all_power_on();
@@ -2106,7 +2126,7 @@ static struct ble_hw *ble_hw_alloc()
 			memset(hw, 0, sizeof(*hw));
 			ble_base.inst[i] = BIT(12) | PHY_TO_BLE(&hw->ble_fp);
 			__set_hw_frame_init(hw);
-            printf("hw: id=%d\n", i);
+            rf_deg("hw: id=%d\n", i);
             list_add_tail(&hw->entry, &bb.head);
 			break;
 		}
@@ -2122,7 +2142,7 @@ static struct ble_hw *ble_hw_alloc()
 
 static void ble_hw_frame_free(struct ble_hw *hw)
 {
-    printf("free hw: id=%d\n", HW_ID(hw));
+    rf_deg("free hw: id=%d\n", HW_ID(hw));
 
     bt_free(hw->regs);
 	ble_base.inst[HW_ID(hw)] = 0;
@@ -2228,7 +2248,7 @@ static struct ble_tx *__connect_req_pdu(struct ble_hw *hw,
 
 static void le_hw_advertising(struct ble_hw *hw, struct ble_adv *adv)
 {
-	puts("hw_advertising\n");
+	rf_puts("hw_advertising\n");
 
     //from connect state back to adv state
 	struct ble_param *ble_fp = &hw->ble_fp;
@@ -2278,7 +2298,7 @@ static void le_hw_advertising(struct ble_hw *hw, struct ble_adv *adv)
 
 static void le_hw_scanning(struct ble_hw *hw, struct ble_scan *scan)
 {
-	puts("hw_scanning\n");
+	rf_puts("hw_scanning\n");
 	struct ble_tx *tx;
 
 	__set_winsize(hw, 50, scan->window*SLOT_UNIT_US);
@@ -2321,7 +2341,7 @@ static void le_hw_scanning(struct ble_hw *hw, struct ble_scan *scan)
 
 void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
 {
-	puts("hw_initiating\n");
+	rf_puts("hw_initiating\n");
 	struct ble_tx *tx;
     struct ble_conn_param *conn_param = &conn->ll_data;
 
@@ -2336,10 +2356,10 @@ void le_hw_initiating(struct ble_hw *hw, struct ble_conn *conn)
 
 	tx = __connect_req_pdu(hw, conn);
 
-    /* puts("conn req : "); */
-    /* printf_buf(hw->local.addr, 6); */
-    puts("conn req : ");
-    printf_buf(hw->peer.addr, 6);
+    /* rf_puts("conn req : "); */
+    /* rf_buf(hw->local.addr, 6); */
+    rf_puts("conn req : ");
+    rf_buf(hw->peer.addr, 6);
 	/* ble_hw_tx(hw, tx, !(hw->ble_fp.TXTOG & BIT(0))); */
 	memcpy(hw->tx_buf[0], tx, TX_PACKET_SIZE(tx->len));
 	memcpy(hw->tx_buf[1], tx, TX_PACKET_SIZE(tx->len));
@@ -2404,7 +2424,7 @@ static void le_hw_send_packet(struct ble_hw *hw, u8 llid, u8 *packet, int len)
 
 	ASSERT(tx != NULL);
 
-	/* printf("send_packet: %x, %x, %d\n", hw, tx, len); */
+	/* rf_deg("send_packet: %x, %x, %d\n", hw, tx, len); */
 
 	memcpy(tx->data, packet, len);
 
@@ -2460,19 +2480,19 @@ static void le_hw_ioctrl(struct ble_hw *hw, int ctrl, ...)
 			__set_local_addr_ram(hw, va_arg(argptr, int), va_arg(argptr, int));
 			break;
         case BLE_SET_PRIVACY_ENABLE:
-            /* puts("BLE_SET_PRIVACY_ENABLE\n"); */
+            /* rf_puts("BLE_SET_PRIVACY_ENABLE\n"); */
             __set_privacy_enable(hw, va_arg(argptr, int));
             break;
         case BLE_SET_RPA_RESOLVE_RESULT:
-            /* puts("BLE_SET_RPA_RESOLVE_RESULT\n");  */
+            /* rf_puts("BLE_SET_RPA_RESOLVE_RESULT\n");  */
             __set_rpa_resolve_result(hw, va_arg(argptr, int), va_arg(argptr, int));
             break;
         case BLE_SET_RX_LENGTH:
-            puts("BLE_SET_RX_LENGTH\n");
+            /* rf_puts("BLE_SET_RX_LENGTH\n"); */
             /* __set_rx_length(hw, va_arg(argptr, u16)); */
             break;
         case BLE_SET_TX_LENGTH:
-            puts("BLE_SET_TX_LENGTH\n");
+            /* rf_puts("BLE_SET_TX_LENGTH\n"); */
             __set_tx_length(hw, va_arg(argptr, u16));
             break;
 		default:
@@ -2493,7 +2513,7 @@ static void le_hw_handler_register(struct ble_hw *hw, void *priv,
 
 void ble_rf_init(void)
 {
-	puts("ble_RF_init\n");
+	rf_puts("ble_RF_init\n");
     BT_BLE_CON |= BIT(0);
 
 	/* SFR(BLE_RADIO_CON0, 0 , 10 , 150);    //TXPWRUP_OPEN_PLL */
@@ -2511,7 +2531,7 @@ void ble_rf_init(void)
 
 static void le_hw_init()
 {
-	puts("le_hw_init\n");
+	rf_puts("le_hw_init\n");
 
     ble_rf_init();
 	BT_BLEEXM_ADR = (u32)&ble_base;

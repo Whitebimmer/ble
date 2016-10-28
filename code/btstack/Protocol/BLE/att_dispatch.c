@@ -45,6 +45,21 @@
 #include "ble/att_dispatch.h"
 #include "ble/debug.h"
 
+/************************ATT DEBUG CONTROL**************************/
+/* #define ATT_DEBUG */
+
+#ifdef ATT_DEBUG
+#define att_puts     puts
+#define att_deg      printf
+#define att_buf(x,y) printf_buf(x,y)
+
+#else
+#define att_puts(...)     
+#define att_deg(...)      
+#define att_buf(...)
+
+#endif
+
 static void dummy_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size);
 
 static btstack_packet_handler_t att_client_handler SEC(.btmem_highly_available) = &dummy_packet_handler;
@@ -87,7 +102,7 @@ void att_dispatch_register_client(btstack_packet_handler_t packet_handler){
 	if (packet_handler == NULL){
 		packet_handler = dummy_packet_handler;
 	}
-    puts("att_dispatch_register_client\n");
+    att_puts(__func__);
 	att_client_handler = packet_handler;
 	le_l2cap_register_fixed_channel(att_packet_handler, L2CAP_CID_ATTRIBUTE_PROTOCOL);
 }
@@ -100,7 +115,7 @@ void att_dispatch_register_server(btstack_packet_handler_t packet_handler){
 	if (packet_handler == NULL){
 		packet_handler = dummy_packet_handler;
 	}
+    att_puts(__func__);
 	att_server_handler = packet_handler;
-	/* printf("att_sispatch: %x\n", packet_handler); */
 	le_l2cap_register_fixed_channel(att_packet_handler, L2CAP_CID_ATTRIBUTE_PROTOCOL);
 }

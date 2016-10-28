@@ -41,6 +41,24 @@
 #include <string.h>
 #include "ble/debug.h"
 
+/* #define DB_DEBUG_EN */
+
+#ifdef DB_DEBUG_EN
+#define db_putchar(x)        putchar(x)
+#define db_puts(x)           puts(x)
+#define db_u32hex(x)         put_u32hex(x)
+#define db_u8hex(x)          put_u8hex(x)
+#define db_buf(x,y)          printf_buf(x,y)
+#define db_printf            printf
+#else
+#define db_putchar(...)
+#define db_puts(...)
+#define db_u32hex(...)
+#define db_u8hex(...)
+#define db_buf(...)
+#define db_printf(...)
+#endif
+
 // Central Device db implemenation using static memory
 typedef struct le_device_memory_db {
 
@@ -73,23 +91,6 @@ typedef struct le_device_memory_db {
 
 le_device_memory_db_t le_devices[LE_DEVICE_MEMORY_SIZE] SEC(.db_memory);
 
-#define DB_DEBUG_EN
-
-#ifdef DB_DEBUG_EN
-#define db_putchar(x)        putchar(x)
-#define db_puts(x)           puts(x)
-#define db_u32hex(x)         put_u32hex(x)
-#define db_u8hex(x)          put_u8hex(x)
-#define db_buf(x,y)          printf_buf(x,y)
-#define db_printf            printf
-#else
-#define db_putchar(...)
-#define db_puts(...)
-#define db_u32hex(...)
-#define db_u8hex(...)
-#define db_buf(...)
-#define db_printf(...)
-#endif
 
 void le_device_db_init(void){
     int i;

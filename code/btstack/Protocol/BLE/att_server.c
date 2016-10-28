@@ -63,6 +63,21 @@
 
 #include "ble/att_server.h"
 
+/************************ATT DEBUG CONTROL**************************/
+#define ATT_DEBUG
+
+#ifdef ATT_DEBUG
+#define att_puts     puts
+#define att_deg      printf
+#define att_buf(x,y) printf_buf(x,y)
+
+#else
+#define att_puts(...)     
+#define att_deg(...)      
+#define att_buf(...)
+
+#endif
+
 
 static void att_run(void);
 
@@ -132,8 +147,8 @@ static void att_handle_value_indication_timeout(struct sys_timer *ts){
 
 static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     
-	/*puts("att_event_handler\n");*/
-    /* puts("--EVENT "); */
+	/*att_puts("att_event_handler\n");*/
+    /* att_puts("--EVENT "); */
 
     switch (packet_type) {
             
@@ -141,9 +156,9 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
             switch (packet[0]) {
                 
                 case DAEMON_EVENT_HCI_PACKET_SENT:
-					puts("att_server_daemo_event\n");
+					/* att_puts("att_server_daemo_event\n"); */
                     att_run();
-					puts("exit\n");
+					/* att_puts("exit\n"); */
                     break;
                     
                 case HCI_EVENT_LE_META:
@@ -172,7 +187,7 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
 
                 case HCI_EVENT_ENCRYPTION_CHANGE: 
 				case HCI_EVENT_ENCRYPTION_KEY_REFRESH_COMPLETE: 
-					puts("att: encryption_change\n");
+					att_puts("att: encryption_change\n");
                 	// check handle
                 	if (att_connection.con_handle != READ_BT_16(packet, 3)) break;
                 	att_connection.encryption_key_size = sm_encryption_key_size(att_client_addr_type, att_client_address);
@@ -180,7 +195,7 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
                 	break;
 
                 case HCI_EVENT_DISCONNECTION_COMPLETE:
-					puts("att: disconnection complete\n");
+					att_puts("att: disconnection complete\n");
                     att_clear_transaction_queue(&att_connection);
                     att_connection.con_handle = 0;
                     att_handle_value_indication_handle = 0; // reset error state
@@ -249,7 +264,7 @@ static void att_run(void){
         case ATT_SERVER_W4_SIGNED_WRITE_VALIDATION:
             return;
         case ATT_SERVER_REQUEST_RECEIVED:
-			puts("att_seriver_request_received\n");
+			att_puts("att_seriver_request_received\n");
             if (att_request_buffer[0] == ATT_SIGNED_WRITE_COMMAND){
                 log_info("ATT Signed Write!");
                 if (!sm_cmac_ready()) {
@@ -294,14 +309,14 @@ static void att_run(void){
             // NOTE: fall through for regular commands
 
         case ATT_SERVER_REQUEST_RECEIVED_AND_VALIDATED:
-			puts("att_server_request_received_and_validated\n");
+			att_puts("ATT_SERVER_REQUEST_RECEIVED_AND_VALIDATED\n");
             if (!le_l2cap_can_send_fixed_channel_packet_now(att_connection.con_handle)) return;
 
             le_l2cap_reserve_packet_buffer();
             uint8_t * att_response_buffer = le_l2cap_get_outgoing_buffer();
             uint16_t  att_response_size   = att_handle_request(&att_connection, att_request_buffer, att_request_size, att_response_buffer);
 
-			/* printf("att_response_buff: %x\n", att_response_buffer); */
+			/* att_deg("att_response_buff: %x\n", att_response_buffer); */
             // intercept "insufficient authorization" for authenticated connections to allow for user authorization
             if ((att_response_size     >= 4)
             && (att_response_buffer[0] == ATT_ERROR_RESPONSE)
@@ -340,13 +355,11 @@ static void att_run(void){
 
 static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
 	
-    /* puts("--Server "); */
-
+    /* att_puts("--Server "); */
     if (packet_type != ATT_DATA_PACKET){
-		puts("sexit\n");   
+		/* att_puts("sexit\n");    */
 		return;
 	}	
-
 
     // handle value indication confirms
     if (packet[0] == ATT_HANDLE_VALUE_CONFIRMATION && att_handle_value_indication_handle){
@@ -381,12 +394,11 @@ static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pa
     att_request_size = size;
     memcpy(att_request_buffer, packet, size);
 
-
     att_run();
 }
 
 void att_server_init(uint8_t const * db, att_read_callback_t read_callback, att_write_callback_t write_callback){
-    puts("ATT init\n");
+    att_puts("ATT init\n");
 
     sm_register_packet_handler(att_event_packet_handler);
 

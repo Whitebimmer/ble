@@ -6,7 +6,7 @@
 #include "RF_ble.h"
 
 
-#define LL_DEBUG_EN
+/* #define LL_DEBUG_EN */
 
 #ifdef LL_DEBUG_EN
 #define ll_putchar(x)        putchar(x)
@@ -365,8 +365,8 @@ static int le_meta_event_upload()
 
 	event = lbuf_pop(le_event_buf);
 	if (event){
-        /* puts("\nEMIT : META EVENT "); */
-        /* printf_buf(event, sizeof(*event)+event->len); */
+        puts("\nEMIT : META EVENT ");
+        printf_buf(event, sizeof(*event)+event->len);
 
 		ble_h4_packet_handler(HCI_EVENT_PACKET, event, sizeof(*event)+event->len);
 		lbuf_free(event);
@@ -709,8 +709,8 @@ void ll_send_acl_packet(int handle, u8 *packet, int total_len)
         //Continuing fragment of Higher Layer Message
         rf_tx_len = (total_len > link->pdu_len.connEffectiveMaxTxOctets) ? 
             link->pdu_len.connEffectiveMaxTxOctets : total_len;
-        puts("\nTX : DATA");
-        printf_buf(rf_tx_packet, rf_tx_len);
+        ll_puts("\nTX : DATA");
+        ll_pbuf(rf_tx_packet, rf_tx_len);
         if (((pb_flag & 0x1) == 0) && (rf_tx_idx == 0))
         {
             __ble_ops->send_packet(link->hw, LL_DATA_PDU_START, rf_tx_packet, rf_tx_len);
@@ -1867,7 +1867,7 @@ static void ll_adv_timeout_handler(struct sys_timer *timer)
    
     ASSERT(link != NULL, "%s\n", __func__);
 
-    puts("LL Adv High Duty Timeout\n");
+    ll_puts("LL Adv High Duty Timeout\n");
 
     __le_connection_complete_event(link, DIRECTED_ADVERTISING_TIMEOUT);
 
@@ -1926,8 +1926,8 @@ static void __set_ll_adv_state(struct le_link *link)
     /* Time Range: 20 ms to 10.24 sec */
     min = le_param.adv_param.Advertising_Interval_Max;
     max = le_param.adv_param.Advertising_Interval_Min;
-    printf("interval min : %x\n", min);
-    printf("interval max : %x\n", max);
+    ll_printf("interval min : %x\n", min);
+    ll_printf("interval max : %x\n", max);
 
     adv->filter_policy = le_param.adv_param.Advertising_Filter_Policy;
 
@@ -5095,7 +5095,7 @@ static int ll_open(int state)
 {
 	struct le_link *link;
 
-	puts("ll_open\n");
+	ll_puts("ll_open\n");
 
 	link = ll_create_link();
 	if (!link){

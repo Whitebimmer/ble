@@ -794,7 +794,7 @@ static void sm_trigger_user_response(sm_connection_t * sm_conn){
     setup->sm_user_response = SM_USER_RESPONSE_IDLE;
     switch (setup->sm_stk_generation_method){
         case PK_RESP_INPUT:
-			sm_puts("resp_input\n");
+			sm_puts("sm : resp_input\n");
             if (sm_conn->sm_role){
                 setup->sm_user_response = SM_USER_RESPONSE_PENDING;
                 sm_notify_client(SM_PASSKEY_INPUT_NUMBER, sm_conn->sm_peer_addr_type, sm_conn->sm_peer_address, 0, 0); 
@@ -803,7 +803,7 @@ static void sm_trigger_user_response(sm_connection_t * sm_conn){
             }
             break;
         case PK_INIT_INPUT:
-			sm_puts("init_input\n");
+			sm_puts("sm : init_input\n");
             if (sm_conn->sm_role){
                 sm_notify_client(SM_PASSKEY_DISPLAY_NUMBER, sm_conn->sm_peer_addr_type, sm_conn->sm_peer_address, READ_NET_32(setup->sm_tk, 12), 0); 
             } else {
@@ -812,12 +812,12 @@ static void sm_trigger_user_response(sm_connection_t * sm_conn){
             }
             break;
         case OK_BOTH_INPUT:
-			sm_puts("OK_BOTH_INPUT\n");
+			sm_puts("sm : OK_BOTH_INPUT\n");
             setup->sm_user_response = SM_USER_RESPONSE_PENDING;
             sm_notify_client(SM_PASSKEY_INPUT_NUMBER, sm_conn->sm_peer_addr_type, sm_conn->sm_peer_address, 0, 0); 
             break;        
         case JUST_WORKS:
-			sm_puts("JUST_WORKS\n");
+			sm_puts("sm : JUST_WORKS\n");
             setup->sm_user_response = SM_USER_RESPONSE_PENDING;
             sm_notify_client(SM_JUST_WORKS_REQUEST, sm_conn->sm_peer_addr_type, sm_conn->sm_peer_address, READ_NET_32(setup->sm_tk, 12), 0);
             break;
@@ -1212,18 +1212,18 @@ static void sm_run(void){
     // -- Continue with CSRK device lookup by public or resolvable private address
     if (!sm_address_resolution_idle()){
         log_info("LE Device Lookup: device %u/%u", sm_address_resolution_test, le_device_db_count());
-        sm_printf("LE Device Lookup: device %u/%u\n", sm_address_resolution_test, le_device_db_count());
+        sm_printf("sm : LE Device Lookup: device %u/%u\n", sm_address_resolution_test, le_device_db_count());
         while (sm_address_resolution_test < le_device_db_count()){
             int addr_type;
             bd_addr_t addr;
             sm_key_t irk;
             le_device_db_info(sm_address_resolution_test, &addr_type, addr, irk);
             log_info("device type %u, addr: %s", addr_type, bd_addr_to_str(addr));
-            sm_printf("device type %u, addr: %s", addr_type, bd_addr_to_str(addr));
+            sm_printf("sm : device type %u, addr: %s", addr_type, bd_addr_to_str(addr));
 
             if (sm_address_resolution_addr_type == addr_type && memcmp(addr, sm_address_resolution_address, 6) == 0){
                 log_info("LE Device Lookup: found CSRK by { addr_type, address} ");
-                sm_printf("LE Device Lookup: found CSRK by { addr_type, address} ");
+                sm_printf("sm : LE Device Lookup: found CSRK by { addr_type, address} ");
                 sm_address_resolution_handle_event(ADDRESS_RESOLUTION_SUCEEDED);
                 break;
             }
@@ -1236,9 +1236,9 @@ static void sm_run(void){
             if (sm_aes128_state == SM_AES128_ACTIVE) break;
 
             log_info("LE Device Lookup: calculate AH");
-            sm_puts("LE Device Lookup: calculate AH");
             log_key("IRK", irk);
-            sm_printf("IRK", irk);
+            sm_puts("sm : LE Device Lookup: calculate AH");
+            sm_printf("sm : IRK", irk);
 
             sm_key_t r_prime;
             sm_ah_r_prime(sm_address_resolution_address, r_prime);
@@ -1983,7 +1983,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
     sm_connection_t  * sm_conn;
     uint16_t handle;
 
-    /* sm_puts("--SM EVENT "); */
+    sm_puts("Layer - sm_event_packet_handler :");    
     switch (packet_type) {
             
 		case HCI_EVENT_PACKET:
@@ -2007,7 +2007,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                         case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
 
 							/* printf_buf(packet, size); */
-                            sm_puts("\nsm: connected status : ");sm_u8hex(packet[3]);
+                            sm_puts("\nsm: CONNECTED STATUS : ");sm_u8hex(packet[3]);
 
                             if (packet[3]) return; // connection failed
 
@@ -2035,7 +2035,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                             // just connected -> everything else happens in sm_run()
                             if (sm_conn->sm_role){
                                 // slave - state already could be SM_RESPONDER_SEND_SECURITY_REQUEST instead
-								sm_puts("slave\n");
+								sm_puts(" = slave\n");
                                 if (sm_conn->sm_engine_state == SM_GENERAL_IDLE){
                                     if (sm_slave_request_security) {
                                         // request security if requested by app
@@ -2086,7 +2086,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                     break;
 
                 case HCI_EVENT_ENCRYPTION_CHANGE: 
-					sm_puts("sm: encryption_change\n");
+					sm_puts("sm: HCI_EVENT_ENCRYPTION_CHANGE\n");
                     handle = READ_BT_16(packet, 3);
                     sm_conn = sm_get_connection_for_handle(handle);
                     if (!sm_conn) break;
@@ -2122,6 +2122,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                     break;
 
                 case HCI_EVENT_ENCRYPTION_KEY_REFRESH_COMPLETE:
+					sm_puts("sm: HCI_EVENT_ENCRYPTION_KEY_REFRESH_COMPLETE\n");
                     handle = READ_BT_16(packet, 3);
                     sm_conn = sm_get_connection_for_handle(handle);
                     if (!sm_conn) break;
@@ -2147,7 +2148,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                     break;
 
                 case HCI_EVENT_DISCONNECTION_COMPLETE:
-					sm_puts("sm: disconnection complete\n");
+					sm_puts("sm: HCI_EVENT_DISCONNECTION_COMPLETE\n");
                     handle = READ_BT_16(packet, 3);
                     sm_done_for_handle(handle);
                     sm_conn = sm_get_connection_for_handle(handle);
