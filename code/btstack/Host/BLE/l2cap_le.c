@@ -78,6 +78,12 @@ static void (*packet_handler) (void * connection, uint8_t packet_type, uint16_t 
 static btstack_packet_handler_t attribute_protocol_packet_handler SEC(.btmem_highly_available);
 static btstack_packet_handler_t security_protocol_packet_handler SEC(.btmem_highly_available);
 
+static void l2cap_hci_event_handler(uint8_t packet_type, uint16_t cid, uint8_t *packet, uint16_t size);
+static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size );
+
+static btstack_packet_handler_t l2cap_event_packet_handler SEC(.btmem_highly_available);
+static btstack_packet_callback_registration_t hci_event_callback_registration;
+
 void le_l2cap_init(){
     
     packet_handler = NULL;
@@ -87,10 +93,20 @@ void le_l2cap_init(){
     // 
     // register callback with HCI
     //
-    le_hci_register_packet_handler(l2cap_packet_handler);
+    /* le_hci_register_packet_handler(l2cap_packet_handler); */
+
+    l2cap_event_packet_handler = NULL;
+    hci_event_callback_registration.callback = &l2cap_hci_event_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
+
+    hci_register_acl_packet_handler(&l2cap_acl_handler);
 #if 0
     hci_connectable_control(0); // no services yet
 #endif
+}
+
+void l2cap_register_packet_handler(void (*handler)(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)){
+    l2cap_event_packet_handler = handler;
 }
 
 static uint16_t l2cap_max_mtu(void){
@@ -174,8 +190,10 @@ int le_l2cap_send_connectionless(uint16_t handle, uint16_t cid, uint8_t *data, u
     return le_l2cap_send_prepared_connectionless(handle, cid, len);
 }
 
-static void l2cap_event_handler( uint8_t *packet, uint16_t size ){
-    
+static void l2cap_hci_event_handler(uint8_t packet_type, uint16_t cid, uint8_t *packet, uint16_t size)
+{
+    l2cap_puts("Layer - l2cap_hci_event_handler : ");
+        
     // pass on
     if (packet_handler) {
         /* l2cap_puts("l2cap_event_handler\n"); */
@@ -191,7 +209,7 @@ static void l2cap_event_handler( uint8_t *packet, uint16_t size ){
     }
 }
 
-static void l2cap_acl_handler( uint8_t *packet, uint16_t size ){
+static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size ){
         
     // Get Channel ID
     uint16_t channel_id = READ_L2CAP_CHANNEL_ID(packet); 
@@ -224,21 +242,21 @@ static void l2cap_acl_handler( uint8_t *packet, uint16_t size ){
     }
 }
 
-static void l2cap_packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size){
-    l2cap_puts("--L2CAP PH ");
-    switch (packet_type) {
-        case HCI_EVENT_PACKET:
-            l2cap_event_handler(packet, size);
-            break;
-        case HCI_ACL_DATA_PACKET:
-            l2cap_acl_handler(packet, size);
-            break;
-        default:
-            break;
-    }
-    l2cap_puts("\n L2CAP exit ");
-    /* trig_fun(); */
-}
+/* static void l2cap_packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size){ */
+    /* l2cap_puts("--L2CAP PH "); */
+    /* switch (packet_type) { */
+        /* case HCI_EVENT_PACKET: */
+            /* l2cap_event_handler(packet, size); */
+            /* break; */
+        /* case HCI_ACL_DATA_PACKET: */
+            /* l2cap_acl_handler(packet, size); */
+            /* break; */
+        /* default: */
+            /* break; */
+    /* } */
+    /* l2cap_puts("\n L2CAP exit "); */
+    /* [> trig_fun(); <] */
+/* } */
 
 
 // Bluetooth 4.0 - allow to register handler for Attribute Protocol and Security Manager Protocol

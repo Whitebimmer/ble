@@ -44,7 +44,7 @@
 #ifndef __RUN_LOOP_H
 #define __RUN_LOOP_H
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 
 #include <ble/linked_list.h>
 

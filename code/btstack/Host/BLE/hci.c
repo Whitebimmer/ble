@@ -42,7 +42,7 @@
  *
  */
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 
 #include "hci.h"
 #include "ble/gap.h"
@@ -89,13 +89,13 @@ static void hci_connection_timestamp(hci_connection_t *connection);
 static int  hci_power_control_on(void);
 static void hci_power_control_off(void);
 static void hci_state_reset(void);
-#ifdef HAVE_BLE
+#ifdef ENABLE_BLE
 // called from test/ble_client/advertising_data_parser.c
 void le_handle_advertisement_report(uint8_t *packet, int size);
 static void hci_remove_from_whitelist(bd_addr_type_t address_type, bd_addr_t address);
 #endif
 
-static void hci_emit_state();
+static void hci_emit_event(uint8_t * event, uint16_t size, int dump);
 
 // the STACK is here
 #ifndef HAVE_MALLOC
@@ -503,8 +503,8 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         le_hci_release_packet_buffer();
         // notify upper stack that iit might be possible to send again
         uint8_t event[] = { DAEMON_EVENT_HCI_PACKET_SENT, 0};
-        hci_stack->packet_handler(HCI_EVENT_PACKET, 
-				&event[0], sizeof(event));
+        /* hci_stack->packet_handler(HCI_EVENT_PACKET, &event[0], sizeof(event)); */
+        hci_emit_event(&event[0], sizeof(event), 0);
     }
 	/* hci_puts("exit2\n"); */
 
@@ -545,6 +545,10 @@ int le_hci_send_acl_packet_buffer(int size){
     return hci_send_acl_packet_fragments(connection);
 }
 
+static void hci_emit_acl_packet(uint8_t * packet, uint16_t size){
+    if (!hci_stack->acl_packet_handler) return;
+    hci_stack->acl_packet_handler(HCI_ACL_DATA_PACKET, 0, packet, size);
+}
 
 static void acl_handler(uint8_t *packet, int size)
 {
@@ -593,9 +597,8 @@ static void acl_handler(uint8_t *packet, int size)
             hci_deg("acl pos : %x / acl length : %x\n",conn->acl_recombination_pos, conn->acl_recombination_length);
 			if (conn->acl_recombination_pos >= conn->acl_recombination_length + 4 + 4){ // pos already incl. ACL header
 
-				hci_stack->packet_handler(HCI_ACL_DATA_PACKET,
-						&conn->acl_recombination_buffer[HCI_INCOMING_PRE_BUFFER_SIZE],
-						conn->acl_recombination_pos);
+				/* hci_stack->packet_handler(HCI_ACL_DATA_PACKET, &conn->acl_recombination_buffer[HCI_INCOMING_PRE_BUFFER_SIZE], conn->acl_recombination_pos); */
+                hci_emit_acl_packet(&conn->acl_recombination_buffer[HCI_INCOMING_PRE_BUFFER_SIZE], conn->acl_recombination_pos);
 				// reset recombination buffer
 				conn->acl_recombination_length = 0;
 				conn->acl_recombination_pos = 0;
@@ -621,7 +624,8 @@ static void acl_handler(uint8_t *packet, int size)
 				if (acl_length >= l2cap_length + 4){
 
 					// forward fragment as L2CAP packet
-					hci_stack->packet_handler(HCI_ACL_DATA_PACKET, packet, acl_length + 4);
+					/* hci_stack->packet_handler(HCI_ACL_DATA_PACKET, packet, acl_length + 4); */
+                    hci_emit_acl_packet(packet, acl_length + 4);
 				} else {
 
 					if (acl_length > HCI_ACL_BUFFER_SIZE){
@@ -726,7 +730,8 @@ void le_handle_advertisement_report(uint8_t *packet, int size)
         memcpy(&event[pos], &packet[offset], data_length);
         pos += data_length;
         offset += data_length + 1; // rssi
-        hci_stack->packet_handler(HCI_EVENT_PACKET, event, pos);
+        /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, pos); */
+        hci_emit_event(event, pos, 0);
     }
 }
 
@@ -888,8 +893,10 @@ static void hci_initializing_event_handler(uint8_t * packet, uint16_t size)
         uint16_t opcode = READ_BT_16(packet,3);
         if (opcode == hci_stack->last_cmd_opcode){
             command_completed = 1;
+            log_info("Command complete for expected opcode %04x at substate %u", opcode, hci_stack->substate);
+        } else {
+            log_info("Command complete for different opcode %04x, expected %04x, at substate %u", opcode, hci_stack->last_cmd_opcode, hci_stack->substate);
         }
-        hci_puts("command_completed\n");
     }
     if (packet[0] == HCI_EVENT_COMMAND_STATUS){
         uint8_t  status = packet[2];
@@ -897,11 +904,14 @@ static void hci_initializing_event_handler(uint8_t * packet, uint16_t size)
         if (opcode == hci_stack->last_cmd_opcode){
             if (status){
                 command_completed = 1;
+                log_error("Command status error 0x%02x for expected opcode %04x at substate %u", status, opcode, hci_stack->substate);
+            } else {
+                log_info("Command status OK for expected opcode %04x, waiting for command complete", opcode);
             }
+        } else {
+            log_info("Command status for opcode %04x, expected %04x", opcode, hci_stack->last_cmd_opcode);
         }
-        hci_puts("command_status\n");
     }
-
 
     if (!command_completed) return;
 
@@ -1001,8 +1011,8 @@ static void le_event_command_complete_handler(uint8_t *packet, int size)
             //spec 4.2 Vol 2 Part E
             hci_puts("Host shall not fragment HCI ACL Data Packets on an LE-U logial link\n");
         }
-        printf("le_data_packets_length : %x\n", hci_stack->le_data_packets_length);
-        printf("le_acl_packets_total_num : %x\n", hci_stack->le_acl_packets_total_num);
+        hci_deg("le_data_packets_length : %x\n", hci_stack->le_data_packets_length);
+        hci_deg("le_acl_packets_total_num : %x\n", hci_stack->le_acl_packets_total_num);
     }
     if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_le_read_white_list_size)){
         hci_stack->le_whitelist_capacity = READ_BT_16(packet, 6);
@@ -1029,6 +1039,122 @@ static void le_event_command_complete_handler(uint8_t *packet, int size)
     //data length extension end
 }
 
+static void le_meta_event_handler(uint8_t *packet, int size)
+{
+	bd_addr_t addr;
+	bd_addr_type_t addr_type;
+	uint8_t link_type;
+	hci_con_handle_t handle;
+	hci_connection_t * conn;
+	int i;
+
+    switch (packet[2])
+    {
+        case HCI_SUBEVENT_LE_DATA_LENGTH_CHANGE:
+            hci_puts("le_data_length_change\n");
+            hci_deg("connEffectiveMaxTxOctets: %04x\n",    packet[5]<<8|packet[4]);
+            hci_deg("connEffectiveMaxTxTime:   %04x\n",    packet[7]<<8|packet[6]);
+            hci_deg("connEffectiveMaxRxOctets: %04x\n",    packet[9]<<8|packet[8]);
+            hci_deg("connEffectiveMaxRxTime:   %04x\n",    packet[11]<<8|packet[10]);
+            break;
+        case HCI_SUBEVENT_LE_ADVERTISING_REPORT:
+            hci_puts("advertising report received");
+            if (hci_stack->le_scanning_state != LE_SCANNING)
+                break;
+            le_handle_advertisement_report(packet, size);
+            break;
+
+        case HCI_SUBEVENT_LE_ENHANCED_CONNECTION_COMPLETE_EVENT:
+            hci_puts("le_enhanced_connection_complete\n");
+            hci_deg("interval: %04x\n",    packet[27]<<8|packet[26]);
+            hci_deg("latency : %04x\n",    packet[29]<<8|packet[28]);
+            hci_deg("timeout : %04x\n",    packet[31]<<8|packet[30]);
+            hci_puts("local RPA : "); printf_buf(&packet[14], 6); bt_flip_addr(hci_stack->adv_address, &packet[14]);
+            hci_puts("peer RPA : "); printf_buf(&packet[20], 6);
+            hci_puts("\n");
+        case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
+            // Connection management
+            hci_puts("le_connection_complete\n");
+            bt_flip_addr(addr, &packet[8]);
+            addr_type = (bd_addr_type_t)packet[7];
+
+            // LE connections are auto-accepted, so just create a connection if there isn't one already
+            conn = le_hci_connection_for_bd_addr_and_type(addr, addr_type);
+            // if auto-connect, remove from whitelist in both roles
+            if (hci_stack->le_connecting_state == LE_CONNECTING_WHITELIST){
+                hci_remove_from_whitelist(addr_type, addr);  
+            }
+            if (packet[3]){
+                // outgoing connection establishment is done
+                hci_stack->le_connecting_state = LE_CONNECTING_IDLE;
+                if (conn){
+                    // outgoing connection failed, remove entry
+                    linked_list_remove(&hci_stack->connections, (linked_item_t *) conn);
+                    le_btstack_memory_hci_connection_free( conn );
+                }
+                // if authentication error, also delete link key
+                if (packet[3] == 0x05) {
+                    hci_drop_link_key_for_bd_addr(addr);
+                }
+                //DIRECTED_ADVERTISING_TIMEOUT
+                if (packet[3] == 0x3C) 
+                {
+                }
+                break;
+            }
+            // on success, both hosts receive connection complete event
+            if (packet[6] == HCI_ROLE_MASTER){
+                // if we're master, it was an outgoing connection and we're done with it
+                hci_stack->le_connecting_state = LE_CONNECTING_IDLE;
+            } else {
+                // if we're slave, it was an incoming connection, advertisements have stopped
+                hci_stack->le_advertisements_active = 0;
+            }
+            if (!conn){
+                conn = create_connection_for_bd_addr_and_type(addr, addr_type);
+            }
+            if (!conn){
+                // no memory
+                ASSERT(0, "%s\n", "no memory");
+                break;
+            }
+
+            conn->state = OPEN;
+            conn->role = packet[6];
+            conn->con_handle = READ_BT_16(packet, 4);
+
+            // TODO: store - role, peer address type, conn_interval, conn_latency, supervision timeout, master clock
+
+            // restart timer
+            // run_loop_set_timer(&conn->timeout, HCI_CONNECTION_TIMEOUT_MS);
+            // run_loop_add_timer(&conn->timeout);
+
+            le_hci_emit_nr_connections_changed();
+            break;
+
+        default:
+            break;
+    }
+}
+
+// Create various non-HCI events. 
+// TODO: generalize, use table similar to hci_create_command
+
+static void hci_emit_event(uint8_t * event, uint16_t size, int dump){
+    // dump packet
+    /* if (dump) { */
+        /* hci_dump_packet( HCI_EVENT_PACKET, 0, event, size); */
+    /* }  */
+
+    // dispatch to all event handlers
+    linked_list_iterator_t it;
+    linked_list_iterator_init(&it, &hci_stack->event_handlers);
+    while (linked_list_iterator_has_next(&it)){
+        btstack_packet_callback_registration_t * entry = (btstack_packet_callback_registration_t*) linked_list_iterator_next(&it);
+        entry->callback(HCI_EVENT_PACKET, 0, event, size);
+    }
+}
+
 static void event_handler(uint8_t *packet, int size)
 {
 	uint16_t event_length = packet[1];
@@ -1052,8 +1178,11 @@ static void event_handler(uint8_t *packet, int size)
             hci_stack->num_cmd_packets = packet[2];
             //for Classic
             event_command_complete_handler(packet, size);
-            //for BLE
+
+#ifdef ENABLE_BLE
+            //for LE
             le_event_command_complete_handler(packet, size);
+#endif
 			break;
 
 		case HCI_EVENT_COMMAND_STATUS:
@@ -1135,94 +1264,11 @@ static void event_handler(uint8_t *packet, int size)
 			conn->state = RECEIVED_DISCONNECTION_COMPLETE;
 			break;
 
+#ifdef ENABLE_BLE
 		case HCI_EVENT_LE_META:
-			switch (packet[2])
-			{
-                case HCI_SUBEVENT_LE_DATA_LENGTH_CHANGE:
-					hci_puts("le_data_length_change\n");
-                    hci_deg("connEffectiveMaxTxOctets: %04x\n",    packet[5]<<8|packet[4]);
-                    hci_deg("connEffectiveMaxTxTime:   %04x\n",    packet[7]<<8|packet[6]);
-                    hci_deg("connEffectiveMaxRxOctets: %04x\n",    packet[9]<<8|packet[8]);
-                    hci_deg("connEffectiveMaxRxTime:   %04x\n",    packet[11]<<8|packet[10]);
-                    break;
-				case HCI_SUBEVENT_LE_ADVERTISING_REPORT:
-					hci_puts("advertising report received");
-					if (hci_stack->le_scanning_state != LE_SCANNING)
-					   	break;
-					le_handle_advertisement_report(packet, size);
-					break;
-
-                case HCI_SUBEVENT_LE_ENHANCED_CONNECTION_COMPLETE_EVENT:
-					hci_puts("le_enhanced_connection_complete\n");
-                    hci_deg("interval: %04x\n",    packet[27]<<8|packet[26]);
-                    hci_deg("latency : %04x\n",    packet[29]<<8|packet[28]);
-                    hci_deg("timeout : %04x\n",    packet[31]<<8|packet[30]);
-                    hci_puts("local RPA : "); printf_buf(&packet[14], 6); bt_flip_addr(hci_stack->adv_address, &packet[14]);
-                    hci_puts("peer RPA : "); printf_buf(&packet[20], 6);
-                    hci_puts("\n");
-				case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
-					// Connection management
-					hci_puts("le_connection_complete\n");
-					bt_flip_addr(addr, &packet[8]);
-					addr_type = (bd_addr_type_t)packet[7];
-
-					// LE connections are auto-accepted, so just create a connection if there isn't one already
-					conn = le_hci_connection_for_bd_addr_and_type(addr, addr_type);
-					// if auto-connect, remove from whitelist in both roles
-                    if (hci_stack->le_connecting_state == LE_CONNECTING_WHITELIST){
-                        hci_remove_from_whitelist(addr_type, addr);  
-                    }
-					if (packet[3]){
-                        // outgoing connection establishment is done
-                        hci_stack->le_connecting_state = LE_CONNECTING_IDLE;
-						if (conn){
-							// outgoing connection failed, remove entry
-							linked_list_remove(&hci_stack->connections, (linked_item_t *) conn);
-							le_btstack_memory_hci_connection_free( conn );
-						}
-						// if authentication error, also delete link key
-						if (packet[3] == 0x05) {
-							hci_drop_link_key_for_bd_addr(addr);
-						}
-                        //DIRECTED_ADVERTISING_TIMEOUT
-                        if (packet[3] == 0x3C) 
-                        {
-                        }
-						break;
-					}
-					// on success, both hosts receive connection complete event
-                    if (packet[6] == HCI_ROLE_MASTER){
-                        // if we're master, it was an outgoing connection and we're done with it
-                        hci_stack->le_connecting_state = LE_CONNECTING_IDLE;
-                    } else {
-                        // if we're slave, it was an incoming connection, advertisements have stopped
-                        hci_stack->le_advertisements_active = 0;
-                    }
-					if (!conn){
-						conn = create_connection_for_bd_addr_and_type(addr, addr_type);
-					}
-					if (!conn){
-						// no memory
-						ASSERT(0, "%s\n", "no memory");
-						break;
-					}
-
-					conn->state = OPEN;
-					conn->con_handle = READ_BT_16(packet, 4);
-
-					// TODO: store - role, peer address type, conn_interval, conn_latency, supervision timeout, master clock
-
-					// restart timer
-					// run_loop_set_timer(&conn->timeout, HCI_CONNECTION_TIMEOUT_MS);
-					// run_loop_add_timer(&conn->timeout);
-
-					le_hci_emit_nr_connections_changed();
-					break;
-
-				default:
-					break;
-			}
+            le_meta_event_handler(packet, size);
 			break;
+#endif
 
 		default:
 			break;
@@ -1241,8 +1287,11 @@ static void event_handler(uint8_t *packet, int size)
 	}
 #endif
 
+
 	// notify upper stack
-	hci_stack->packet_handler(HCI_EVENT_PACKET, packet, size);
+	/* hci_stack->packet_handler(HCI_EVENT_PACKET, packet, size); */
+    hci_emit_event(packet, size, 0);
+
 
 	// moved here to give upper stack a chance to close down everything with hci_connection_t intact
 	if (packet[0] == HCI_EVENT_DISCONNECTION_COMPLETE){
@@ -1273,6 +1322,25 @@ static void event_handler(uint8_t *packet, int size)
 	le_hci_run();
 }
 
+/**
+ * @brief Add event packet handler. 
+ */
+void hci_add_event_handler(btstack_packet_callback_registration_t * callback_handler){
+    linked_list_add_tail(&hci_stack->event_handlers, (linked_item_t*) callback_handler);
+}
+
+
+/** Register HCI packet handlers */
+void hci_register_acl_packet_handler(btstack_packet_handler_t handler){
+    hci_stack->acl_packet_handler = handler;
+}
+
+/**
+ * @brief Registers a packet handler for SCO data. Used for HSP and HFP profiles.
+ */
+/* void hci_register_sco_packet_handler(btstack_packet_handler_t handler){ */
+    /* hci_stack->sco_packet_handler = handler;     */
+/* } */
 
 static void hci_packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size)
 {
@@ -1293,9 +1361,9 @@ static void hci_packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t si
 }
 
 /** Register HCI packet handlers */
-void le_hci_register_packet_handler(void (*handler)(uint8_t packet_type, uint8_t *packet, uint16_t size)){
-    hci_stack->packet_handler = handler;
-}
+/* void le_hci_register_packet_handler(void (*handler)(uint8_t packet_type, uint8_t *packet, uint16_t size)){ */
+    /* hci_stack->packet_handler = handler; */
+/* } */
 
 static void hci_state_reset()
 {
@@ -1352,7 +1420,7 @@ void le_hci_init(hci_transport_t *transport, void *config, bt_control_t *control
     hci_stack->config = config;
     
     // higher level handler
-    hci_stack->packet_handler = dummy_handler;
+    /* hci_stack->packet_handler = dummy_handler; */
 
     // store and open remote device db
     hci_stack->remote_device_db = remote_device_db;
@@ -2029,7 +2097,7 @@ int pc_h4_send_hci_cmd(void *data, u16 size)
 
 // Create various non-HCI events. 
 // TODO: generalize, use table similar to hci_create_command
-static void hci_emit_state()
+void hci_emit_state()
 {
     log_info("BTSTACK_EVENT_STATE %u", hci_stack->state);
     hci_deg("BTSTACK_EVENT_STATE %x\n", hci_stack->state);
@@ -2037,7 +2105,8 @@ static void hci_emit_state()
     event[0] = BTSTACK_EVENT_STATE;
     event[1] = sizeof(event) - 2;
     event[2] = hci_stack->state;
-    hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event));
+    /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event)); */
+    hci_emit_event(event, sizeof(event), 0);
 }
 
 
@@ -2055,7 +2124,8 @@ void hci_emit_le_connection_complete(uint8_t address_type, bd_addr_t address, ui
     bt_store_16(event, 16, 0); // latency
     bt_store_16(event, 18, 0); // supervision timeout
     event[20] = 0; // master clock accuracy
-    hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event));
+    /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event)); */
+    hci_emit_event(event, sizeof(event), 0);
 }
 
 void le_hci_emit_disconnection_complete(uint16_t handle, uint8_t reason){
@@ -2065,7 +2135,8 @@ void le_hci_emit_disconnection_complete(uint16_t handle, uint8_t reason){
     event[2] = 0; // status = OK
     bt_store_16(event, 3, handle);
     event[5] = reason;
-    hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event));
+    /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event)); */
+    hci_emit_event(event, sizeof(event), 0);
 }
 
 void le_hci_emit_l2cap_check_timeout(hci_connection_t *conn){
@@ -2075,7 +2146,8 @@ void le_hci_emit_l2cap_check_timeout(hci_connection_t *conn){
     event[0] = L2CAP_EVENT_TIMEOUT_CHECK;
     event[1] = sizeof(event) - 2;
     bt_store_16(event, 2, conn->con_handle);
-    hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event));
+    /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event)); */
+    hci_emit_event(event, sizeof(event), 0);
 }
 
 void le_hci_emit_nr_connections_changed(){
@@ -2085,7 +2157,8 @@ void le_hci_emit_nr_connections_changed(){
     event[0] = BTSTACK_EVENT_NR_CONNECTIONS_CHANGED;
     event[1] = sizeof(event) - 2;
     event[2] = nr_hci_connections();
-    hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event));
+    /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event)); */
+    hci_emit_event(event, sizeof(event), 0);
 }
 
 void le_hci_emit_hci_open_failed(){
@@ -2093,7 +2166,8 @@ void le_hci_emit_hci_open_failed(){
     uint8_t event[2];
     event[0] = BTSTACK_EVENT_POWERON_FAILED;
     event[1] = sizeof(event) - 2;
-    hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event));
+    /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event)); */
+    hci_emit_event(event, sizeof(event), 0);
 }
 
 #if 0
@@ -2123,7 +2197,8 @@ void hci_emit_security_level(hci_con_handle_t con_handle, gap_security_level_t l
     bt_store_16(event, 2, con_handle);
     pos += 2;
     event[pos++] = level;
-    hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event));
+    /* hci_stack->packet_handler(HCI_EVENT_PACKET, event, sizeof(event)); */
+    hci_emit_event(event, sizeof(event), 0);
 }
 
 #if 0
@@ -2475,7 +2550,7 @@ le_command_status_t gap_disconnect(hci_con_handle_t handle){
     return BLE_PERIPHERAL_OK;
 }
 
-#ifdef HAVE_BLE
+#ifdef ENABLE_BLE
 
 /**
  * @brief Auto Connection Establishment - Start Connecting to device
@@ -2560,3 +2635,4 @@ void hci_disconnect_all(){
     }
     le_hci_run();
 }
+

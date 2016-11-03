@@ -52,7 +52,7 @@
 extern "C" {
 #endif
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
     
 #include "hci.h"
 #include "l2cap.h"
@@ -60,7 +60,7 @@ extern "C" {
 #include "bredr/bnep.h"
 #include "ble/remote_device_db.h"
 
-#ifdef HAVE_BLE
+#ifdef ENABLE_BLE
 #include "ble/gatt_client.h"
 #include "ble/sm.h"
 #endif
@@ -99,7 +99,7 @@ void   btstack_memory_bnep_service_free(bnep_service_t *bnep_service);
 bnep_channel_t * btstack_memory_bnep_channel_get(void);
 void   btstack_memory_bnep_channel_free(bnep_channel_t *bnep_channel);
 
-#ifdef HAVE_BLE
+#ifdef ENABLE_BLE
 // gatt_client, gatt_subclient
 gatt_client_t * btstack_memory_gatt_client_get(void);
 void   btstack_memory_gatt_client_free(gatt_client_t *gatt_client);

@@ -44,7 +44,7 @@
 #ifndef __AD_PARSER_H
 #define __AD_PARSER_H
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 
 #if defined __cplusplus
 extern "C" {

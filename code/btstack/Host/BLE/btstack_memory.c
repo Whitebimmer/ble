@@ -49,7 +49,7 @@
 #include "ble/btstack_memory.h"
 #include <memory_pool.h>
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 #include "hci.h"
 #include "l2cap.h"
 

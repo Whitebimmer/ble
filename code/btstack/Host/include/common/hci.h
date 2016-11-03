@@ -45,7 +45,7 @@
 #ifndef __HCI_H
 #define __HCI_H
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 
 #include <hci_cmds.h>
 #include <utils.h>
@@ -59,6 +59,7 @@
 #include <linked_list.h>
 #include <ble/btstack_run_loop.h>
 #include "classic/btstack_link_key_db.h"
+#include "linked_list.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -499,6 +500,9 @@ typedef struct {
     // le public, le random, classic
     bd_addr_type_t address_type;
 
+    // role: 0 - master, 1 - slave
+    uint8_t role;
+
     // connection state
     CONNECTION_STATE state;
     
@@ -711,7 +715,16 @@ typedef struct {
     uint16_t packet_types;
     
     /* callback to L2CAP layer */
-    void (*packet_handler)(uint8_t packet_type, uint8_t *packet, uint16_t size);
+    // void (*packet_handler)(uint8_t packet_type, uint8_t *packet, uint16_t size);
+
+    /* callback to L2CAP layer */
+    btstack_packet_handler_t acl_packet_handler;
+
+    /* callback for SCO data */
+    // btstack_packet_handler_t sco_packet_handler;
+
+    /* callbacks for events */
+    linked_list_t event_handlers;
 
     /* remote device db */
     remote_device_db_t const*remote_device_db;
@@ -859,6 +872,10 @@ void hci_disconnect_security_block(hci_con_handle_t con_handle);
 // send complete CMD packet
 int hci_send_cmd_packet(uint8_t *packet, int size);
 
+/**
+ * Emit current HCI state. Called by daemon
+ */
+void hci_emit_state(void);
 
 /* API_START */
 

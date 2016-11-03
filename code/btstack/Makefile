@@ -34,6 +34,8 @@ objs += \
    hcitest_uart.o \
 
 INCLUDES += \
+-I../user/include/ \
+-I../user/include/common \
 -IBaseband/include/ble/$(CHIPID)/ \
 -IBaseband/include/common/$(CHIPID)/ \
 -IController/include/ \

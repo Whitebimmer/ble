@@ -44,6 +44,7 @@
 
 #include "ble/att_dispatch.h"
 #include "ble/debug.h"
+#include "ble/core.h"
 
 /************************ATT DEBUG CONTROL**************************/
 /* #define ATT_DEBUG */

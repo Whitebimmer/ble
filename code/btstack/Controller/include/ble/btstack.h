@@ -51,7 +51,7 @@
 #include <ble/btstack_run_loop.h>
 #include <utils.h>
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 
 #include <stdint.h>
 
@@ -70,7 +70,7 @@ extern "C" {
 #endif
 
 // packet handler
-typedef void (*btstack_packet_handler_t) (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
+// typedef void (*btstack_packet_handler_t) (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 
 // optional: if called before bt_open, TCP socket is used instead of local unix socket
 //           note: address is not copied and must be valid during bt_open

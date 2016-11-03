@@ -46,7 +46,7 @@
 #include <string.h>
 
 /*#include <btstack/sdp_util.h>*/
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 #include "hci.h"
 
 // calculate combined ogf/ocf value
@@ -143,7 +143,7 @@ uint16_t le_hci_create_cmd_internal(uint8_t *hci_cmd_buffer, const hci_cmd_t *cm
                 memcpy(&hci_cmd_buffer[pos], ptr, 16);
                 pos += 16;
                 break;
-#ifdef HAVE_BLE
+#ifdef ENABLE_BLE
             case 'A': // 31 bytes advertising data
                 ptr = va_arg(argptr, uint8_t *);
                 memcpy(&hci_cmd_buffer[pos], ptr, 31);

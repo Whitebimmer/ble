@@ -45,7 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 
 #include <ble/btstack_run_loop.h>
 #include "ble/debug.h"
@@ -62,6 +62,8 @@
 #include "ble/le_device_db.h"
 
 #include "ble/att_server.h"
+
+#include "ble/core.h"
 
 /************************ATT DEBUG CONTROL**************************/
 #define ATT_DEBUG

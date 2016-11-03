@@ -44,7 +44,7 @@
 #include <utils.h>
 /*#include <btstack/sdp_util.h>*/
 
-#include "ble/btstack-config.h"
+#include "btstack-config.h"
 
 #include "ble/gatt_client.h"
 #include "ble/ad_parser.h"
@@ -58,6 +58,8 @@
 #include "ble/att_dispatch.h"
 #include "ble/sm.h"
 #include "ble/le_device_db.h"
+
+#include "ble/core.h"
 
 static linked_list_t gatt_client_connections = NULL;
 static linked_list_t gatt_subclients = NULL;

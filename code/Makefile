@@ -24,6 +24,8 @@ INCLUDES = \
 -Ibtstack/Host/include/common/ \
 -Ibtstack/Protocol/include/ \
 -Ibtstack/Profile/include/ \
+-Iuser/include/ \
+-Iuser/include/common \
 
 LIBS = \
 cpu/$(CHIPID)/driver/br16_ccm_aes.a \
@@ -56,6 +58,7 @@ objs += \
    driver/init.o \
    os/thread.o \
    os/sys_timer.o \
+   user/ble/ble_peripheral_test.o \
    btstack/Baseband/common/$(CHIPID)/RF.o \
    btstack/Baseband/BLE/$(CHIPID)/RF_ble.o \
    btstack/Baseband/BLE/$(CHIPID)/analog_ble.o \
@@ -68,7 +71,6 @@ objs += \
    btstack/Host/BLE/hci.o \
    btstack/Host/BLE/h4_transport.o \
    btstack/Host/BLE/l2cap_le.o \
-   btstack/Host/BLE/ble_peripheral_test.o \
    btstack/Host/BLE/le_device_db_memory.o \
    btstack/Host/BLE/btstack_memory.o \
    btstack/Host/common/hci_cmds.o \

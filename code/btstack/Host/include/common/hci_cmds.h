@@ -45,6 +45,7 @@
 #define __HCI_CMDS_H
 
 #include <stdint.h>
+#include "btstack_defines.h"
 
 #if defined __cplusplus
 extern "C" {

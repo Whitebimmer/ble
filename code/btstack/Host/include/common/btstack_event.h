@@ -1418,7 +1418,7 @@ static inline hci_con_handle_t gatt_event_service_query_result_get_handle(const 
  * @param Pointer to storage for service
  * @note: btstack_type X
  */
-static inline void gatt_event_service_query_result_get_service(const uint8_t * event, gatt_client_service_t * service){
+static inline void gatt_event_service_query_result_get_service(const uint8_t * event, le_service_t * service){
     gatt_client_deserialize_service(event, 4, service);    
 }
 #endif
@@ -1439,7 +1439,7 @@ static inline hci_con_handle_t gatt_event_characteristic_query_result_get_handle
  * @param Pointer to storage for characteristic
  * @note: btstack_type Y
  */
-static inline void gatt_event_characteristic_query_result_get_characteristic(const uint8_t * event, gatt_client_characteristic_t * characteristic){
+static inline void gatt_event_characteristic_query_result_get_characteristic(const uint8_t * event, le_characteristic_t * characteristic){
     gatt_client_deserialize_characteristic(event, 4, characteristic);    
 }
 #endif
@@ -1469,7 +1469,7 @@ static inline uint16_t gatt_event_included_service_query_result_get_include_hand
  * @param Pointer to storage for service
  * @note: btstack_type X
  */
-static inline void gatt_event_included_service_query_result_get_service(const uint8_t * event, gatt_client_service_t * service){
+static inline void gatt_event_included_service_query_result_get_service(const uint8_t * event, le_service_t * service){
     gatt_client_deserialize_service(event, 6, service);    
 }
 #endif
@@ -1490,7 +1490,7 @@ static inline hci_con_handle_t gatt_event_all_characteristic_descriptors_query_r
  * @param Pointer to storage for characteristic_descriptor
  * @note: btstack_type Z
  */
-static inline void gatt_event_all_characteristic_descriptors_query_result_get_characteristic_descriptor(const uint8_t * event, gatt_client_characteristic_descriptor_t * characteristic_descriptor){
+static inline void gatt_event_all_characteristic_descriptors_query_result_get_characteristic_descriptor(const uint8_t * event, le_characteristic_descriptor_t * characteristic_descriptor){
     gatt_client_deserialize_characteristic_descriptor(event, 4, characteristic_descriptor);    
 }
 #endif

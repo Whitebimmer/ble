@@ -222,7 +222,12 @@ void l2cap_init(void);
 /** 
  * @brief Registers a packet handler that handles HCI and general BTstack events.
  */
-void l2cap_register_packet_handler(void (*handler)(void * connection, uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size));
+// void l2cap_register_packet_handler(void (*handler)(void * connection, uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size));
+
+/** 
+ * @brief Registers packet handler for LE Connection Parameter Update events
+ */
+void l2cap_register_packet_handler(void (*handler)(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size));
 
 /** 
  * @brief Creates L2CAP channel to the PSM of a remote device with baseband address. A new baseband connection will be initiated if necessary.

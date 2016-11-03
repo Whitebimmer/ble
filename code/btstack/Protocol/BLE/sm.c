@@ -46,6 +46,7 @@
 #include "ble/sm.h"
 #include "ble/gap_le.h"
 
+#include "ble/core.h"
 //
 // SM internal types and globals
 //

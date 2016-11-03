@@ -42,6 +42,7 @@
 #include "ble/att.h"
 #include "ble/debug.h"
 #include <utils.h>
+#include "ble/core.h"
 
 /************************ATT DEBUG CONTROL**************************/
 /* #define ATT_DEBUG */
