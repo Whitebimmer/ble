@@ -188,6 +188,9 @@ static void *             sm_aes128_context;
 // random engine. store context (ususally sm_connection_t)
 static void * sm_random_context;
 
+
+// to receive hci events
+static btstack_packet_callback_registration_t hci_event_callback_registration;
 //
 // Volume 3, Part H, Chapter 24
 // "Security shall be initiated by the Security Manager in the device in the master role.
@@ -2224,7 +2227,7 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
     /* sm_puts("--SM PH "); */
 
     if (packet_type == HCI_EVENT_PACKET) {
-        sm_event_packet_handler(packet_type, handle, packet, size);
+        /* sm_event_packet_handler(packet_type, handle, packet, size); */
         /* sm_puts("event\n "); */
         return;
     }
@@ -2549,8 +2552,12 @@ void sm_init(void){
 
     test_use_fixed_local_csrk = 0;
 
-    // attach to lower layers
-    le_l2cap_register_fixed_channel(sm_packet_handler, L2CAP_CID_SECURITY_MANAGER_PROTOCOL);
+    // register for HCI Events from HCI
+    hci_event_callback_registration.callback = &sm_event_packet_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
+
+    // and L2CAP PDUs + L2CAP_EVENT_CAN_SEND_NOW
+    l2cap_register_fixed_channel(sm_packet_handler, L2CAP_CID_SECURITY_MANAGER_PROTOCOL);
 }
 
 static sm_connection_t * sm_get_connection_for_handle(uint16_t con_handle){

@@ -61,36 +61,43 @@
 
 #endif
 
-static void dummy_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size);
+static btstack_packet_handler_t att_client_handler SEC(.btmem_highly_available);
+static btstack_packet_handler_t att_server_handler SEC(.btmem_highly_available);
 
-static btstack_packet_handler_t att_client_handler SEC(.btmem_highly_available) = &dummy_packet_handler;
-static btstack_packet_handler_t att_server_handler SEC(.btmem_highly_available) = &dummy_packet_handler;
 
-static void dummy_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
-}
+static uint8_t att_client_waiting_for_can_send;
+static uint8_t att_server_waiting_for_can_send;
 
 static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
-    /* puts("--ATT PH "); */
 	switch (packet_type){
 		case ATT_DATA_PACKET: {
-			/* puts("--DATA "); */
 			log_info("att_data_packet with opcode 0x%x", packet[0]);
 			uint8_t att_pdu_odd = packet[0] & 1;
 			if (att_pdu_odd){
 				// odd PDUs are sent from server to client
+                if (!att_client_handler) return;
 				att_client_handler(packet_type, handle, packet, size);
 			} else {
 				// even PDUs are sent from client to server
+                if (!att_server_handler) return;
 				att_server_handler(packet_type, handle, packet, size);
 			}
 			break;
 		}
+		case HCI_EVENT_PACKET:
+			if (packet[0] != L2CAP_EVENT_CAN_SEND_NOW) break;
+			if (att_server_handler && att_server_waiting_for_can_send){
+				att_server_waiting_for_can_send = 0;
+				att_server_handler(packet_type, handle, packet, size);
+				// stop if client cannot send anymore
+				if (!hci_can_send_acl_le_packet_now()) break;
+			}
+			if (att_client_handler && att_client_waiting_for_can_send){
+				att_client_waiting_for_can_send = 0;
+				att_client_handler(packet_type, handle, packet, size);
+			}
+			break;
 		default:
-			/* puts("--DEFAULT "); */
-            /* printf("att_dispatch: %x\n", att_client_handler); */
-			att_client_handler(packet_type, handle, packet, size);
-            /* printf("att_dispatch: %x\n", att_server_handler); */
-			att_server_handler(packet_type, handle, packet, size);
 			break;	
 	}
 }
@@ -100,12 +107,8 @@ static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pa
  * @param packet_hander for ATT client packets
  */
 void att_dispatch_register_client(btstack_packet_handler_t packet_handler){
-	if (packet_handler == NULL){
-		packet_handler = dummy_packet_handler;
-	}
-    att_puts(__func__);
 	att_client_handler = packet_handler;
-	le_l2cap_register_fixed_channel(att_packet_handler, L2CAP_CID_ATTRIBUTE_PROTOCOL);
+	l2cap_register_fixed_channel(att_packet_handler, L2CAP_CID_ATTRIBUTE_PROTOCOL);
 }
 
 /**
@@ -113,10 +116,44 @@ void att_dispatch_register_client(btstack_packet_handler_t packet_handler){
  * @param packet_hander for ATT server packets
  */
 void att_dispatch_register_server(btstack_packet_handler_t packet_handler){
-	if (packet_handler == NULL){
-		packet_handler = dummy_packet_handler;
-	}
-    att_puts(__func__);
 	att_server_handler = packet_handler;
-	le_l2cap_register_fixed_channel(att_packet_handler, L2CAP_CID_ATTRIBUTE_PROTOCOL);
+	l2cap_register_fixed_channel(att_packet_handler, L2CAP_CID_ATTRIBUTE_PROTOCOL);
+}
+
+/**
+ * @brief can send packet for client
+ * @param handle
+ */
+int att_dispatch_client_can_send_now(hci_con_handle_t con_handle){
+	return l2cap_can_send_fixed_channel_packet_now(con_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL);
+}
+
+/**
+ * @brief can send packet for server
+ * @param handle
+ */
+int att_dispatch_server_can_send_now(hci_con_handle_t con_handle){
+	return l2cap_can_send_fixed_channel_packet_now(con_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL);
+}
+
+/** 
+ * @brief Request emission of L2CAP_EVENT_CAN_SEND_NOW as soon as possible for client
+ * @note L2CAP_EVENT_CAN_SEND_NOW might be emitted during call to this function
+ *       so packet handler should be ready to handle it
+ * @param con_handle
+ */
+void att_dispatch_client_request_can_send_now_event(hci_con_handle_t con_handle){
+	att_client_waiting_for_can_send = 1;
+	l2cap_request_can_send_fix_channel_now_event(con_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL);
+}
+
+/** 
+ * @brief Request emission of L2CAP_EVENT_CAN_SEND_NOW as soon as possible for server
+ * @note L2CAP_EVENT_CAN_SEND_NOW might be emitted during call to this function
+ *       so packet handler should be ready to handle it
+ * @param con_handle
+ */
+void att_dispatch_server_request_can_send_now_event(hci_con_handle_t con_handle){
+	att_server_waiting_for_can_send = 1;
+	l2cap_request_can_send_fix_channel_now_event(con_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL);
 }

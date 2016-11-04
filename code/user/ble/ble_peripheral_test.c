@@ -1070,11 +1070,6 @@ int btstack_main()
     // turn on!
 	le_hci_power_control(HCI_POWER_ON);
 
-
-    /* le_hci_send_cmd(&hci_le_set_advertise_enable, 1); */
-    /* le_hci_send_cmd(&hci_le_set_scan_enable, 1); */
-
-    /* le_hci_send_cmd(&hci_le_set_advertise_enable, 1); */
 	/*sm_test();*/
     return 0;
 }
