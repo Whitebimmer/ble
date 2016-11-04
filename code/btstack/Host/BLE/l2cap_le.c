@@ -72,24 +72,77 @@
 #define l2cap_printf(...)
 #endif
 
+// internal table
+#define L2CAP_FIXED_CHANNEL_TABLE_INDEX_ATTRIBUTE_PROTOCOL          0
+#define L2CAP_FIXED_CHANNEL_TABLE_INDEX_SECURITY_MANAGER_PROTOCOL   1
+#define L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL      2
+#define L2CAP_FIXED_CHANNEL_TABLE_SIZE                              (L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL+1)
+
 static void l2cap_packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size);
 
 static void (*packet_handler) (void * connection, uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-static btstack_packet_handler_t attribute_protocol_packet_handler SEC(.btmem_highly_available);
-static btstack_packet_handler_t security_protocol_packet_handler SEC(.btmem_highly_available);
 
 static void l2cap_hci_event_handler(uint8_t packet_type, uint16_t cid, uint8_t *packet, uint16_t size);
 static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size );
 
 static btstack_packet_handler_t l2cap_event_packet_handler SEC(.btmem_highly_available);
-static btstack_packet_callback_registration_t hci_event_callback_registration;
+static btstack_packet_callback_registration_t hci_event_callback_registration SEC(.btmem_highly_available);
 
+typedef struct l2cap_fixed_channel {
+    btstack_packet_handler_t callback;
+    uint8_t waiting_for_can_send_now;
+} l2cap_fixed_channel_t;
+
+static linked_list_t l2cap_channels;
+static linked_list_t l2cap_services;
+static linked_list_t l2cap_le_channels;
+static linked_list_t l2cap_le_services;
+static btstack_packet_handler_t attribute_protocol_packet_handler SEC(.btmem_highly_available);
+static btstack_packet_handler_t security_protocol_packet_handler SEC(.btmem_highly_available);
+static l2cap_fixed_channel_t fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_SIZE] SEC(.btmem_highly_available);
+
+static uint16_t l2cap_fixed_channel_table_channel_id_for_index(int index){
+    switch (index){
+        case L2CAP_FIXED_CHANNEL_TABLE_INDEX_ATTRIBUTE_PROTOCOL:
+            return L2CAP_CID_ATTRIBUTE_PROTOCOL;
+        case L2CAP_FIXED_CHANNEL_TABLE_INDEX_SECURITY_MANAGER_PROTOCOL:
+            return L2CAP_CID_SECURITY_MANAGER_PROTOCOL;
+        case L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL:
+            return L2CAP_CID_CONNECTIONLESS_CHANNEL;
+        default:
+            return 0;
+    }  
+}
+static int l2cap_fixed_channel_table_index_for_channel_id(uint16_t channel_id){
+    switch (channel_id){
+        case L2CAP_CID_ATTRIBUTE_PROTOCOL:
+            return L2CAP_FIXED_CHANNEL_TABLE_INDEX_ATTRIBUTE_PROTOCOL;
+        case L2CAP_CID_SECURITY_MANAGER_PROTOCOL:
+            return  L2CAP_FIXED_CHANNEL_TABLE_INDEX_SECURITY_MANAGER_PROTOCOL;
+        case L2CAP_CID_CONNECTIONLESS_CHANNEL:
+            return  L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL;
+        default:
+            return -1;
+        }
+}
+
+static int l2cap_fixed_channel_table_index_is_le(int index){
+    if (index == L2CAP_CID_CONNECTIONLESS_CHANNEL) return 0;
+    return 1;
+}
 void le_l2cap_init(){
     
     packet_handler = NULL;
     attribute_protocol_packet_handler = NULL;
     security_protocol_packet_handler = NULL;
     
+    l2cap_channels = NULL;
+    l2cap_services = NULL;
+    l2cap_le_services = NULL;
+    l2cap_le_channels = NULL;
+
+    l2cap_event_packet_handler = NULL;
+    memset(fixed_channels, 0, sizeof(fixed_channels));
     // 
     // register callback with HCI
     //

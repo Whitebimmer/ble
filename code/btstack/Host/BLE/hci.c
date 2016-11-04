@@ -576,7 +576,6 @@ static void acl_handler(uint8_t *packet, int size)
 	switch (acl_flags & 0x03) 
 	{
 		case 0x01: // continuation fragment
-
 			// sanity checks
 			if (conn->acl_recombination_pos == 0) {
 				return;
