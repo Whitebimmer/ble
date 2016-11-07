@@ -164,6 +164,73 @@ uint8_t crc8_calc(uint8_t *data, uint16_t len);
 
 int is_authenticated_link_key(link_key_type_t link_key_type);
 
+/*******************************************************************/
+/*
+ *-------------------New Untils
+ */
+int bd_addr_cmp(bd_addr_t a, bd_addr_t b);
+
+void bd_addr_copy(bd_addr_t dest, bd_addr_t src);
+
+/** 
+ * @brief Read 16/24/32 bit little endian value from buffer
+ * @param buffer
+ * @param position in buffer
+ * @return value
+ */
+uint16_t little_endian_read_16(const uint8_t * buffer, int position);
+uint32_t little_endian_read_24(const uint8_t * buffer, int position);
+uint32_t little_endian_read_32(const uint8_t * buffer, int position);
+
+/** 
+ * @brief Write 16/32 bit little endian value into buffer
+ * @param buffer
+ * @param position in buffer
+ * @param value
+ */
+void little_endian_store_16(uint8_t *buffer, uint16_t position, uint16_t value);
+void little_endian_store_32(uint8_t *buffer, uint16_t position, uint32_t value);
+
+/** 
+ * @brief Read 16/24/32 bit big endian value from buffer
+ * @param buffer
+ * @param position in buffer
+ * @return value
+ */
+uint32_t big_endian_read_16( const uint8_t * buffer, int pos);
+uint32_t big_endian_read_32( const uint8_t * buffer, int pos);
+
+/** 
+ * @brief Write 16/32 bit big endian value into buffer
+ * @param buffer
+ * @param position in buffer
+ * @param value
+ */
+void big_endian_store_16(uint8_t *buffer, uint16_t pos, uint16_t value);
+void big_endian_store_32(uint8_t *buffer, uint16_t pos, uint32_t value);
+
+/**
+ * @brief Copy from source to destination and reverse byte order
+ * @param src
+ * @param dest
+ * @param len
+ */
+void reverse_bytes  (const uint8_t *src, uint8_t * dest, int len);
+
+/**
+ * @brief Wrapper around reverse_bytes for common buffer sizes
+ * @param src
+ * @param dest
+ */
+void reverse_24 (const uint8_t *src, uint8_t * dest);
+void reverse_48 (const uint8_t *src, uint8_t * dest);
+void reverse_56 (const uint8_t *src, uint8_t * dest);
+void reverse_64 (const uint8_t *src, uint8_t * dest);
+void reverse_128(const uint8_t *src, uint8_t * dest);
+void reverse_256(const uint8_t *src, uint8_t * dest);
+
+void reverse_bd_addr(const bd_addr_t src, bd_addr_t dest);
+
 #if defined __cplusplus
 }
 #endif

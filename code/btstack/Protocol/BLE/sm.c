@@ -2224,16 +2224,15 @@ static void sm_pdu_received_in_wrong_state(sm_connection_t * sm_conn){
 }
 
 static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
-    /* sm_puts("--SM PH "); */
 
-    if (packet_type == HCI_EVENT_PACKET) {
-        /* sm_event_packet_handler(packet_type, handle, packet, size); */
-        /* sm_puts("event\n "); */
-        return;
+    if (packet_type == HCI_EVENT_PACKET && packet[0] == L2CAP_EVENT_CAN_SEND_NOW){
+        /* sm_run(); */
     }
 
+    //filter out l2cap event
     if (packet_type != SM_DATA_PACKET) return;
 
+    sm_puts("Layer - sm_acl_handler : ");
     /* sm_puts("--SM DATA "); */
     sm_connection_t * sm_conn = sm_get_connection_for_handle(handle);
     /* printf("sm conn : %0x\n", sm_conn); */
@@ -2341,7 +2340,7 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
         case SM_RESPONDER_IDLE:
         case SM_RESPONDER_SEND_SECURITY_REQUEST: 
         case SM_RESPONDER_PH1_W4_PAIRING_REQUEST:
-			sm_puts("pairing_request\n");
+			sm_puts("SM_RESPONDER_PH1_W4_PAIRING_REQUEST\n");
             if (packet[0] != SM_CODE_PAIRING_REQUEST){
                 sm_pdu_received_in_wrong_state(sm_conn);
                 break;;
@@ -2350,7 +2349,6 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
             // store pairing request
             memcpy(&sm_conn->sm_m_preq, packet, sizeof(sm_pairing_packet_t));
             sm_conn->sm_engine_state = SM_RESPONDER_PH1_PAIRING_REQUEST_RECEIVED;
-			sm_puts("received\n");
             break;
 
         case SM_RESPONDER_PH1_W4_PAIRING_CONFIRM:

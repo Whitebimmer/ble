@@ -919,13 +919,6 @@ static void hci_initializing_event_handler(uint8_t * packet, uint16_t size)
 
 static void event_command_complete_handler(uint8_t *packet, int size)
 {
-#if 0
-    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_bd_addr)){
-        bt_flip_addr(hci_stack->local_bd_addr, 
-                &packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1]);
-        hci_puts("hci_read_bd_addr");hci_pbuf(hci_stack->local_bd_addr, 6);
-    }
-
     if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_buffer_size)){
         // from offset 5
         // status 
@@ -956,19 +949,27 @@ static void event_command_complete_handler(uint8_t *packet, int size)
             hci_stack->link_key_db->set_local_bd_addr(hci_stack->local_bd_addr);
         }
     }
-    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_write_scan_enable)){
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_write_scan_enable))
+    {
+#ifdef ENABLE_CLASSIC
+#error "ENABLE_CLASSIC defined but hci_emit_discoverable_enabled not implement"
         hci_emit_discoverable_enabled(hci_stack->discoverable);
+#endif
     }
     // Note: HCI init checks 
-    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_local_supported_features)){
+    if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_local_supported_features))
+    {
         memcpy(hci_stack->local_supported_features, &packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1], 8);
 
+#ifdef ENABLE_CLASSIC
+#error "ENABLE_CLASSIC defined but hci_acl_packet_types_for_buffer_size_and_local_features not implement"
         // determine usable ACL packet types based on host buffer size and supported features
         hci_stack->packet_types = hci_acl_packet_types_for_buffer_size_and_local_features(HCI_ACL_PAYLOAD_SIZE, &hci_stack->local_supported_features[0]);
         log_info("packet types %04x", hci_stack->packet_types); 
 
         // Classic/LE
         log_info("BR/EDR support %u, LE support %u", hci_classic_supported(), hci_le_supported());
+#endif
     }
     if (HCI_EVENT_IS_COMMAND_COMPLETE(packet, hci_read_local_version_information)){
         // hci_stack->hci_version    = READ_BT_16(packet, 4);
@@ -992,7 +993,6 @@ static void event_command_complete_handler(uint8_t *packet, int size)
             hci_stack->synchronous_flow_control_enabled = 1;
         }
     } 
-#endif
 }
 // avoid huge local variables
 static void le_event_command_complete_handler(uint8_t *packet, int size)

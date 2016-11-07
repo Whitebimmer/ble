@@ -1229,8 +1229,8 @@ static int ble_hci_h4_upload_data()
 
 	rx = lbuf_pop(hci_rx_buf);
 	if (rx) {
-        hci_puts("\nRX : DATA ");
-        hci_buf(rx->head, rx->len+sizeof(rx->head));
+        puts("\nRX : ACL ");
+        printf_buf(rx->head, rx->len+sizeof(rx->head));
 		ble_h4_packet_handler(HCI_ACL_DATA_PACKET, rx->head, rx->len+sizeof(rx->head));
 		lbuf_free(rx);
 	}

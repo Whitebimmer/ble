@@ -54,7 +54,7 @@
 
 #include <stdio.h>
 
-/* #define L2CAP_DEBUG_EN */
+#define L2CAP_DEBUG_EN
 
 #ifdef L2CAP_DEBUG_EN
 #define l2cap_putchar(x)        putchar(x)
@@ -353,6 +353,8 @@ static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
     // Get Channel ID
     uint16_t channel_id = READ_L2CAP_CHANNEL_ID(packet); 
     hci_con_handle_t handle = READ_ACL_CONNECTION_HANDLE(packet);
+
+    l2cap_puts("Layer - l2cap_acl_handler: ");
     
     switch (channel_id) {
             
@@ -368,14 +370,14 @@ static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
             l2cap_puts("L2CAP_CID_SECURITY_MANAGER_PROTOCOL\n");
             if (fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_SECURITY_MANAGER_PROTOCOL].callback)
             {
-                (*fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_SECURITY_MANAGER_PROTOCOL].callback)(ATT_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
+                (*fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_SECURITY_MANAGER_PROTOCOL].callback)(SM_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
             }
             break;
         case L2CAP_CID_CONNECTIONLESS_CHANNEL:
             l2cap_puts("L2CAP_CID_SECURITY_MANAGER_PROTOCOL\n");
-            if (fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback)
+            if (fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback) 
             {
-                (*fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback)(ATT_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
+                (*fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback)(UCD_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
             }
             break;
 
