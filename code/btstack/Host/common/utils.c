@@ -47,8 +47,103 @@
 #include <utils.h>
 #include <stdio.h>
 #include <string.h>
-#include "ble/debug.h"
 
+/*******************************************************************/
+/*
+ *-------------------New Untils
+ */
+
+/**
+ * @brief Compare two Bluetooth addresses
+ * @param a
+ * @param b
+ * @return 0 if equal
+ */
+int bd_addr_cmp(bd_addr_t a, bd_addr_t b){
+    return memcmp(a,b, BD_ADDR_LEN);
+}
+
+/**
+ * @brief Copy Bluetooth address
+ * @param dest
+ * @param src
+ */
+void bd_addr_copy(bd_addr_t dest, bd_addr_t src){
+    memcpy(dest,src,BD_ADDR_LEN);
+}
+
+uint16_t little_endian_read_16(const uint8_t * buffer, int pos){
+    return ((uint16_t) buffer[pos]) | (((uint16_t)buffer[(pos)+1]) << 8);
+}
+uint32_t little_endian_read_24(const uint8_t * buffer, int pos){
+    return ((uint32_t) buffer[pos]) | (((uint32_t)buffer[(pos)+1]) << 8) | (((uint32_t)buffer[(pos)+2]) << 16);
+}
+uint32_t little_endian_read_32(const uint8_t * buffer, int pos){
+    return ((uint32_t) buffer[pos]) | (((uint32_t)buffer[(pos)+1]) << 8) | (((uint32_t)buffer[(pos)+2]) << 16) | (((uint32_t) buffer[(pos)+3]) << 24);
+}
+
+void little_endian_store_16(uint8_t *buffer, uint16_t pos, uint16_t value){
+    buffer[pos++] = value;
+    buffer[pos++] = value >> 8;
+}
+
+void little_endian_store_32(uint8_t *buffer, uint16_t pos, uint32_t value){
+    buffer[pos++] = value;
+    buffer[pos++] = value >> 8;
+    buffer[pos++] = value >> 16;
+    buffer[pos++] = value >> 24;
+}
+
+uint32_t big_endian_read_16( const uint8_t * buffer, int pos) {
+    return ((uint16_t) buffer[(pos)+1]) | (((uint16_t)buffer[ pos   ]) << 8);
+}
+
+uint32_t big_endian_read_32( const uint8_t * buffer, int pos) {
+    return ((uint32_t) buffer[(pos)+3]) | (((uint32_t)buffer[(pos)+2]) << 8) | (((uint32_t)buffer[(pos)+1]) << 16) | (((uint32_t) buffer[pos]) << 24);
+}
+
+void big_endian_store_16(uint8_t *buffer, uint16_t pos, uint16_t value){
+    buffer[pos++] = value >> 8;
+    buffer[pos++] = value;
+}
+
+void big_endian_store_32(uint8_t *buffer, uint16_t pos, uint32_t value){
+    buffer[pos++] = value >> 24;
+    buffer[pos++] = value >> 16;
+    buffer[pos++] = value >> 8;
+    buffer[pos++] = value;
+}
+
+// general swap/endianess utils
+void reverse_bytes(const uint8_t *src, uint8_t *dst, int len){
+    int i;
+    for (i = 0; i < len; i++)
+        dst[len - 1 - i] = src[i];
+}
+void reverse_24(const uint8_t * src, uint8_t * dst){
+    reverse_bytes(src, dst, 3);
+}
+void reverse_48(const uint8_t * src, uint8_t * dst){
+    reverse_bytes(src, dst, 6);
+}
+void reverse_56(const uint8_t * src, uint8_t * dst){
+    reverse_bytes(src, dst, 7);
+}
+void reverse_64(const uint8_t * src, uint8_t * dst){
+    reverse_bytes(src, dst, 8);
+}
+void reverse_128(const uint8_t * src, uint8_t * dst){
+    reverse_bytes(src, dst, 16);
+}
+void reverse_256(const uint8_t * src, uint8_t * dst){
+    reverse_bytes(src, dst, 32);
+}
+
+void reverse_bd_addr(const bd_addr_t src, bd_addr_t dest){
+    reverse_bytes(src, dest, 6);
+}
+
+/*******************************************************************/
 void bt_store_16(uint8_t *buffer, uint16_t pos, uint16_t value){
     buffer[pos++] = value;
     buffer[pos++] = value >> 8;

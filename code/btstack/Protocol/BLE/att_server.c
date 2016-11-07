@@ -111,6 +111,8 @@ static struct sys_timer att_handle_value_indication_timer SEC(.btmem_highly_avai
 
 static btstack_packet_handler_t att_client_packet_handler SEC(.btmem_highly_available) = NULL;
 
+static btstack_packet_callback_registration_t hci_event_callback_registration SEC(.btmem_highly_available);
+
 static void att_handle_value_indication_notify_client(uint8_t status, uint16_t client_handle, uint16_t attribute_handle){
     
     if (!att_client_packet_handler) return;
@@ -149,18 +151,14 @@ static void att_handle_value_indication_timeout(struct sys_timer *ts){
 
 static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     
-	/*att_puts("att_event_handler\n");*/
-    /* att_puts("--EVENT "); */
-
+    att_puts("Layer - att_event_packet_handler :");    
     switch (packet_type) {
             
         case HCI_EVENT_PACKET:
             switch (packet[0]) {
                 
                 case DAEMON_EVENT_HCI_PACKET_SENT:
-					/* att_puts("att_server_daemo_event\n"); */
                     att_run();
-					/* att_puts("exit\n"); */
                     break;
                     
                 case HCI_EVENT_LE_META:
@@ -359,7 +357,7 @@ static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pa
 	
     /* att_puts("--Server "); */
     if (packet_type != ATT_DATA_PACKET){
-		/* att_puts("sexit\n");    */
+        att_puts("sexit\n");   
 		return;
 	}	
 
@@ -401,6 +399,10 @@ static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pa
 
 void att_server_init(uint8_t const * db, att_read_callback_t read_callback, att_write_callback_t write_callback){
     att_puts("ATT init\n");
+
+    // register for HCI Events
+    hci_event_callback_registration.callback = &att_event_packet_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
 
     sm_register_packet_handler(att_event_packet_handler);
 

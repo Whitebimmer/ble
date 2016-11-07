@@ -140,7 +140,7 @@ typedef struct {
     L2CAP_CHANNEL_STATE_VAR state_var;
     
     bd_addr_t address;
-    hci_con_handle_t handle;
+    hci_con_handle_t con_handle;
     
     uint8_t   remote_sig_id;    // used by other side, needed for delayed response
     uint8_t   local_sig_id;     // own signaling identifier
@@ -168,6 +168,8 @@ typedef struct {
     
     // internal connection
     btstack_packet_handler_t packet_handler;
+
+    uint8_t   waiting_for_can_send_now;
     
 } l2cap_channel_t;
 
@@ -202,8 +204,6 @@ typedef struct l2cap_signaling_response {
     
 
 void l2cap_block_new_credits(uint8_t blocked);
-
-int  l2cap_can_send_fixed_channel_packet_now(uint16_t handle);
 
 // @deprecated use l2cap_can_send_fixed_channel_packet_now instead
 int  l2cap_can_send_connectionless_packet_now(void);
@@ -297,6 +297,10 @@ uint16_t l2cap_max_le_mtu(void);
 int  l2cap_send_connectionless(uint16_t handle, uint16_t cid, uint8_t *data, uint16_t len);
 /* API_END */
 
+// Used by RFCOMM - similar to l2cap_can-send_packet_now but does not check if outgoing buffer is reserved
+int  l2cap_can_send_prepared_packet_now(uint16_t local_cid);
+
+int  l2cap_can_send_fixed_channel_packet_now(hci_con_handle_t con_handle, uint16_t channel_id);
 #if defined __cplusplus
 }
 #endif
