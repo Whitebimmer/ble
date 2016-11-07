@@ -57,14 +57,14 @@
 #define sm_puts(x)           puts(x)
 #define sm_u32hex(x)         put_u32hex(x)
 #define sm_u8hex(x)          put_u8hex(x)
-#define sm_buf(x,y)          printf_buf(x,y)
+#define sm_pbuf(x,y)         printf_buf(x,y)
 #define sm_printf            printf
 #else
 #define sm_putchar(...)
 #define sm_puts(...)
 #define sm_u32hex(...)
 #define sm_u8hex(...)
-#define sm_buf(...)
+#define sm_pbuf(...)
 #define sm_printf(...)
 #endif
 
@@ -191,6 +191,9 @@ static void * sm_random_context;
 
 // to receive hci events
 static btstack_packet_callback_registration_t hci_event_callback_registration;
+
+/* to dispatch sm event */
+static linked_list_t sm_event_handlers;
 //
 // Volume 3, Part H, Chapter 24
 // "Security shall be initiated by the Security Manager in the device in the master role.
@@ -484,6 +487,17 @@ static void sm_s1_r_prime(sm_key_t r1, sm_key_t r2, sm_key_t r_prime){
     log_key("r2", r2);
     memcpy(&r_prime[8], &r2[8], 8);
     memcpy(&r_prime[0], &r1[8], 8);
+}
+
+
+static void sm_dispatch_event(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t size){
+    // dispatch to all event handlers
+    linked_list_iterator_t it;
+    linked_list_iterator_init(&it, &sm_event_handlers);
+    while (linked_list_iterator_has_next(&it)){
+        btstack_packet_callback_registration_t * entry = (btstack_packet_callback_registration_t*) linked_list_iterator_next(&it);
+        entry->callback(packet_type, 0, packet, size);
+    }
 }
 
 static void sm_notify_client(uint8_t type, uint8_t addr_type, bd_addr_t address, uint32_t passkey, uint16_t index){
@@ -874,7 +888,7 @@ static void sm_init_setup(sm_connection_t * sm_conn){
     setup->sm_peer_addr_type = sm_conn->sm_peer_addr_type;
     memcpy(setup->sm_peer_address, sm_conn->sm_peer_address, 6);
 
-	sm_puts("sm_init_setup\n");
+	sm_puts("\n ---SM Setup Info -----\n");
     // query client for OOB data
     int have_oob_data = 0;
     if (sm_get_oob_data) {
@@ -886,24 +900,26 @@ static void sm_init_setup(sm_connection_t * sm_conn){
         // slave
         local_packet = &setup->sm_s_pres;
         hci_le_advertisement_address(&setup->sm_s_addr_type, setup->sm_s_address);
-        sm_printf("sm s addr type : %x\n", setup->sm_s_addr_type);
+        sm_printf("-sm s addr type : %x /", setup->sm_s_addr_type);
         sm_puts("sm s address :");
-		sm_buf(setup->sm_s_address, 6);
+		sm_pbuf(setup->sm_s_address, 6);
         setup->sm_m_addr_type = sm_conn->sm_peer_addr_type;
-        sm_printf("sm m addr type : %x\n", setup->sm_m_addr_type);
+        sm_printf("-sm m addr type : %x /", setup->sm_m_addr_type);
         memcpy(setup->sm_m_address, sm_conn->sm_peer_address, 6);
         sm_puts("sm m address :");
-		sm_buf(setup->sm_m_address, 6);
+		sm_pbuf(setup->sm_m_address, 6);
     } else {
         // master
         local_packet = &setup->sm_m_preq;
         hci_le_advertisement_address(&setup->sm_m_addr_type, setup->sm_m_address);
+        sm_printf("-sm m addr type : %x /", setup->sm_m_addr_type);
         sm_puts("sm m address :");
-		sm_buf(setup->sm_m_address, 6);
+		sm_pbuf(setup->sm_m_address, 6);
         setup->sm_s_addr_type = sm_conn->sm_peer_addr_type;
         memcpy(setup->sm_s_address, sm_conn->sm_peer_address, 6);
+        sm_printf("-sm s addr type : %x /", setup->sm_s_addr_type);
         sm_puts("sm s address :");
-		sm_buf(setup->sm_s_address, 6);
+		sm_pbuf(setup->sm_s_address, 6);
          int key_distribution_flags = sm_key_distribution_flags_for_auth_req();
         setup->sm_m_preq.initiator_key_distribution = key_distribution_flags;
         setup->sm_m_preq.responder_key_distribution = key_distribution_flags;
@@ -913,9 +929,7 @@ static void sm_init_setup(sm_connection_t * sm_conn){
     local_packet->oob_data_flag = have_oob_data;
     local_packet->auth_req = sm_auth_req;
     local_packet->max_encryption_key_size = sm_max_encryption_key_size;
-    sm_printf("sm io capability : %x\n", sm_io_capabilities);
-    sm_printf("sm oob data flag : %x\n", have_oob_data);
-    sm_printf("sm auth req %x\n", sm_auth_req);
+    sm_printf("-sm io capability : %x/oob data flag : %x/auth req %x\n", sm_io_capabilities,have_oob_data,sm_auth_req);
 }
 
 static int sm_stk_generation_init(sm_connection_t * sm_conn){
@@ -1038,7 +1052,7 @@ static void sm_key_distribution_handle_all_received(sm_connection_t * sm_conn){
     log_info("sm peer addr type %u, peer addres %s", setup->sm_peer_addr_type, bd_addr_to_str(setup->sm_peer_address));
     sm_printf("sm peer addr type %x / ", setup->sm_peer_addr_type);
     sm_puts("peer_address ");
-    sm_buf(setup->sm_peer_address, 6);
+    sm_pbuf(setup->sm_peer_address, 6);
     if (le_db_index < 0 && setup->sm_peer_addr_type == BD_ADDR_TYPE_LE_PUBLIC){
         int i;
         for (i=0; i < le_device_db_count(); i++){
@@ -1048,7 +1062,7 @@ static void sm_key_distribution_handle_all_received(sm_connection_t * sm_conn){
             log_info("device %u, sm peer addr type %u, peer addres %s", i, address_type, bd_addr_to_str(address));
             sm_printf("sm peer addr type %x / ", address_type);
             sm_puts("peer_address ");
-            sm_buf(setup->sm_peer_address, 6);
+            sm_pbuf(setup->sm_peer_address, 6);
             if (address_type == BD_ADDR_TYPE_LE_PUBLIC && memcmp(address, setup->sm_peer_address, 6) == 0){
                 log_info("sm: device found for public address, updating");
                 sm_printf("sm: device found for public address, updating\n");
@@ -1301,7 +1315,7 @@ static void sm_run(void){
                     // recover pairing request
                     memcpy(&setup->sm_m_preq, &sm_connection->sm_m_preq, sizeof(sm_pairing_packet_t));
                     /* sm_puts("sm mreq : "); */
-                    /* sm_buf(&setup->sm_m_preq, sizeof(sm_pairing_packet_t)); */
+                    /* sm_pbuf(&setup->sm_m_preq, sizeof(sm_pairing_packet_t)); */
                     err = sm_stk_generation_init(sm_connection);
                     if (err){
 						sm_puts("sm_stk:err\n");
@@ -1490,7 +1504,7 @@ static void sm_run(void){
                 // calculate m_confirm using aes128 engine - step 1
 				sm_puts("SM_PH2_C1_GET_ENC_C\n");
                 /* sm_puts("peer random : "); */
-				/* sm_buf(setup->sm_peer_random, 16); */
+				/* sm_pbuf(setup->sm_peer_random, 16); */
 				/* printf_buf(&setup->sm_m_preq, 7); */
 				/* printf_buf(&setup->sm_s_pres, 7); */
 				/* printf("m addrtype :%d,s addrtype : %d\n", setup->sm_m_addr_type, setup->sm_s_addr_type); */
@@ -1498,9 +1512,9 @@ static void sm_run(void){
                         (uint8_t*) &setup->sm_m_preq, (uint8_t*) &setup->sm_s_pres, 
                         setup->sm_m_addr_type, setup->sm_s_addr_type, plaintext);
 				/* sm_puts("plaintext : "); */
-				/* sm_buf(plaintext, 16); */
+				/* sm_pbuf(plaintext, 16); */
 				/* sm_puts("TK : "); */
-				/* sm_buf(setup->sm_tk, 16); */
+				/* sm_pbuf(setup->sm_tk, 16); */
                 sm_next_responding_state(connection);
                 sm_aes128_start(setup->sm_tk, plaintext, connection);
                 break;
@@ -1518,9 +1532,9 @@ static void sm_run(void){
                         (uint8_t*) &setup->sm_m_preq, (uint8_t*) &setup->sm_s_pres, 
                         setup->sm_m_addr_type, setup->sm_s_addr_type, plaintext);
 				/* sm_puts("plaintext : "); */
-				/* sm_buf(plaintext, 16); */
+				/* sm_pbuf(plaintext, 16); */
 				/* sm_puts("TK : "); */
-				/* sm_buf(setup->sm_tk, 16); */
+				/* sm_pbuf(setup->sm_tk, 16); */
                 sm_next_responding_state(connection);
                 sm_aes128_start(setup->sm_tk, plaintext, connection);
                 break;
@@ -1531,20 +1545,20 @@ static void sm_run(void){
                 // calculate STK
                 if (connection->sm_role){
                     sm_puts("Srand : ");
-                    sm_buf(setup->sm_local_random, 16);
+                    sm_pbuf(setup->sm_local_random, 16);
                     sm_puts("Mrand : ");
-                    sm_buf(setup->sm_peer_random, 16);
+                    sm_pbuf(setup->sm_peer_random, 16);
                     sm_s1_r_prime(setup->sm_local_random, setup->sm_peer_random, plaintext);
                 } else {
                     sm_puts("Srand : ");
-                    sm_buf(setup->sm_peer_random, 16);
+                    sm_pbuf(setup->sm_peer_random, 16);
                     sm_puts("Mrand : ");
-                    sm_buf(setup->sm_local_random, 16);
+                    sm_pbuf(setup->sm_local_random, 16);
                     sm_s1_r_prime(setup->sm_peer_random, setup->sm_local_random, plaintext);
                 }
                 sm_next_responding_state(connection);
                 sm_puts("TK : ");
-                sm_buf(setup->sm_tk, 16);
+                sm_pbuf(setup->sm_tk, 16);
                 sm_aes128_start(setup->sm_tk, plaintext, connection);
                 break;
             case SM_PH3_Y_GET_ENC:
@@ -1562,7 +1576,7 @@ static void sm_run(void){
                 buffer[0] = SM_CODE_PAIRING_CONFIRM;
                 swap128(setup->sm_local_confirm, &buffer[1]);
 				sm_puts("SM_PH2_C1_SEND_PAIRING_CONFIRM:\n");
-				sm_buf(buffer+1, 16);
+				sm_pbuf(buffer+1, 16);
                 if (connection->sm_role){
                     connection->sm_engine_state = SM_RESPONDER_PH2_W4_PAIRING_RANDOM;
                 } else {
@@ -1779,11 +1793,11 @@ static void sm_handle_encryption_result(uint8_t * data){
                 swap128(data, t2);
                 /* sm_puts("SM_PH2_C1_W4_ENC_A/C:\n"); */
 				/* sm_puts("m addr : "); */
-                /* sm_buf(setup->sm_m_address, 6); */
+                /* sm_pbuf(setup->sm_m_address, 6); */
 				/* sm_puts("s addr : "); */
-                /* sm_buf(setup->sm_s_address, 6); */
+                /* sm_pbuf(setup->sm_s_address, 6); */
 				/* sm_puts("plaintext : "); */
-                /* sm_buf(t2, 16); */
+                /* sm_pbuf(t2, 16); */
                 sm_c1_t3(t2, setup->sm_m_address, setup->sm_s_address, setup->sm_c1_t3_value);
             }
             sm_next_responding_state(connection);
@@ -1823,7 +1837,7 @@ static void sm_handle_encryption_result(uint8_t * data){
             sm_truncate_key(setup->sm_ltk, connection->sm_actual_encryption_key_size);
             log_key("stk", setup->sm_ltk);
             sm_puts("SM STK : ");
-            sm_buf(setup->sm_ltk, 16);
+            sm_pbuf(setup->sm_ltk, 16);
             if (connection->sm_role){
                 connection->sm_engine_state = SM_RESPONDER_PH2_SEND_LTK_REPLY;
             } else {
@@ -1863,7 +1877,7 @@ static void sm_handle_encryption_result(uint8_t * data){
             sm_puts("SM_PH3_LTK_W4_ENC\n");
             swap128(data, setup->sm_ltk);
             log_key("ltk", setup->sm_ltk);
-            sm_buf(setup->sm_ltk, 16);
+            sm_pbuf(setup->sm_ltk, 16);
             // calc CSRK next
             connection->sm_engine_state = SM_PH3_CSRK_GET_ENC;
             return;
@@ -1871,7 +1885,7 @@ static void sm_handle_encryption_result(uint8_t * data){
             sm_puts("SM_PH3_CSRK_W4_ENC\n");
             swap128(data, setup->sm_local_csrk);
             log_key("csrk", setup->sm_local_csrk);
-            sm_buf(setup->sm_local_csrk, 16);
+            sm_pbuf(setup->sm_local_csrk, 16);
             if (setup->sm_key_distribution_send_set){
                 connection->sm_engine_state = SM_PH3_DISTRIBUTE_KEYS;
             } else {
@@ -2306,7 +2320,7 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
                 sm_conn->sm_engine_state = SM_PH2_C1_GET_RANDOM_A;
             } 
             //sm_u8hex(setup->sm_m_addr_type);
-            //sm_buf(setup->sm_m_address, 6);
+            //sm_pbuf(setup->sm_m_address, 6);
             /* sm_just_works_confirm(setup->sm_m_addr_type, setup->sm_m_address); */
             //sm_just_works_confirm1(sm_conn);
             break;                        
@@ -2405,9 +2419,10 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
             switch(packet[0])
             {
                 case SM_CODE_ENCRYPTION_INFORMATION:
-                    sm_puts("SM_CODE_ENCRYPTION_INFORMATION\n");
+                    sm_puts("SM_CODE_ENCRYPTION_INFORMATION - LTK :");
                     setup->sm_key_distribution_received_set |= SM_KEYDIST_FLAG_ENCRYPTION_INFORMATION;
                     swap128(&packet[1], setup->sm_peer_ltk);
+                    sm_pbuf(&packet[1], 16);
                     break;
 
                 case SM_CODE_MASTER_IDENTIFICATION:
@@ -2418,9 +2433,10 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
                     break;
 
                 case SM_CODE_IDENTITY_INFORMATION:
-                    sm_puts("SM_CODE_IDENTITY_INFORMATION\n");
+                    sm_puts("SM_CODE_IDENTITY_INFORMATION - IRK : ");
                     setup->sm_key_distribution_received_set |= SM_KEYDIST_FLAG_IDENTITY_INFORMATION;
                     swap128(&packet[1], setup->sm_peer_irk);
+                    sm_pbuf(&packet[1], 16);
                     break;
 
                 case SM_CODE_IDENTITY_ADDRESS_INFORMATION:
@@ -2431,9 +2447,10 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
                     break;
 
                 case SM_CODE_SIGNING_INFORMATION:
-                    sm_puts("SM_CODE_SIGNING_INFORMATION\n");
+                    sm_puts("SM_CODE_SIGNING_INFORMATION - CSRK :");
                     setup->sm_key_distribution_received_set |= SM_KEYDIST_FLAG_SIGNING_IDENTIFICATION;
                     swap128(&packet[1], setup->sm_peer_csrk);
+                    sm_pbuf(&packet[1], 16);
                     break;
                 default:
                     // Unexpected PDU
@@ -2467,6 +2484,10 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
 // Security Manager Client API
 void sm_register_oob_data_callback( int (*get_oob_data_callback)(uint8_t addres_type, bd_addr_t addr, uint8_t * oob_data)){
     sm_get_oob_data = get_oob_data_callback;
+}
+
+void sm_add_event_handler(btstack_packet_callback_registration_t * callback_handler){
+    linked_list_add_tail(&sm_event_handlers, (linked_item_t*) callback_handler);
 }
 
 void sm_register_packet_handler(btstack_packet_handler_t handler){
@@ -2683,7 +2704,7 @@ void sm_just_works_confirm(uint8_t addr_type, bd_addr_t address){
     sm_connection_t * sm_conn = sm_get_connection(addr_type, address);
 
     if (!sm_conn) return;     // wrong connection
-    sm_buf(setup->sm_m_address, 6);
+    sm_pbuf(setup->sm_m_address, 6);
 
     setup->sm_user_response = SM_USER_RESPONSE_CONFIRM;
     if (sm_conn->sm_engine_state == SM_PH1_W4_USER_RESPONSE){
