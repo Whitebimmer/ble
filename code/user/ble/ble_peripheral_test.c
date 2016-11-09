@@ -653,15 +653,15 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     att_write_queue_init();
                     break;
                     
-                case SM_JUST_WORKS_REQUEST: {
-                    puts("SM_JUST_WORKS_REQUEST\n");
+                case SM_EVENT_JUST_WORKS_REQUEST: {
+                    puts("SM_EVENT_JUST_WORKS_REQUEST\n");
                     sm_event_t * event = (sm_event_t *) packet;
                     sm_just_works_confirm(event->addr_type, event->address);
                     break;
                 }
 
-                case SM_PASSKEY_INPUT_NUMBER: {
-                    puts("SM_PASSKEY_INPUT_NUMBER\n");
+                case SM_EVENT_PASSKEY_INPUT_NUMBER: {
+                    puts("SM_EVENT_PASSKEY_INPUT_NUMBER\n");
                     // display number
                     sm_event_t * event = (sm_event_t *) packet;
                     memcpy(master_address, event->address, 6);
@@ -673,20 +673,20 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
                 }
 
-                case SM_PASSKEY_DISPLAY_NUMBER: {
-                    puts("SM_PASSKEY_DISPLAY_NUMBER\n");
+                case SM_EVENT_PASSKEY_DISPLAY_NUMBER: {
+                    puts("SM_EVENT_PASSKEY_DISPLAY_NUMBER\n");
                     // display number
                     sm_event_t * event = (sm_event_t *) packet;
                     printf("\nGAP Bonding %s (%u): Display Passkey '%06u\n", bd_addr_to_str(master_address), master_addr_type, event->passkey);
                     break;
                 }
 
-                case SM_PASSKEY_DISPLAY_CANCEL: 
+                case SM_EVENT_PASSKEY_DISPLAY_CANCEL: 
                     printf("\nGAP Bonding %s (%u): Display cancel\n", bd_addr_to_str(master_address), master_addr_type);
                     break;
 
-                case SM_AUTHORIZATION_REQUEST: {
-                    puts("SM_AUTHORIZATION_REQUEST\n");
+                case SM_EVENT_AUTHORIZATION_REQUEST: {
+                    puts("SM_EVENT_AUTHORIZATION_REQUEST\n");
                     // auto-authorize connection if requested
                     sm_event_t * event = (sm_event_t *) packet;
                     sm_authorization_grant(event->addr_type, event->address);

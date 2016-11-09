@@ -109,9 +109,9 @@ static int       att_ir_lookup_active SEC(.btmem_highly_available) = 0;
 static int       att_handle_value_indication_handle SEC(.btmem_highly_available) = 0;    
 static struct sys_timer att_handle_value_indication_timer SEC(.btmem_highly_available);
 
-static btstack_packet_handler_t att_client_packet_handler SEC(.btmem_highly_available) = NULL;
-
 static btstack_packet_callback_registration_t hci_event_callback_registration SEC(.btmem_highly_available);
+static btstack_packet_callback_registration_t sm_event_callback_registration;
+static btstack_packet_handler_t att_client_packet_handler SEC(.btmem_highly_available) = NULL;
 
 static void att_handle_value_indication_notify_client(uint8_t status, uint16_t client_handle, uint16_t attribute_handle){
     
@@ -204,24 +204,24 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
                     att_server_state = ATT_SERVER_IDLE;
                     break;
                     
-                case SM_IDENTITY_RESOLVING_STARTED:
-                    log_info("SM_IDENTITY_RESOLVING_STARTED");
+                case SM_EVENT_IDENTITY_RESOLVING_STARTED:
+                    log_info("SM_EVENT_IDENTITY_RESOLVING_STARTED");
                     att_ir_lookup_active = 1;
                     break;
-                case SM_IDENTITY_RESOLVING_SUCCEEDED:
+                case SM_EVENT_IDENTITY_RESOLVING_SUCCEEDED:
                     att_ir_lookup_active = 0;
                     att_ir_le_device_db_index = ((sm_event_t*) packet)->le_device_db_index;
-                    log_info("SM_IDENTITY_RESOLVING_SUCCEEDED id %u", att_ir_le_device_db_index);
+                    log_info("SM_EVENT_IDENTITY_RESOLVING_SUCCEEDED id %u", att_ir_le_device_db_index);
                     att_run();
                     break;
-                case SM_IDENTITY_RESOLVING_FAILED:
-                    log_info("SM_IDENTITY_RESOLVING_FAILED");
+                case SM_EVENT_IDENTITY_RESOLVING_FAILED:
+                    log_info("SM_EVENT_IDENTITY_RESOLVING_FAILED");
                     att_ir_lookup_active = 0;
                     att_ir_le_device_db_index = -1;
                     att_run();
                     break;
 
-                case SM_AUTHORIZATION_RESULT: {
+                case SM_EVENT_AUTHORIZATION_RESULT: {
                     sm_event_t * event = (sm_event_t *) packet;
                     if (event->addr_type != att_client_addr_type) break;
                     if (memcmp(event->address, att_client_address, 6) != 0) break;
@@ -398,13 +398,15 @@ static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pa
 }
 
 void att_server_init(uint8_t const * db, att_read_callback_t read_callback, att_write_callback_t write_callback){
-    att_puts("ATT init\n");
+    att_puts("Protocol : att_server_init\n");
 
     // register for HCI Events
     hci_event_callback_registration.callback = &att_event_packet_handler;
     hci_add_event_handler(&hci_event_callback_registration);
 
-    sm_register_packet_handler(att_event_packet_handler);
+    // register for SM events
+    sm_event_callback_registration.callback = &att_event_packet_handler;
+    sm_add_event_handler(&sm_event_callback_registration);
 
     att_dispatch_register_server(att_packet_handler);
 

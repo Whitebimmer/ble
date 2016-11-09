@@ -6,7 +6,7 @@
 #include "RF_ble.h"
 
 
-/* #define LL_DEBUG_EN */
+#define LL_DEBUG_EN
 
 #ifdef LL_DEBUG_EN
 #define ll_putchar(x)        putchar(x)
@@ -117,13 +117,14 @@ static struct link_layer ll SEC(.btmem_highly_available);
 #define COMPLD      0x0000
 #define SUBVERSNR   0x0000
 
+#ifndef	BLE_PRIVACY_EN
+#define LE_FEATURES         (LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE|LE_DATA_PACKET_LENGTH_EXTENSION|CONNECTION_PARAMETER_REQUEST)
+#else
+#define LE_FEATURES         (LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE)
+#endif
 
 static const struct le_read_parameter le_read_param = {
-#ifndef	BLE_PRIVACY_EN
-    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE|LE_DATA_PACKET_LENGTH_EXTENSION, 0, 0, 0, 0, 0, 0, 0},
-#else
-    .features = {LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE, 0, 0, 0, 0, 0, 0, 0},
-#endif
+    .features = {LE_FEATURES, 0, 0, 0, 0, 0, 0, 0},
     .version = {0x06, 0x0f, 0x00, 0x09, 0x61},
     .versnr = VERSNR,
     .compld = COMPLD,
@@ -2240,12 +2241,14 @@ static bool __le_long_term_key_request_event(struct le_link *link, struct ble_rx
         rx->data+1+8);  //ediv
 }
 
-static void __le_remote_connection_parameter_request_event(struct le_link *link, struct ble_rx *rx) 
+static bool __le_remote_connection_parameter_request_event(struct le_link *link, struct ble_rx *rx) 
 {
     u8 *data = &rx->data[1];
 
     ll_puts("LE_REMOTE_CONNECTION_PARAMETER_REQUEST_EVENT\n");
-    __hci_emit_le_meta_event(LE_REMOTE_CONNECTION_PARAMETER_REQUEST_EVENT, 
+    bool res;
+
+    res = __hci_emit_le_meta_event(LE_REMOTE_CONNECTION_PARAMETER_REQUEST_EVENT, 
             "1H2222", 
             0,
             link->handle,
@@ -2253,6 +2256,7 @@ static void __le_remote_connection_parameter_request_event(struct le_link *link,
             READ_BT16(data, 2),
             READ_BT16(data, 4),
             READ_BT16(data, 6));
+    return res;
 }
 
 static void __le_enhanced_connection_complete_event(struct le_link *link, u8 status)
@@ -3044,44 +3048,56 @@ static void rx_data_pdu_handler(struct le_link *link, struct ble_rx *rx)
  *                      LL Control Procedure 
  */
 
+struct connection_param_request{
+    u16 interval_max;
+    u16 interval_min;
+    u16 latency;
+    u16 timeout;
+    u8  PreferredPeriodicity;
+    u16 ReferenceConnEventCount;
+    u16 offset[6];
+};
 
 
+static struct connection_param_request conn_param_req;
 /*
  *      LL Control Procedure - Connection parameter request
  */
 static void __ll_send_conn_param_req_auto(struct le_link *link)
 {
-    u16 interval_max;
-    u16 interval_min;
+    //don't change
+    conn_param_req.latency = link->conn.ll_data.latency;
+    conn_param_req.timeout = link->conn.ll_data.timeout;
 
-    if (link->conn.ll_data.timeout < 
-            (2 * interval_max * (link->conn.ll_data.latency + 1)))
+    //depend on anchor move management
+    conn_param_req.interval_min = link->conn.ll_data.interval;
+    conn_param_req.interval_max = link->conn.ll_data.interval;
+    conn_param_req.PreferredPeriodicity = 0x0;
+    conn_param_req.ReferenceConnEventCount = __ble_ops->get_conn_event(link->hw) + 15; //15 default 
+
+    memset(conn_param_req.offset, 0x0, sizeof(offset));
+    conn_param_req.offset[0] = 0x0003;     //depend on the achor point management, 0x3 is for example
+
+    if (conn_param_req.timeout < 
+            (2 * conn_param_req.interval_max * (conn_param_req.latency + 1)))
     {
-        ASSERT(0, "%s\n", __func__);
+        ASSERT(0, "Conn Param Request err TimeOut in %s\n", __func__);
     }
-
-    u8 PreferredPeriodicity;
-
-    PreferredPeriodicity = interval_max/2;
-    //TO*DO
-    u16 ReferenceConnEventCount;
-
-    u16 offset[6];
 
     ll_send_control_data(link, LL_CONNECTION_PARAM_REQ,
             "222212222222",
-            interval_min,
-            interval_max,
-            link->conn.ll_data.latency,
-            link->conn.ll_data.timeout,
-            PreferredPeriodicity,   //
-            ReferenceConnEventCount,
-            offset[0],
-            offset[1],
-            offset[2],
-            offset[3],
-            offset[4],
-            offset[5]);
+            conn_param_req.interval_min,
+            conn_param_req.interval_max,
+            conn_param_req.latency,
+            conn_param_req.timeout,
+            conn_param_req.PreferredPeriodicity,   //
+            conn_param_req.ReferenceConnEventCount,
+            conn_param_req.offset[0],
+            conn_param_req.offset[1],
+            conn_param_req.offset[2],
+            conn_param_req.offset[3],
+            conn_param_req.offset[4],
+            conn_param_req.offset[5]);
 }
 
 static void __ll_send_conn_param_req(void)
@@ -3092,42 +3108,81 @@ static void __ll_send_conn_param_req(void)
 
     ASSERT(param != NULL, "%s\n", __func__);
 
+    if (param->Supervision_Timeout < 
+            (2 * param->Conn_Interval_Max * (param.Conn_Latency + 1)))
+    {
+        ASSERT(0, "Conn Param Request err TimeOut in %s\n", __func__);
+    }
+
 	struct le_link *link = ll_link_for_handle(param->connection_handle);
 
     ASSERT(link != NULL, "%s\n", __func__);
 
-    u8 PreferredPeriodicity;
+    conn_param_req.interval_min = param->Conn_Interval_Min;
+    conn_param_req.interval_max = param->Conn_Interval_Max;
+    conn_param_req.latency = param->Conn_Latency;
+    conn_param_req.timeout = param->Supervision_Timeout;
+    conn_param_req.PreferredPeriodicity = 0x0;
+    conn_param_req.ReferenceConnEventCount = __ble_ops->get_conn_event(link->hw) + 15; //15 default 
 
-    PreferredPeriodicity = param->Conn_Interval_Max/2;
-
-    //TO*DO
-    u16 ReferenceConnEventCount;
-
-    u16 offset[6];
+    memset(conn_param_req.offset, 0x0, sizeof(offset));
+    conn_param_req.offset[0] = 0x0003;     //depend on the achor point management, 0x3 is for example
 
     ll_send_control_data(link, LL_CONNECTION_PARAM_REQ,
             "222212222222",
-            param->Conn_Interval_Min,
-            param->Conn_Interval_Max,
-            param->Conn_Latency,
-            param->Supervision_Timeout,
-            PreferredPeriodicity,   //
-            ReferenceConnEventCount,
-            offset[0],
-            offset[1],
-            offset[2],
-            offset[3],
-            offset[4],
-            offset[5]);
+            conn_param_req.interval_min,
+            conn_param_req.interval_max,
+            conn_param_req.latency,
+            conn_param_req.timeout,
+            conn_param_req.PreferredPeriodicity,   //
+            conn_param_req.ReferenceConnEventCount,
+            conn_param_req.offset[0],
+            conn_param_req.offset[1],
+            conn_param_req.offset[2],
+            conn_param_req.offset[3],
+            conn_param_req.offset[4],
+            conn_param_req.offset[5]);
 }
 
+enum{
+    CONN_PARAM_REQ_AUTO = 0,
+    CONN_PARAM_REQ_HOST,
+    CONN_PARAM_REQ_REJECT,
+    CONN_PARAM_REQ_INVALID,
+}CONN_PARAM_RES;
 
-static void __ll_receive_connection_param_req(struct le_link *link, struct ble_rx *rx)
+
+static CONN_PARAM_RES __ll_receive_connection_param_req(struct le_link *link, struct ble_rx *rx)
 {
-    //TO*DO
+    CONN_PARAM_RES res;
+
     u8 *data = &rx->data[1];
 
+    /* memset(conn_param_req , 0x0, sizeof(connection_param_request)); */
 
+    //update conn param
+    conn_param_req.interval_min = READ_BT16(data, 0);
+    conn_param_req.interval_max = READ_BT16(data, 2);
+    conn_param_req.latency  = READ_BT16(data, 4);
+    conn_param_req.interval = interval_max;
+    conn_param_req.timeout  = READ_BT16(data, 6);
+
+    conn_param_req.PreferredPeriodicity  = data[8];
+    conn_param_req.ReferenceConnEventCount = READ_BT16(data, 9);
+    for (i = 0; i < 6; i++){
+        conn_param_req.offset[i] = READ_BT16(data, 11 + 2*i);
+    }
+
+    if ((conn_param_req.latency == link->conn.ll_data.latency)
+        && (conn_param_req.timeout == link->conn.ll_data.timeout))
+    {
+        res = CONN_PARAM_REQ_AUTO;
+    }
+    else{
+        res = CONN_PARAM_REQ_HOST;
+    }
+
+    return res;
 }
 
 static void __slave_ll_send_conn_param_rsp_auto(struct le_link *link)
@@ -3177,6 +3232,50 @@ static void __master_ll_receive_connection_param_rsp(struct le_link *link, struc
 static void __master_ll_send_conn_update_req_auto(struct le_link *link)
 {
     //TO*DO
+	struct le_link *link = ll_link_for_handle(param->connection_handle);
+
+    ASSERT(link != NULL, "%s\n", __func__);
+
+    u16 instant = __ble_ops->get_conn_event(link->hw) + 10;
+
+    u16 t;
+
+    //assume interval_min as interval new
+    if (conn_param_req.ReferenceConnEventCount > instant)
+    {
+        /* Δt = ( (ReferenceConnEventCount – Instant)*connIntervalOLD + offset0 ) % connIntervalNEW */
+        t = ((conn_param_req.ReferenceConnEventCount - instant) * link->conn.ll_data.interval + conn_param_req.offset[0]) % conn_param_req.interval_min ; 
+    }
+    else
+    {
+        /* Δt = connIntervalNEW - ( (Instant - ReferenceConnEventCount )*connIntervalOLD - offset0 ) % connIntervalNEW */
+        t = conn_param_req.interval_min - ((instant - conn_param_req.ReferenceConnEventCount)*link->conn.ll_data.interval - offset[0]) % conn_param_req.interval_min;
+    }
+
+    link->conn.ll_data.interval = conn_param_req.interval_min;
+    //Option 1: the first packet sent after the instant by the master is inside the Transmit Window and 3.75 ms from the beginning of the Transmit Window.
+    if (t > 0)
+    link->conn.ll_data.winoffset = t - 3;
+    link->conn.ll_data.winsize = 6;
+
+    //not chanege
+    /* link->conn.ll_data.latency = conn_param_req.latency; */
+    /* link->conn.ll_data.timeout = conn_param_req.timeout; */
+
+    ll_send_control_data(link, LL_CONNECTION_UPDATE_REQ, 
+            "122222",
+            link->conn.ll_data.winsize,
+            link->conn.ll_data.winoffset,
+            link->conn.ll_data.interval,
+            link->conn.ll_data.latency,
+            link->conn.ll_data.timeout,
+            instant);
+
+	__ble_ops->ioctrl(link->hw, BLE_SET_INSTANT, instant);
+
+    __event_oneshot_add(link, __connection_upadte, instant - 1);
+
+    __event_oneshot_add(link, __le_connection_update_complete_event, instant);
 }
 
 
@@ -3294,8 +3393,14 @@ static void le_connection_update(
                 ll_control_data_step_start(master_connection_parameter_request_steps);
             }
         }
-        else{
-            ll_control_data_step_start(master_connection_update_steps);
+        else
+        {
+            if (ROLE_IS_SLAVE(link)){
+                ASSERT(0, "%s\n", __func__);
+            }
+            else{
+                ll_control_data_step_start(master_connection_update_steps);
+            }
         }
     }
     else
@@ -3344,6 +3449,13 @@ static void __slave_ll_send_conn_param_rsp(void)
     __hci_param_free(le_param.remote_conn_param_reply_param);
 }
 
+static const ll_step_extend master_connection_parameter_respond_steps[] = {
+    LL_CONNECTION_PARAM_RSP,
+    LL_CONNECTION_UPDATE_REQ|WAIT_RX,
+
+    LL_DONE(SLAVE_CONNECTION_PARAMETER_RESPOND_STEPS),
+};
+
 static const ll_step_extend slave_connection_parameter_respond_steps[] = {
     LL_CONNECTION_PARAM_RSP,
     LL_CONNECTION_UPDATE_REQ|WAIT_RX,
@@ -3360,13 +3472,19 @@ static void le_connection_paramter_respond(
 
     int malloc_len;
 
-    malloc_len = sizeof(struct remote_connection_parameter_request_reply_parameter);
+    malloc_len = sizeof(struct connection_update_parameter);
     //for futrue used
-    le_param.remote_conn_param_reply_param = __hci_param_malloc(malloc_len);
+    le_param.conn_update_param = __hci_param_malloc(malloc_len);
    
-    memcpy(le_param.remote_conn_param_reply_param, param, malloc_len);
+    memcpy(le_param.conn_update_param, param, malloc_len);
     
-    ll_control_data_step_start(slave_connection_parameter_respond_steps);
+    if (ROLE_IS_SLAVE(link)){
+        ll_control_data_step_start(slave_connection_parameter_respond_steps);
+    }
+    else{
+        //re-use master conn update procedure
+        ll_control_data_step_start(master_connection_update_steps);
+    }
 }
 
 /*
@@ -4422,18 +4540,43 @@ static void master_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 			/* master_conn_param_req(link, data, rx->event_count); */
             if (LE_FEATURES_IS_SUPPORT(CONNECTION_PARAMETER_REQUEST))
             {
-                __ll_receive_connection_param_req(link, rx);
-                //if move anchor point
-                if (0){
+                CONN_PARAM_RES res;
+                res = __ll_receive_connection_param_req(link, rx);
+                switch(res)
+                {
+                case CONN_PARAM_REQ_AUTO:
+                    //if move anchor point
                     __master_ll_send_conn_update_req_auto(link);
-                }else{
-                    __le_remote_connection_parameter_request_event(link, rx);
+                    break;
+                case CONN_PARAM_REQ_HOST:
+                    //change conn param
+                    bool res;
+                    res = __le_remote_connection_parameter_request_event(link, rx);
+                    //is masked
+                    if (res == FALSE)
+                    {
+                        if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                            __ll_send_reject_ind_ext_auto(link, opcode, UNSUPPORTED_REMOTE_FEATURE_UNSUPPORTED_LMP_FEATURE);
+                        }
+                    }
+                    break;
+                case CONN_PARAM_REQ_REJECT:
+                    if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                        __ll_send_reject_ind_ext_auto(link, opcode, UNSUPPORTED_LMP_PARAMETER_VALUE_UNSUPPORTED_LL_PARAMETER_VALUE);
+                    }
+                    break;
+                case CONN_PARAM_REQ_INVALID:
+                    if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                        __ll_send_reject_ind_ext_auto(link, opcode, INVALID_LMP_PARAMETERS_INVALID_LL_PARAMETERS);
+                    }
+                    break;
                 }
-            }else{
-                if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
-                    __ll_send_reject_ind_ext_auto(link, opcode, UNSUPPORTED_REMOTE_FEATURE_UNSUPPORTED_LMP_FEATURE);
+            }
+            else
+            {
                 }else{
-                    ASSERT(0, "%s\n", "M LL_CONNECTION_PARAM_REQ");
+                    __ll_send_unknow_rsp_auto(link, rx);
+                    /* ASSERT(0, "%s\n", "M LL_CONNECTION_PARAM_REQ"); */
                 }
             }
 			break;
@@ -4589,18 +4732,42 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             ll_puts("--LL_CONNECTION_PARAM_REQ\n");
             if (LE_FEATURES_IS_SUPPORT(CONNECTION_PARAMETER_REQUEST))
             {
-                __ll_receive_connection_param_req(link, rx);
-                //if move anchor point
-                if (0){
+                CONN_PARAM_RES res;
+                res = __ll_receive_connection_param_req(link, rx);
+                switch(res)
+                {
+                case CONN_PARAM_REQ_AUTO:
+                    //if move anchor point
                     __slave_ll_send_conn_param_rsp_auto(link);
-                }else{
-                    __le_remote_connection_parameter_request_event(link, rx);
-                    
+                    break;
+                case CONN_PARAM_REQ_HOST:
+                    //change conn param
+                    bool res;
+                    res = __le_remote_connection_parameter_request_event(link, rx);
+                    //is masked
+                    if (res == FALSE)
+                    {
+                        if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                            __ll_send_reject_ind_ext_auto(link, opcode, UNSUPPORTED_REMOTE_FEATURE_UNSUPPORTED_LMP_FEATURE);
+                        }
+                    }
+                    break;
+                case CONN_PARAM_REQ_REJECT:
+                    if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                        __ll_send_reject_ind_ext_auto(link, opcode, UNSUPPORTED_LMP_PARAMETER_VALUE_UNSUPPORTED_LL_PARAMETER_VALUE);
+                    }
+                    break;
+                case CONN_PARAM_REQ_INVALID:
+                    if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                        __ll_send_reject_ind_ext_auto(link, opcode, INVALID_LMP_PARAMETERS_INVALID_LL_PARAMETERS);
+                    }
+                    break;
                 }
             }else{
                 if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
                     __ll_send_reject_ind_ext_auto(link, opcode, UNSUPPORTED_REMOTE_FEATURE_UNSUPPORTED_LMP_FEATURE);
                 }else{
+                    __ll_send_unknow_rsp_auto(link, rx);
                     ASSERT(0, "%s\n", "S LL_CONNECTION_PARAM_REQ");
                 }
             }
@@ -4678,6 +4845,7 @@ void le_ll_push_control_data(u8 opcode, const u8 *param)
             le_connection_paramter_respond(param);
             break;
         case HCI_LE_REMOTE_CONNECTION_PARAMETER_REQUEST_NEGATIVE_REPLY:
+            //only use UNACCEPTABLE_CONNECTION_PARAMETERS 
             le_reject_ext(param);
             break;
         /* case : */

@@ -603,17 +603,120 @@ typedef struct {
 #define BNEP_EVENT_READY_TO_SEND                           0xC5
 
 // data: event(8), address_type(8), address (48), [number(32)]
-#define SM_JUST_WORKS_REQUEST                              0xD0
-#define SM_JUST_WORKS_CANCEL                               0xD1 
-#define SM_PASSKEY_DISPLAY_NUMBER                          0xD2
-#define SM_PASSKEY_DISPLAY_CANCEL                          0xD3
-#define SM_PASSKEY_INPUT_NUMBER                            0xD4
-#define SM_PASSKEY_INPUT_CANCEL                            0xD5
-#define SM_IDENTITY_RESOLVING_STARTED                      0xD6
-#define SM_IDENTITY_RESOLVING_FAILED                       0xD7
-#define SM_IDENTITY_RESOLVING_SUCCEEDED                    0xD8
-#define SM_AUTHORIZATION_REQUEST                           0xD9
-#define SM_AUTHORIZATION_RESULT                            0xDA
+ /**
+  * @format H1B
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_JUST_WORKS_REQUEST                              0xD0
+
+ /**
+  * @format H1B
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_JUST_WORKS_CANCEL                               0xD1 
+
+ /**
+  * @format H1B4
+  * @param handle
+  * @param addr_type
+  * @param address
+  * @param passkey
+  */
+#define SM_EVENT_PASSKEY_DISPLAY_NUMBER                          0xD2
+
+ /**
+  * @format H1B
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_PASSKEY_DISPLAY_CANCEL                          0xD3
+
+ /**
+  * @format H1B421
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_PASSKEY_INPUT_NUMBER                            0xD4
+
+ /**
+  * @format H1B
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_PASSKEY_INPUT_CANCEL                            0xD5
+
+ /**
+  * @format H1B4
+  * @param handle
+  * @param addr_type
+  * @param address
+  * @param passkey
+  */
+#define SM_EVENT_NUMERIC_COMPARISON_REQUEST                      0xD6
+
+ /**
+  * @format H1B4
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_NUMERIC_COMPARISON_CANCEL                       0xD7
+
+ /**
+  * @format H1B
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_IDENTITY_RESOLVING_STARTED                      0xD8
+
+ /**
+  * @format H1B
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_IDENTITY_RESOLVING_FAILED                       0xD9
+
+ /**
+  * @format H1B2
+  * @param handle
+  * @param addr_type
+  * @param address
+  * @param le_device_db_index
+  */
+#define SM_EVENT_IDENTITY_RESOLVING_SUCCEEDED                    0xDA
+
+ /**
+  * @format H1B
+  * @param handle
+  * @param addr_type
+  * @param address
+  */
+#define SM_EVENT_AUTHORIZATION_REQUEST                           0xDB
+
+ /**
+  * @format H1B1
+  * @param handle
+  * @param addr_type
+  * @param address
+  * @param authorization_result
+  */
+#define SM_EVENT_AUTHORIZATION_RESULT                            0xDC
+
+ /**
+  * @format H1
+  * @param handle
+  * @param action see SM_KEYPRESS_*
+  */
+#define SM_EVENT_KEYPRESS_NOTIFICATION                           0xDD
 
 // GAP
 

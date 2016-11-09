@@ -341,15 +341,16 @@ struct read_remote_used_features_paramter{
     u16 connection_handle;
 }__attribute__((packed));
 
-struct remote_connection_parameter_request_reply_parameter {
-    u16 connection_handle;
-	u16 Interval_Min;
-	u16 Interval_Max;
-	u16 Latency;
-	u16 Timeout;
-	u16 Minimum_CE_Length;
-	u16 Maximum_CE_Length;
-}__attribute__((packed));
+//same as connection_update_parameter 
+// struct remote_connection_parameter_request_reply_parameter {
+    // u16 connection_handle;
+	// u16 Interval_Min;
+	// u16 Interval_Max;
+	// u16 Latency;
+	// u16 Timeout;
+	// u16 Minimum_CE_Length;
+	// u16 Maximum_CE_Length;
+// }__attribute__((packed));
 
 struct remote_connection_parameter_request_negative_reply_parameter {
     u16 connection_handle;
