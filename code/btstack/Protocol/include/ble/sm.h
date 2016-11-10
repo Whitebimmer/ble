@@ -123,12 +123,18 @@ typedef struct {
  * @brief Security Manager event
  */
 typedef struct sm_event {
+    //base info
     uint8_t   type;                 ///< See <btstack/hci_cmds.h> SM_...
     uint8_t   addr_type;
+    uint8_t   size;
     bd_addr_t address;
-    uint32_t  passkey;              ///< only used for SM_PASSKEY_DISPLAY_NUMBER 
-    uint16_t  le_device_db_index;   ///< only used for SM_IDENTITY_RESOLVING_..
-    uint8_t   authorization_result; ///< only use for SM_AUTHORIZATION_RESULT
+    hci_con_handle_t con_handle;
+    //extend info
+    union{
+        uint32_t  passkey;              ///< only used for SM_EVENT_PASSKEY_DISPLAY_NUMBER 
+        uint16_t  le_device_db_index;   ///< only used for SM_IDENTITY_RESOLVING_..
+        uint8_t   authorization_result; ///< only use for SM_EVENT_AUTHORIZATION_RESULT
+    };
 } sm_event_t;
 
 /**
@@ -158,7 +164,7 @@ void sm_register_oob_data_callback( int (*get_oob_data_callback)(uint8_t addres_
  *
  * @brief Registers packet handler. Called by att_server.c
  */
-void sm_register_packet_handler(btstack_packet_handler_t handler);
+// void sm_register_packet_handler(btstack_packet_handler_t handler);
 
 /**
  * @brief Limit the STK generation methods. Bonding is stopped if the resulting one isn't in the list

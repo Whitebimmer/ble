@@ -1891,6 +1891,19 @@ void le_hci_run(void)
 			default:
 				break;
 		}
+
+#ifdef ENABLE_BLE
+        if ((connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_SEND_REQUEST) || (connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_CHANGE_HCI_CON_PARAMETERS)){
+            connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_NONE; 
+            
+            uint16_t connection_interval_min = connection->le_conn_interval_min;
+            connection->le_conn_interval_min = 0;
+            puts("hci_le_connection_update\n");
+            le_hci_send_cmd(&hci_le_connection_update, connection->con_handle, connection_interval_min,
+                connection->le_conn_interval_max, connection->le_conn_latency, connection->le_supervision_timeout,
+                0x0000, 0xffff);
+        }
+#endif
 	}
 
 	switch (hci_stack->state){

@@ -814,11 +814,23 @@ static void __set_white_list_addr(struct ble_hw *hw, u8 addr_type, const u8 *add
 static void __set_receive_encrypted(struct ble_hw *hw, u8 rx_enable)
 {
     hw->encrypt.rx_enable = rx_enable;
+    //reset when RECEIVE_UNENCRYPTED    
+    if (hw->encrypt.rx_enable == 0x0)
+    {
+        hw->encrypt.rx_counter_l = 0x0;
+        hw->encrypt.rx_counter_h = 0x0;
+    }
 }
 
 static void __set_send_encrypted(struct ble_hw *hw, u8 tx_enable)
 {
     hw->encrypt.tx_enable = tx_enable;
+    //reset when SEND_UNENCRYPTED       
+    if (hw->encrypt.tx_enable == 0x0)
+    {
+        hw->encrypt.tx_counter_l = 0x0;
+        hw->encrypt.tx_counter_h = 0x0;
+    }
 }
 
 //--------------Privacy
@@ -1470,6 +1482,7 @@ static void ble_hw_decrypt(struct ble_hw *hw, struct ble_rx *rx)
 		memcpy(rx->data, pt, rx->len);
 		if (memcmp(tag, rx->data+rx->len, 4)){
 			rf_deg("no_match: %d\n", rx->llid);
+            printf("\n*******NO Match : %d\n", rx->llid);
 		}
 	}
 }
