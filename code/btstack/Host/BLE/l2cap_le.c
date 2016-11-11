@@ -245,7 +245,7 @@ uint16_t l2cap_max_le_mtu(){
 
 
 int  le_l2cap_can_send_fixed_channel_packet_now(uint16_t handle){
-    return le_hci_can_send_acl_packet_now(handle);
+    return hci_can_send_acl_packet_now(handle);
 }
 // @deprecated
 int le_l2cap_can_send_connectionless_packet_now(void){
@@ -255,20 +255,20 @@ int le_l2cap_can_send_connectionless_packet_now(void){
 
 
 uint8_t *le_l2cap_get_outgoing_buffer(void){
-    return le_hci_get_outgoing_packet_buffer() + COMPLETE_L2CAP_HEADER; // 8 bytes
+    return hci_get_outgoing_packet_buffer() + COMPLETE_L2CAP_HEADER; // 8 bytes
 }
 
 int le_l2cap_reserve_packet_buffer(void){
-    return le_hci_reserve_packet_buffer();
+    return hci_reserve_packet_buffer();
 }
 
 void le_l2cap_release_packet_buffer(void){
-    le_hci_release_packet_buffer();
+    hci_release_packet_buffer();
 }
 
 int le_l2cap_send_prepared_connectionless(uint16_t handle, uint16_t cid, uint16_t len){
     
-    if (!le_hci_is_packet_buffer_reserved()){
+    if (!hci_is_packet_buffer_reserved()){
         log_error("l2cap_send_prepared_connectionless called without reserving packet first");
         return BTSTACK_ACL_BUFFERS_FULL;
     }
@@ -280,7 +280,7 @@ int le_l2cap_send_prepared_connectionless(uint16_t handle, uint16_t cid, uint16_
     
     log_debug("l2cap_send_prepared_connectionless handle %u, cid %u", handle, cid);
     
-    uint8_t *acl_buffer = le_hci_get_outgoing_packet_buffer();
+    uint8_t *acl_buffer = hci_get_outgoing_packet_buffer();
 
     // 0 - Connection handle : PB=00 : BC=00 
     bt_store_16(acl_buffer, 0, handle | (0 << 12) | (0 << 14));
@@ -291,7 +291,7 @@ int le_l2cap_send_prepared_connectionless(uint16_t handle, uint16_t cid, uint16_
     // 6 - L2CAP channel DEST
     bt_store_16(acl_buffer, 6, cid);    
     // send
-    int err = le_hci_send_acl_packet_buffer(len+8);
+    int err = hci_send_acl_packet_buffer(len+8);
 	/* l2cap_puts("l2cap_send_acl_exit\n"); */
         
     return err;
@@ -299,13 +299,13 @@ int le_l2cap_send_prepared_connectionless(uint16_t handle, uint16_t cid, uint16_
 
 int le_l2cap_send_connectionless(uint16_t handle, uint16_t cid, uint8_t *data, uint16_t len){
 
-    if (!le_hci_can_send_acl_packet_now(handle)){
+    if (!hci_can_send_acl_packet_now(handle)){
         log_info("l2cap_send_connectionless cid %u, cannot send", cid);
         return BTSTACK_ACL_BUFFERS_FULL;
     }
 
-    le_hci_reserve_packet_buffer();
-    uint8_t *acl_buffer = le_hci_get_outgoing_packet_buffer();
+    hci_reserve_packet_buffer();
+    uint8_t *acl_buffer = hci_get_outgoing_packet_buffer();
 
     memcpy(&acl_buffer[8], data, len);
 
@@ -320,9 +320,260 @@ static void l2cap_hci_event_handler(uint8_t packet_type, uint16_t cid, uint8_t *
 
 }
 
+static int l2cap_send_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, uint8_t identifier, ...){
+
+    if (!hci_can_send_acl_packet_now(handle)){
+        log_info("l2cap_send_signaling_packet, cannot send");
+        return BTSTACK_ACL_BUFFERS_FULL;
+    }
+    
+    // log_info("l2cap_send_signaling_packet type %u", cmd);
+    hci_reserve_packet_buffer();
+    uint8_t *acl_buffer = hci_get_outgoing_packet_buffer();
+    va_list argptr;
+    va_start(argptr, identifier);
+    uint16_t len = l2cap_create_signaling_classic(acl_buffer, handle, cmd, identifier, argptr);
+    va_end(argptr);
+    // log_info("l2cap_send_signaling_packet con %u!", handle);
+    return hci_send_acl_packet_buffer(len);
+}
+
+#ifdef ENABLE_BLE
+static int l2cap_send_le_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, uint8_t identifier, ...){
+
+    if (!hci_can_send_acl_packet_now(handle)){
+        log_info("l2cap_send_signaling_packet, cannot send");
+        return BTSTACK_ACL_BUFFERS_FULL;
+    }
+    
+    // log_info("l2cap_send_signaling_packet type %u", cmd);
+    hci_reserve_packet_buffer();
+    uint8_t *acl_buffer = hci_get_outgoing_packet_buffer();
+    va_list argptr;
+    va_start(argptr, identifier);
+    uint16_t len = l2cap_create_signaling_le(acl_buffer, handle, cmd, identifier, argptr);
+    va_end(argptr);
+    // log_info("l2cap_send_signaling_packet con %u!", handle);
+    return hci_send_acl_packet_buffer(len);
+}
+#endif
+
 // MARK: L2CAP_RUN
 // process outstanding signaling tasks
 static void l2cap_run(void){
+    
+    // log_info("l2cap_run: entered");
+
+#if 0
+    // check pending signaling responses
+    while (signaling_responses_pending){
+        
+        hci_con_handle_t handle = signaling_responses[0].handle;
+        
+        if (!hci_can_send_acl_packet_now(handle)) break;
+
+        uint8_t  sig_id = signaling_responses[0].sig_id;
+        uint16_t infoType = signaling_responses[0].data;    // INFORMATION_REQUEST
+        uint16_t result   = signaling_responses[0].data;    // CONNECTION_REQUEST, COMMAND_REJECT
+        uint8_t  response_code = signaling_responses[0].code;
+
+        // remove first item before sending (to avoid sending response mutliple times)
+        signaling_responses_pending--;
+        int i;
+        for (i=0; i < signaling_responses_pending; i++){
+            memcpy(&signaling_responses[i], &signaling_responses[i+1], sizeof(l2cap_signaling_response_t));
+        }
+
+        switch (response_code){
+            case CONNECTION_REQUEST:
+                l2cap_send_signaling_packet(handle, CONNECTION_RESPONSE, sig_id, 0, 0, result, 0);
+                // also disconnect if result is 0x0003 - security blocked
+                if (result == 0x0003){
+                    hci_disconnect_security_block(handle);
+                }
+                break;
+            case ECHO_REQUEST:
+                l2cap_send_signaling_packet(handle, ECHO_RESPONSE, sig_id, 0, NULL);
+                break;
+            case INFORMATION_REQUEST:
+                switch (infoType){
+                    case 1: { // Connectionless MTU
+                        uint16_t connectionless_mtu = hci_max_acl_data_packet_length();
+                        l2cap_send_signaling_packet(handle, INFORMATION_RESPONSE, sig_id, infoType, 0, sizeof(connectionless_mtu), &connectionless_mtu);
+                        break;
+                    }
+                    case 2: { // Extended Features Supported
+                        // extended features request supported, features: fixed channels, unicast connectionless data reception
+                        uint32_t features = 0x280;
+                        l2cap_send_signaling_packet(handle, INFORMATION_RESPONSE, sig_id, infoType, 0, sizeof(features), &features);
+                        break;
+                    }
+                    case 3: { // Fixed Channels Supported
+                        uint8_t map[8];
+                        memset(map, 0, 8);
+                        map[0] = 0x06;  // L2CAP Signaling Channel (0x02) + Connectionless reception (0x04)
+                        l2cap_send_signaling_packet(handle, INFORMATION_RESPONSE, sig_id, infoType, 0, sizeof(map), &map);
+                        break;
+                    }
+                    default:
+                        // all other types are not supported
+                        l2cap_send_signaling_packet(handle, INFORMATION_RESPONSE, sig_id, infoType, 1, 0, NULL);
+                        break;                        
+                }
+                break;
+            case COMMAND_REJECT:
+                l2cap_send_signaling_packet(handle, COMMAND_REJECT, sig_id, result, 0, NULL);
+#ifdef ENABLE_BLE
+            case COMMAND_REJECT_LE:
+                l2cap_send_le_signaling_packet(handle, COMMAND_REJECT, sig_id, result, 0, NULL);
+                break;
+#endif
+            default:
+                // should not happen
+                break;
+        }
+    }
+    
+    uint8_t  config_options[4];
+    linked_list_iterator_t it;    
+    linked_list_iterator_init(&it, &l2cap_channels);
+    while (linked_list_iterator_has_next(&it)){
+
+        l2cap_channel_t * channel = (l2cap_channel_t *) linked_list_iterator_next(&it);
+        // log_info("l2cap_run: channel %p, state %u, var 0x%02x", channel, channel->state, channel->state_var);
+        switch (channel->state){
+
+            case L2CAP_STATE_WAIT_INCOMING_SECURITY_LEVEL_UPDATE:
+            case L2CAP_STATE_WAIT_CLIENT_ACCEPT_OR_REJECT:
+                if (!hci_can_send_acl_packet_now(channel->con_handle)) break;
+                if (channel->state_var & L2CAP_CHANNEL_STATE_VAR_SEND_CONN_RESP_PEND) {
+                    channelStateVarClearFlag(channel, L2CAP_CHANNEL_STATE_VAR_SEND_CONN_RESP_PEND);
+                    l2cap_send_signaling_packet(channel->con_handle, CONNECTION_RESPONSE, channel->remote_sig_id, channel->local_cid, channel->remote_cid, 1, 0);
+                }
+                break;
+
+            case L2CAP_STATE_WILL_SEND_CREATE_CONNECTION:
+                if (!hci_can_send_command_packet_now()) break;
+                // send connection request - set state first
+                channel->state = L2CAP_STATE_WAIT_CONNECTION_COMPLETE;
+                // BD_ADDR, Packet_Type, Page_Scan_Repetition_Mode, Reserved, Clock_Offset, Allow_Role_Switch
+                hci_send_cmd(&hci_create_connection, channel->address, hci_usable_acl_packet_types(), 0, 0, 0, 1); 
+                break;
+                
+            case L2CAP_STATE_WILL_SEND_CONNECTION_RESPONSE_DECLINE:
+                if (!hci_can_send_acl_packet_now(channel->con_handle)) break;
+                channel->state = L2CAP_STATE_INVALID;
+                l2cap_send_signaling_packet(channel->con_handle, CONNECTION_RESPONSE, channel->remote_sig_id, channel->local_cid, channel->remote_cid, channel->reason, 0);
+                // discard channel - l2cap_finialize_channel_close without sending l2cap close event
+                l2cap_stop_rtx(channel);
+                linked_list_iterator_remove(&it);
+                btstack_memory_l2cap_channel_free(channel); 
+                break;
+                
+            case L2CAP_STATE_WILL_SEND_CONNECTION_RESPONSE_ACCEPT:
+                if (!hci_can_send_acl_packet_now(channel->con_handle)) break;
+                channel->state = L2CAP_STATE_CONFIG;
+                channelStateVarSetFlag(channel, L2CAP_CHANNEL_STATE_VAR_SEND_CONF_REQ);
+                l2cap_send_signaling_packet(channel->con_handle, CONNECTION_RESPONSE, channel->remote_sig_id, channel->local_cid, channel->remote_cid, 0, 0);
+                break;
+                
+            case L2CAP_STATE_WILL_SEND_CONNECTION_REQUEST:
+                if (!hci_can_send_acl_packet_now(channel->con_handle)) break;
+                // success, start l2cap handshake
+                channel->local_sig_id = l2cap_next_sig_id();
+                channel->state = L2CAP_STATE_WAIT_CONNECT_RSP;
+                l2cap_send_signaling_packet( channel->con_handle, CONNECTION_REQUEST, channel->local_sig_id, channel->psm, channel->local_cid);
+                l2cap_start_rtx(channel);
+                break;
+            
+            case L2CAP_STATE_CONFIG:
+                if (!hci_can_send_acl_packet_now(channel->con_handle)) break;
+                if (channel->state_var & L2CAP_CHANNEL_STATE_VAR_SEND_CONF_RSP){
+                    uint16_t flags = 0;
+                    channelStateVarClearFlag(channel, L2CAP_CHANNEL_STATE_VAR_SEND_CONF_RSP);
+                    if (channel->state_var & L2CAP_CHANNEL_STATE_VAR_SEND_CONF_RSP_CONT) {
+                        flags = 1;
+                    } else {
+                        channelStateVarSetFlag(channel, L2CAP_CHANNEL_STATE_VAR_SENT_CONF_RSP);
+                    }
+                    if (channel->state_var & L2CAP_CHANNEL_STATE_VAR_SEND_CONF_RSP_INVALID){
+                        l2cap_send_signaling_packet(channel->con_handle, CONFIGURE_RESPONSE, channel->remote_sig_id, channel->remote_cid, flags, L2CAP_CONF_RESULT_UNKNOWN_OPTIONS, 0, NULL);
+                    } else if (channel->state_var & L2CAP_CHANNEL_STATE_VAR_SEND_CONF_RSP_MTU){
+                        config_options[0] = 1; // MTU
+                        config_options[1] = 2; // len param
+                        little_endian_store_16( (uint8_t*)&config_options, 2, channel->remote_mtu);
+                        l2cap_send_signaling_packet(channel->con_handle, CONFIGURE_RESPONSE, channel->remote_sig_id, channel->remote_cid, flags, 0, 4, &config_options);
+                        channelStateVarClearFlag(channel,L2CAP_CHANNEL_STATE_VAR_SEND_CONF_RSP_MTU);
+                    } else {
+                        l2cap_send_signaling_packet(channel->con_handle, CONFIGURE_RESPONSE, channel->remote_sig_id, channel->remote_cid, flags, 0, 0, NULL);
+                    }
+                    channelStateVarClearFlag(channel, L2CAP_CHANNEL_STATE_VAR_SEND_CONF_RSP_CONT);
+                }
+                else if (channel->state_var & L2CAP_CHANNEL_STATE_VAR_SEND_CONF_REQ){
+                    channelStateVarClearFlag(channel, L2CAP_CHANNEL_STATE_VAR_SEND_CONF_REQ);
+                    channelStateVarSetFlag(channel, L2CAP_CHANNEL_STATE_VAR_SENT_CONF_REQ);
+                    channel->local_sig_id = l2cap_next_sig_id();
+                    config_options[0] = 1; // MTU
+                    config_options[1] = 2; // len param
+                    little_endian_store_16( (uint8_t*)&config_options, 2, channel->local_mtu);
+                    l2cap_send_signaling_packet(channel->con_handle, CONFIGURE_REQUEST, channel->local_sig_id, channel->remote_cid, 0, 4, &config_options);
+                    l2cap_start_rtx(channel);
+                }
+                if (l2cap_channel_ready_for_open(channel)){
+                    channel->state = L2CAP_STATE_OPEN;
+                    l2cap_emit_channel_opened(channel, 0);  // success
+                }
+                break;
+
+            case L2CAP_STATE_WILL_SEND_DISCONNECT_RESPONSE:
+                if (!hci_can_send_acl_packet_now(channel->con_handle)) break;
+                channel->state = L2CAP_STATE_INVALID;
+                l2cap_send_signaling_packet( channel->con_handle, DISCONNECTION_RESPONSE, channel->remote_sig_id, channel->local_cid, channel->remote_cid);   
+                // we don't start an RTX timer for a disconnect - there's no point in closing the channel if the other side doesn't respond :)
+                l2cap_finialize_channel_close(channel);  // -- remove from list
+                break;
+                
+            case L2CAP_STATE_WILL_SEND_DISCONNECT_REQUEST:
+                if (!hci_can_send_acl_packet_now(channel->con_handle)) break;
+                channel->local_sig_id = l2cap_next_sig_id();
+                channel->state = L2CAP_STATE_WAIT_DISCONNECT;
+                l2cap_send_signaling_packet( channel->con_handle, DISCONNECTION_REQUEST, channel->local_sig_id, channel->remote_cid, channel->local_cid);   
+                break;
+            default:
+                break;
+        }
+    }
+#endif
+
+#ifdef ENABLE_BLE
+    linked_list_iterator_t it;    
+    // send l2cap con paramter update if necessary
+    hci_connections_get_iterator(&it);
+    while(linked_list_iterator_has_next(&it)){
+        hci_connection_t * connection = (hci_connection_t *) linked_list_iterator_next(&it);
+        if (connection->address_type != BD_ADDR_TYPE_LE_PUBLIC && connection->address_type != BD_ADDR_TYPE_LE_RANDOM) continue;
+        if (!hci_can_send_acl_packet_now(connection->con_handle)) continue;
+        switch (connection->le_con_parameter_update_state){
+            case CON_PARAMETER_UPDATE_SEND_REQUEST:
+                connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_NONE;
+                l2cap_send_le_signaling_packet(connection->con_handle, CONNECTION_PARAMETER_UPDATE_REQUEST, connection->le_con_param_update_identifier,
+                                               connection->le_conn_interval_min, connection->le_conn_interval_max, connection->le_conn_latency, connection->le_supervision_timeout);
+                break;
+            case CON_PARAMETER_UPDATE_SEND_RESPONSE:
+                connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_CHANGE_HCI_CON_PARAMETERS;
+                l2cap_send_le_signaling_packet(connection->con_handle, CONNECTION_PARAMETER_UPDATE_RESPONSE, connection->le_con_param_update_identifier, 0);
+                break;
+            case CON_PARAMETER_UPDATE_DENY:
+                connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_NONE;
+                l2cap_send_le_signaling_packet(connection->con_handle, CONNECTION_PARAMETER_UPDATE_RESPONSE, connection->le_con_param_update_identifier, 1);
+                break;
+            default:
+                break;
+        }
+    }
+#endif
+
+    // log_info("l2cap_run: exit");
 }
 
 static void l2cap_emit_connection_parameter_update_response(hci_con_handle_t con_handle, uint16_t result){

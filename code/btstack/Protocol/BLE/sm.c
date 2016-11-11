@@ -976,6 +976,7 @@ static int sm_stk_generation_init(sm_connection_t * sm_conn){
     // decide on STK generation method
     sm_setup_tk();
     log_info("SMP: generation method %u", setup->sm_stk_generation_method);
+    sm_printf("SMP: generation method %u", setup->sm_stk_generation_method);
 
     // check if STK generation method is acceptable by client
     if (!sm_validate_stk_generation_method()) return SM_REASON_AUTHENTHICATION_REQUIREMENTS;
@@ -1137,7 +1138,7 @@ static void sm_run(void){
 
     /* sm_puts("A-"); */
     // assert that we can send at least commands
-    if (!le_hci_can_send_command_packet_now()) return;
+    if (!hci_can_send_command_packet_now()) return;
 
     //
     // non-connection related behaviour
@@ -1224,7 +1225,7 @@ static void sm_run(void){
     // CSRK Lookup
     // -- if csrk lookup ready, find connection that require csrk lookup
     if (sm_address_resolution_idle()){
-        le_hci_connections_get_iterator(&it);
+        hci_connections_get_iterator(&it);
         while(linked_list_iterator_has_next(&it)){
             hci_connection_t * hci_connection = (hci_connection_t *) linked_list_iterator_next(&it);
             sm_connection_t  * sm_connection  = &hci_connection->sm_connection;
@@ -1300,7 +1301,7 @@ static void sm_run(void){
     while (1) {
 
         // Find connections that requires setup context and make active if no other is locked
-        le_hci_connections_get_iterator(&it);
+        hci_connections_get_iterator(&it);
         /* printf("sm_active_connection  %x\n", sm_active_connection ); */
         /* printf("linked_list_iterator_has_next(&it) %x\n", linked_list_iterator_has_next(&it)); */
         while(!sm_active_connection && linked_list_iterator_has_next(&it)){
@@ -2400,7 +2401,7 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
 
             // handle user cancel pairing?
             if (setup->sm_user_response == SM_USER_RESPONSE_DECLINE){
-				sm_puts("cancel_pairing\n");
+				sm_puts("SM_USER_RESPONSE_DECLINE\n");
                 setup->sm_pairing_failed_reason = SM_REASON_PASSKEYT_ENTRY_FAILED;
                 sm_conn->sm_engine_state = SM_GENERAL_SEND_PAIRING_FAILED;
                 break;
@@ -2408,9 +2409,9 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
 
             // wait for user action?
             if (setup->sm_user_response == SM_USER_RESPONSE_PENDING){
-				sm_puts("wait_user_action\n");
+				sm_puts("SM_USER_RESPONSE_PENDING . . .\n");
                 sm_conn->sm_engine_state = SM_PH1_W4_USER_RESPONSE;
-                sm_just_works_confirm1(sm_conn);
+                /* sm_just_works_confirm1(sm_conn); */
                 break;
             }
 
