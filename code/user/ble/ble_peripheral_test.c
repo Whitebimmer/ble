@@ -696,6 +696,13 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     printf("ATT_HANDLE_VALUE_INDICATION_COMPLETE status %u\n", packet[2]);
                     break;
 
+                /***************L2CAP layer Event****************/
+                case L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_RESPONSE:
+                    puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_RESPONSE\n");
+                    break;
+                case L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST:
+                    puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST\n");
+                    break;
                 default:
                     puts("default\n");
                     break;
@@ -1035,6 +1042,8 @@ int btstack_main()
 
     // set up l2cap_le
     le_l2cap_init();
+    //monitor l2cap event
+    l2cap_register_packet_handler(app_packet_handler);
     
     // setup le device db
     le_device_db_init();

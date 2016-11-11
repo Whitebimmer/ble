@@ -348,16 +348,43 @@ static void l2cap_register_signaling_response(hci_con_handle_t handle, uint8_t c
     }
 }
 
-static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size ){
-        
+static void l2cap_dispatch_cid(uint16_t cid, uint8_t *packet, uint16_t size)
+{
     // Get Channel ID
     uint16_t channel_id = READ_L2CAP_CHANNEL_ID(packet); 
     hci_con_handle_t handle = READ_ACL_CONNECTION_HANDLE(packet);
 
-    l2cap_puts("Layer - l2cap_acl_handler: ");
-    
-    switch (channel_id) {
-            
+    switch(cid)
+    {
+        case L2CAP_CID_SIGNALING:
+            l2cap_puts("L2CAP_CID_SIGNALING\n");
+            /*-TODO-*/
+            break;
+        case L2CAP_CID_CONNECTIONLESS_CHANNEL:
+            l2cap_puts("L2CAP_CID_CONNECTIONLESS_CHANNEL\n");
+            if (fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback) 
+            {
+                (*fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback)(UCD_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
+            }
+            break;
+        default:
+            if (((cid >= 4) && (cid <= 6))
+                && ((cid >= 8) && (cid <= 0x3e)))
+            {
+                puts("L2CAP ACL-U link Reserved CID\n");
+            }    
+            break;
+    }
+}
+
+static void le_l2cap_dispatch_cid(uint16_t cid, uint8_t *packet, uint16_t size)
+{
+    // Get Channel ID
+    uint16_t channel_id = READ_L2CAP_CHANNEL_ID(packet); 
+    hci_con_handle_t handle = READ_ACL_CONNECTION_HANDLE(packet);
+
+    switch(cid)
+    {
         case L2CAP_CID_ATTRIBUTE_PROTOCOL:
             l2cap_puts("L2CAP_CID_ATTRIBUTE_PROTOCOL\n");
             if (fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_ATTRIBUTE_PROTOCOL].callback)
@@ -373,23 +400,17 @@ static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
                 (*fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_SECURITY_MANAGER_PROTOCOL].callback)(SM_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
             }
             break;
-        case L2CAP_CID_CONNECTIONLESS_CHANNEL:
-            l2cap_puts("L2CAP_CID_SECURITY_MANAGER_PROTOCOL\n");
-            if (fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback) 
-            {
-                (*fixed_channels[L2CAP_FIXED_CHANNEL_TABLE_INDEX_CONNECTIONLESS_CHANNEL].callback)(UCD_DATA_PACKET, handle, &packet[COMPLETE_L2CAP_HEADER], size-COMPLETE_L2CAP_HEADER);
-            }
-            break;
-
         case L2CAP_CID_SIGNALING_LE: {
-            l2cap_puts("L2CAP_CID_SIGNALING_LE\n");
+            l2cap_puts("L2CAP_CID_SIGNALING_LE : ");
             switch (packet[8]){
                 case CONNECTION_PARAMETER_UPDATE_RESPONSE: {
+                    l2cap_puts(" - CONNECTION_PARAMETER_UPDATE_RESPONSE");
                     uint16_t result = READ_BT_16(packet, 12);
                     l2cap_emit_connection_parameter_update_response(handle, result);
                     break;
                 }
                 case CONNECTION_PARAMETER_UPDATE_REQUEST: {
+                    l2cap_puts(" - CONNECTION_PARAMETER_UPDATE_REQUEST ");
                     uint8_t event[10];
                     event[0] = L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST;
                     event[1] = 8;
@@ -426,7 +447,13 @@ static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
                             connection->le_conn_interval_max = le_conn_interval_max;
                             connection->le_conn_latency = le_conn_latency;
                             connection->le_supervision_timeout = le_supervision_timeout;
+                            l2cap_puts(" - CON_PARAMETER_UPDATE_SEND_RESPONSE\n");
+                            l2cap_printf("Conn_Interval_Min : %x\n", connection->le_conn_interval_min);
+                            l2cap_printf("Conn_Interval_Max : %x\n", connection->le_conn_interval_max);
+                            l2cap_printf("Conn_Latency : %x\n", connection->le_conn_latency);
+                            l2cap_printf("Supervision_Timeout : %x\n", connection->le_supervision_timeout);
                         } else {
+                            l2cap_puts(" - CON_PARAMETER_UPDATE_DENY\n");
                             connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_DENY;
                         }
                         connection->le_con_param_update_identifier = packet[COMPLETE_L2CAP_HEADER + 1];
@@ -445,17 +472,44 @@ static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
             }
             break;
         }
+            
+        default: 
+            if (((cid >= 1) && (cid <= 3))
+                && ((cid >= 7) && (cid <= 0x1f))
+                && (cid == 0x3f)
+                && ((cid >= 0x80) && (cid <= 0xfffff)))
+            {
+                puts("L2CAP LE-U link Reserved CID\n");
+            }    
+            break;
+    }
+}
+
+static void l2cap_acl_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size ){
         
+    // Get Channel ID
+    uint16_t channel_id = READ_L2CAP_CHANNEL_ID(packet); 
+    hci_con_handle_t handle = READ_ACL_CONNECTION_HANDLE(packet);
+
+    l2cap_puts("Layer - l2cap_acl_handler: ");
+    
+    //ACL-U logical link for Classic
+    l2cap_dispatch_cid(channel_id, packet, size);
+
+#ifdef ENABLE_BLE
+    //LE-U logical link for LE
+    le_l2cap_dispatch_cid(channel_id, packet, size);
+#endif
+    //0x0040~0xffff Dynamically allocated
+    switch (channel_id) {
+        case 0:
+            l2cap_puts("L2CAP Not Allowed CID\n");
+            break;
         //Vendor command
         case 0xff:
             l2cap_puts("********my_acl_packet********\n");
             l2cap_buf(packet, size);
             break;
-            
-            
-        default: {
-            break;
-        }
     }
 }
 

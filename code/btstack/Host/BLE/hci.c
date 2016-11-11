@@ -1893,7 +1893,7 @@ void le_hci_run(void)
 		}
 
 #ifdef ENABLE_BLE
-        if ((connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_SEND_REQUEST) || (connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_CHANGE_HCI_CON_PARAMETERS)){
+        if (connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_CHANGE_HCI_CON_PARAMETERS){
             connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_NONE; 
             
             uint16_t connection_interval_min = connection->le_conn_interval_min;
