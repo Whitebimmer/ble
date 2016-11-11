@@ -833,7 +833,7 @@ static void sm_trigger_user_response(sm_connection_t * sm_conn){
             }
             break;
         case PK_INIT_INPUT:
-			sm_puts("sm : init_input\n");
+			sm_puts("sm : PK_INIT_INPUT\n");
             if (sm_conn->sm_role){
                 sm_notify_client_passkey(SM_EVENT_PASSKEY_DISPLAY_NUMBER, sm_conn->sm_handle, sm_conn->sm_peer_addr_type, sm_conn->sm_peer_address, big_endian_read_32(setup->sm_tk, 12)); 
             } else {
