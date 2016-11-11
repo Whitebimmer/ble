@@ -77,6 +77,7 @@ objs += \
    btstack/Host/common/linked_list.o \
    btstack/Host/common/memory_pool.o \
    btstack/Host/common/utils.o \
+   btstack/Host/common/l2cap_signaling.o \
    btstack/Protocol/BLE/att.o \
    btstack/Protocol/BLE/att_dispatch.o \
    btstack/Protocol/BLE/att_server.o \

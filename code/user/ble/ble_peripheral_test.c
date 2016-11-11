@@ -548,7 +548,7 @@ static uint8_t gap_adv_type(void){
 
 
 static void gap_run(void){
-    if (!le_hci_can_send_command_packet_now()) return;
+    if (!hci_can_send_command_packet_now()) return;
 
     printf("todos : %x\n", todos);
     if (todos & DISABLE_ADVERTISEMENTS){
@@ -677,13 +677,16 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     puts("SM_EVENT_PASSKEY_DISPLAY_NUMBER\n");
                     // display number
                     sm_event_t * event = (sm_event_t *) packet;
-                    printf("\nGAP Bonding %s (%u): Display Passkey '%06u\n", bd_addr_to_str(master_address), master_addr_type, event->passkey);
+                    printf("\nGAP Bonding %s (%u): Display Passkey '%06u\n", bd_addr_to_str(event->address), event->addr_type, event->passkey);
                     break;
                 }
 
-                case SM_EVENT_PASSKEY_DISPLAY_CANCEL: 
-                    printf("\nGAP Bonding %s (%u): Display cancel\n", bd_addr_to_str(master_address), master_addr_type);
+                case SM_EVENT_PASSKEY_DISPLAY_CANCEL: {
+
+                    sm_event_t * event = (sm_event_t *) packet;
+                    printf("\nGAP Bonding %s (%u): Display cancel\n", bd_addr_to_str(event->address), event->addr_type);
                     break;
+                  }
 
                 case SM_EVENT_AUTHORIZATION_REQUEST: {
                     puts("SM_EVENT_AUTHORIZATION_REQUEST\n");
@@ -696,6 +699,13 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     printf("ATT_HANDLE_VALUE_INDICATION_COMPLETE status %u\n", packet[2]);
                     break;
 
+                /***************L2CAP layer Event****************/
+                case L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_RESPONSE:
+                    puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_RESPONSE\n");
+                    break;
+                case L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST:
+                    puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST\n");
+                    break;
                 default:
                     puts("default\n");
                     break;
@@ -807,8 +817,8 @@ int stdin_process(char cmd){
         ui_passkey = ui_passkey * 10 + buffer - '0';
         ui_digits_for_passkey--;
         if (ui_digits_for_passkey == 0){
-            printf("\nSending Passkey '%06x'\n", ui_passkey);
             sm_passkey_input(master_addr_type, master_address, ui_passkey);
+            printf("\nUser Sending Passkey %s (%u): n '%06x'", bd_addr_to_str(master_address), master_addr_type, ui_passkey);
         }
         return 0;
     }
@@ -1035,6 +1045,8 @@ int btstack_main()
 
     // set up l2cap_le
     le_l2cap_init();
+    //monitor l2cap event
+    l2cap_register_packet_handler(app_packet_handler);
     
     // setup le device db
     le_device_db_init();
@@ -1054,11 +1066,12 @@ int btstack_main()
 	/*gap_random_address_set_update_period(300000);
 	gap_random_address_set_mode(GAP_RANDOM_ADDRESS_RESOLVABLE);*/
     strcpy(gap_device_name, "BTstack-bq");
+
+    sm_io_capabilities =  "IO_CAPABILITY_NO_INPUT_NO_OUTPUT";
     sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
     /* sm_set_io_capabilities(IO_CAPABILITY_DISPLAY_ONLY); */
-    /*sm_io_capabilities =  "IO_CAPABILITY_NO_INPUT_NO_OUTPUT";*/
     sm_set_authentication_requirements(SM_AUTHREQ_BONDING|SM_AUTHREQ_MITM_PROTECTION);
-    /*sm_register_oob_data_callback(get_oob_data_callback);*/
+    sm_register_oob_data_callback(get_oob_data_callback);
     sm_set_encryption_key_size_range(sm_min_key_size, 16);
     /*sm_test_set_irk(test_irk);*/
 
@@ -1072,10 +1085,6 @@ int btstack_main()
 
 	/*sm_test();*/
     return 0;
-}
-void ble_initial_setup(void)
-{
-    le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
 }
 
 /*******************************************************************/

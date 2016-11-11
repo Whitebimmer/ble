@@ -164,7 +164,7 @@ void gap_le_set_connection_parameter_range(le_connection_parameter_range_t * ran
  * @return hci connections iterator
  */
 
-void le_hci_connections_get_iterator(linked_list_iterator_t *it){
+void hci_connections_get_iterator(linked_list_iterator_t *it){
     linked_list_iterator_init(it, &hci_stack->connections);
 }
 
@@ -359,11 +359,11 @@ uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
 }
 
 // new functions replacing hci_can_send_packet_now[_using_packet_buffer]
-int le_hci_can_send_command_packet_now(void){
+int hci_can_send_command_packet_now(void){
 	//TODO
 	/* return 1; */
     if (hci_stack->hci_packet_buffer_reserved) {
-        hci_puts("le_hci_can_send_command_packet_now\n");
+        hci_puts("hci_can_send_command_packet_now\n");
         return 0;   
     }
 
@@ -389,23 +389,23 @@ int le_hci_can_send_prepared_acl_packet_now(hci_con_handle_t con_handle) {
     return hci_number_free_acl_slots_for_handle(con_handle) > 0;
 }
 
-int le_hci_can_send_acl_packet_now(hci_con_handle_t con_handle){
+int hci_can_send_acl_packet_now(hci_con_handle_t con_handle){
 	//TODO
 	/* return 1; */
     if (hci_stack->hci_packet_buffer_reserved) {
-        hci_puts("le_hci_can_send_acl_packet_now\n");
+        hci_puts("hci_can_send_acl_packet_now\n");
         return 0;   
     }
     return le_hci_can_send_prepared_acl_packet_now(con_handle);
 }
 
 // used for internal checks in l2cap[-le].c
-int le_hci_is_packet_buffer_reserved(void){
+int hci_is_packet_buffer_reserved(void){
     return hci_stack->hci_packet_buffer_reserved;
 }
 
 // reserves outgoing packet buffer. @returns 1 if successful
-int le_hci_reserve_packet_buffer(void){
+int hci_reserve_packet_buffer(void){
     if (hci_stack->hci_packet_buffer_reserved) {
         log_error("hci_reserve_packet_buffer called but buffer already reserved");
         return 0;
@@ -414,7 +414,7 @@ int le_hci_reserve_packet_buffer(void){
     return 1;    
 }
 
-void le_hci_release_packet_buffer(void){
+void hci_release_packet_buffer(void){
     hci_stack->hci_packet_buffer_reserved = 0;
 }
 
@@ -500,7 +500,7 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
 
     // release buffer now for synchronous transport
     if (hci_transport_synchronous()){
-        le_hci_release_packet_buffer();
+        hci_release_packet_buffer();
         // notify upper stack that iit might be possible to send again
         uint8_t event[] = { DAEMON_EVENT_HCI_PACKET_SENT, 0};
         /* hci_stack->packet_handler(HCI_EVENT_PACKET, &event[0], sizeof(event)); */
@@ -512,7 +512,7 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
 }
 
 // pre: caller has reserved the packet buffer
-int le_hci_send_acl_packet_buffer(int size){
+int hci_send_acl_packet_buffer(int size){
 	/* hci_puts("le_send_acl\n"); */
 
     // log_info("hci_send_acl_packet_buffer size %u", size);
@@ -526,13 +526,13 @@ int le_hci_send_acl_packet_buffer(int size){
 
     // check for free places on Bluetooth module
     if (!le_hci_can_send_prepared_acl_packet_now(con_handle)) {
-        le_hci_release_packet_buffer();
+        hci_release_packet_buffer();
         return BTSTACK_ACL_BUFFERS_FULL;
     }
 
     hci_connection_t *connection = le_hci_connection_for_handle( con_handle);
     if (!connection) {
-        le_hci_release_packet_buffer();
+        hci_release_packet_buffer();
         return 0;
     }
     hci_connection_timestamp(connection);
@@ -666,7 +666,7 @@ static void hci_shutdown_connection(hci_connection_t *conn){
 }
 
 
-uint8_t* le_hci_get_outgoing_packet_buffer(void){
+uint8_t* hci_get_outgoing_packet_buffer(void){
     // hci packet buffer is >= acl data packet length
     return hci_stack->hci_packet_buffer;
 }
@@ -1754,8 +1754,8 @@ void le_hci_run(void)
 		}
 	}
 
-	if (!le_hci_can_send_command_packet_now()) {
-        hci_puts("le_hci_run - le_hci_can_send_command_packet_now\n");
+	if (!hci_can_send_command_packet_now()) {
+        hci_puts("le_hci_run - hci_can_send_command_packet_now\n");
         return;   
     }
 
@@ -1893,7 +1893,7 @@ void le_hci_run(void)
 		}
 
 #ifdef ENABLE_BLE
-        if ((connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_SEND_REQUEST) || (connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_CHANGE_HCI_CON_PARAMETERS)){
+        if (connection->le_con_parameter_update_state == CON_PARAMETER_UPDATE_CHANGE_HCI_CON_PARAMETERS){
             connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_NONE; 
             
             uint16_t connection_interval_min = connection->le_conn_interval_min;
@@ -1919,8 +1919,8 @@ void le_hci_run(void)
 			if (connection){
 
 				// send disconnect
-                if (!le_hci_can_send_command_packet_now()) {
-                    hci_puts("le_hci_run2 - le_hci_can_send_command_packet_now\n");
+                if (!hci_can_send_command_packet_now()) {
+                    hci_puts("le_hci_run2 - hci_can_send_command_packet_now\n");
                     return;   
                 }
 
@@ -1957,8 +1957,8 @@ void le_hci_run(void)
 					if (connection){
 
 						// send disconnect
-                        if (!le_hci_can_send_command_packet_now()) {
-                            hci_puts("le_hci_run3 - le_hci_can_send_command_packet_now\n");
+                        if (!hci_can_send_command_packet_now()) {
+                            hci_puts("le_hci_run3 - hci_can_send_command_packet_now\n");
                             return;   
                         }
 
@@ -1972,8 +1972,8 @@ void le_hci_run(void)
 
 					if (hci_classic_supported()){
 						// disable page and inquiry scan
-                        if (!le_hci_can_send_command_packet_now()) {
-                            hci_puts("le_hci_run4 - le_hci_can_send_command_packet_now\n");
+                        if (!hci_can_send_command_packet_now()) {
+                            hci_puts("le_hci_run4 - hci_can_send_command_packet_now\n");
                             return;   
                         }
 
@@ -2073,7 +2073,7 @@ void hci_disconnect_security_block(hci_con_handle_t con_handle){
  */
 int le_hci_send_cmd(const hci_cmd_t *cmd, ...)
 {
-    if (!le_hci_can_send_command_packet_now()){ 
+    if (!hci_can_send_command_packet_now()){ 
         hci_deg("hci_send_cmd called but cannot send packet now");
         return 0;
     }
@@ -2084,7 +2084,7 @@ int le_hci_send_cmd(const hci_cmd_t *cmd, ...)
     
     hci_stack->last_cmd_opcode = cmd->opcode;
 
-    le_hci_reserve_packet_buffer();
+    hci_reserve_packet_buffer();
     uint8_t * packet = hci_stack->hci_packet_buffer;
 
     va_list argptr;
@@ -2099,7 +2099,7 @@ int le_hci_send_cmd(const hci_cmd_t *cmd, ...)
 /**********************************huayue add************************/
 int pc_h4_send_hci_cmd(void *data, u16 size)
 {
-    le_hci_reserve_packet_buffer();
+    hci_reserve_packet_buffer();
     uint8_t * packet = hci_stack->hci_packet_buffer;
 
     memcpy(packet, data, size);

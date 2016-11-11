@@ -113,8 +113,8 @@ static struct link_layer ll SEC(.btmem_highly_available);
 #define LL_RESOLVING_LIST_SIZE          1
 
 
-#define VERSNR      0x1
-#define COMPLD      0x0000
+#define VERSNR      0x8         //Core Spec 4.2
+#define COMPLD      0x0078      //Nike Inc
 #define SUBVERSNR   0x0000
 
 #ifndef	BLE_PRIVACY_EN
