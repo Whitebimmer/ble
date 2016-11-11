@@ -68,16 +68,16 @@ objs += \
    btstack/Controller/BLE/ble_hci.o \
    btstack/Controller/BLE/ble_main.o \
    btstack/Controller/BLE/link_layer.o \
-   btstack/Host/BLE/hci.o \
-   btstack/Host/BLE/h4_transport.o \
-   btstack/Host/BLE/l2cap_le.o \
    btstack/Host/BLE/le_device_db_memory.o \
-   btstack/Host/BLE/btstack_memory.o \
+   btstack/Host/common/btstack_memory.o \
+   btstack/Host/common/hci.o \
+   btstack/Host/common/h4_transport.o \
+   btstack/Host/common/l2cap.o \
+   btstack/Host/common/l2cap_signaling.o \
    btstack/Host/common/hci_cmds.o \
    btstack/Host/common/linked_list.o \
    btstack/Host/common/memory_pool.o \
    btstack/Host/common/utils.o \
-   btstack/Host/common/l2cap_signaling.o \
    btstack/Protocol/BLE/att.o \
    btstack/Protocol/BLE/att_dispatch.o \
    btstack/Protocol/BLE/att_server.o \
