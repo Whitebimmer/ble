@@ -82,7 +82,7 @@ objs += \
    btstack/Protocol/BLE/att_dispatch.o \
    btstack/Protocol/BLE/att_server.o \
    btstack/Protocol/BLE/sm.o \
-   btstack/LL_TS_4_2_1_hci_test.o \
+   #btstack/LL_TS_4_2_1_hci_test.o \
    btstack/hcitest_uart.o \
 
 obj_S = \

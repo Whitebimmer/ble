@@ -275,6 +275,14 @@ static btstack_packet_handler_t sm_client_packet_handler = NULL;
 
 // horizontal: initiator capabilities
 // vertial:    responder capabilities
+// IO Capability Values
+/* typedef enum { */
+    /* IO_CAPABILITY_DISPLAY_ONLY = 0, */
+    /* IO_CAPABILITY_DISPLAY_YES_NO, */
+    /* IO_CAPABILITY_KEYBOARD_ONLY, */
+    /* IO_CAPABILITY_NO_INPUT_NO_OUTPUT, */
+    /* IO_CAPABILITY_KEYBOARD_DISPLAY, // not used by secure simple pairing */
+/* } io_capability_t; */
 static const stk_generation_method_t stk_generation_method[5][5] = {
     { JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
     { JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
@@ -1169,6 +1177,7 @@ static void sm_run(void){
                 sm_key_t d1_prime;
                 sm_d1_d_prime(3, 0, d1_prime);  // plaintext
                 dkg_next_state();
+				printf_buf(d1_prime, 16);
                 sm_aes128_start(sm_persistent_ir, d1_prime, NULL);
                 return;
             }
@@ -1339,7 +1348,7 @@ static void sm_run(void){
                     /* sm_pbuf(&setup->sm_m_preq, sizeof(sm_pairing_packet_t)); */
                     err = sm_stk_generation_init(sm_connection);
                     if (err){
-						sm_puts("sm_stk:err\n");
+						sm_puts(" -- SM_GENERAL_SEND_PAIRING_FAILED\n");
                         setup->sm_pairing_failed_reason = err;
                         sm_connection->sm_engine_state = SM_GENERAL_SEND_PAIRING_FAILED;
                         break;
@@ -1410,7 +1419,6 @@ static void sm_run(void){
         // responding state
         sm_printf("sm run machine 2: %x\n", connection->sm_engine_state);
         switch (connection->sm_engine_state){
-
 
             // general
             case SM_GENERAL_SEND_PAIRING_FAILED: {
@@ -1493,6 +1501,8 @@ static void sm_run(void){
                 // already busy?
                 if (sm_aes128_state == SM_AES128_ACTIVE) break;
                 sm_next_responding_state(connection);
+                puts("\n SM TK  ");
+                printf_buf(setup->sm_tk, 16);
                 sm_aes128_start(setup->sm_tk, setup->sm_c1_t3_value, connection);
                 return;
             /* LTK = d1(ER, DIV, 0) */
