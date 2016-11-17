@@ -181,6 +181,10 @@ enum
 }LE_EVENT_MASK;
 
 
+/********************************************************************************/
+/*
+ *                  Link Layer State Machine
+ */
 enum {
     SLAVE_CONNECTION_PARAMETER_REQUEST_STEPS = 0,     
     MASTER_CONNECTION_PARAMETER_REQUEST_STEPS,

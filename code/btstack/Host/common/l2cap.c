@@ -599,6 +599,28 @@ static void l2cap_register_signaling_response(hci_con_handle_t handle, uint8_t c
     }
 }
 
+/**
+ * @brief Request an update of the connection parameter for a given LE connection
+ * @param handle
+ * @param conn_interval_min (unit: 1.25ms)
+ * @param conn_interval_max (unit: 1.25ms)
+ * @param conn_latency
+ * @param supervision_timeout (unit: 10ms)
+ * @returns 0 if ok
+ */
+int gap_request_connection_parameter_update(hci_con_handle_t con_handle, uint16_t conn_interval_min,
+    uint16_t conn_interval_max, uint16_t conn_latency, uint16_t supervision_timeout){
+    hci_connection_t * connection = le_hci_connection_for_handle(con_handle);
+    if (!connection) return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
+    connection->le_conn_interval_min = conn_interval_min;
+    connection->le_conn_interval_max = conn_interval_max;
+    connection->le_conn_latency = conn_latency;
+    connection->le_supervision_timeout = supervision_timeout;
+    connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_SEND_REQUEST;
+    l2cap_run();
+    return 0;
+}
+
 static void l2cap_dispatch_cid(uint16_t cid, uint8_t *packet, uint16_t size)
 {
     // Get Channel ID

@@ -156,8 +156,8 @@ static uint8_t test_irk[] =  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0
 static char * sm_io_capabilities = NULL;
 static int sm_mitm_protection = 0;
 static int sm_have_oob_data = 0;
-static uint8_t * sm_oob_data = (uint8_t *) "0123456789012345"; // = { 0x30...0x39, 0x30..0x35}
-// static uint8_t sm_oob_data[] = { 0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  };
+/* static uint8_t * sm_oob_data = (uint8_t *) "0123456789012345"; // = { 0x30...0x39, 0x30..0x35} */
+static uint8_t sm_oob_data[] = { 0x01, 0x02, 0x03, 0x00,  0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  };
 static int sm_min_key_size = 7;
 
 static int master_addr_type;
@@ -1030,6 +1030,7 @@ int stdin_process(char cmd){
 static int get_oob_data_callback(uint8_t addres_type, bd_addr_t addr, uint8_t * oob_data){
     if(!sm_have_oob_data) return 0;
     memcpy(oob_data, sm_oob_data, 16);
+    puts("\nOOB Data : ");printf_buf(oob_data, 16);
     return 1;
 }
 
@@ -1070,7 +1071,7 @@ int btstack_main()
     sm_io_capabilities =  "IO_CAPABILITY_NO_INPUT_NO_OUTPUT";
     sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
     /* sm_set_io_capabilities(IO_CAPABILITY_DISPLAY_ONLY); */
-    sm_set_authentication_requirements(SM_AUTHREQ_BONDING|SM_AUTHREQ_MITM_PROTECTION);
+    /* sm_set_authentication_requirements(SM_AUTHREQ_MITM_PROTECTION); */
     sm_register_oob_data_callback(get_oob_data_callback);
     sm_set_encryption_key_size_range(sm_min_key_size, 16);
     /*sm_test_set_irk(test_irk);*/

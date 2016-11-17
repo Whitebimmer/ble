@@ -2462,6 +2462,7 @@ int gap_update_connection_parameters(hci_con_handle_t con_handle, uint16_t conn_
     return 0;
 }
 
+#if 0
 /**
  * @brief Request an update of the connection parameter for a given LE connection
  * @param handle
@@ -2483,6 +2484,7 @@ int gap_request_connection_parameter_update(hci_con_handle_t con_handle, uint16_
     le_hci_run();
     return 0;
 }
+#endif
 
 /**
  * @brief Set Advertisement Data
