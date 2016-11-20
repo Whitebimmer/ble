@@ -711,7 +711,10 @@ static void gatt_client_run(){
 
         gatt_client_t * peripheral = (gatt_client_t *) it;
 
-        if (!le_l2cap_can_send_fixed_channel_packet_now(peripheral->handle)) return;
+        /* if (!le_l2cap_can_send_fixed_channel_packet_now(peripheral->handle)) return; */
+        if (!att_dispatch_client_can_send_now(peripheral->handle)){
+            att_dispatch_client_request_can_send_now_event(peripheral->handle);
+        }
 
         // log_info("- handle_peripheral_list, mtu state %u, client state %u", peripheral->mtu_state, peripheral->gatt_client_state);
         

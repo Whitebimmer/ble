@@ -6,7 +6,7 @@
 #include "RF_ble.h"
 
 
-#define LL_DEBUG_EN
+/* #define LL_DEBUG_EN */
 
 #ifdef LL_DEBUG_EN
 #define ll_putchar(x)        putchar(x)

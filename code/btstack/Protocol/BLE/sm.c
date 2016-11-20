@@ -624,6 +624,7 @@ static void sm_address_resolution_start_lookup(uint8_t addr_type, hci_con_handle
     sm_address_resolution_test = 0;
     sm_address_resolution_mode = mode;
     sm_address_resolution_context = context;
+    sm_printf("notify : SM_EVENT_IDENTITY_RESOLVING_STARTED : %u / %s\n", sm_address_resolution_addr_type, bd_addr_to_str(&sm_address_resolution_address));
     sm_notify_client_base(SM_EVENT_IDENTITY_RESOLVING_STARTED, con_handle, addr_type, addr);
 }
 
@@ -1001,6 +1002,7 @@ static void sm_address_resolution_handle_event(address_resolution_event_t event)
     int matched_device_id = sm_address_resolution_test;
     address_resolution_mode_t mode = sm_address_resolution_mode;
     void * context = sm_address_resolution_context;
+    sm_printf("\nsm : resolution mode : %02x - ", mode);
     
     // reset context
     sm_address_resolution_mode = ADDRESS_RESOLUTION_IDLE;
@@ -1012,12 +1014,15 @@ static void sm_address_resolution_handle_event(address_resolution_event_t event)
     uint16_t ediv;
     switch (mode){
         case ADDRESS_RESOLUTION_GENERAL:
+            puts("ADDRESS_RESOLUTION_GENERAL\n");
             break;
         case ADDRESS_RESOLUTION_FOR_CONNECTION:
+            puts("ADDRESS_RESOLUTION_FOR_CONNECTION - ");
             sm_connection = (sm_connection_t *) context;
             con_handle = sm_connection->sm_handle;
             switch (event){
                 case ADDRESS_RESOLUTION_SUCEEDED:
+                    puts("ADDRESS_RESOLUTION_SUCEEDED - ");
                     sm_connection->sm_irk_lookup_state = IRK_LOOKUP_SUCCEEDED;
                     sm_connection->sm_le_db_index = matched_device_id;
                     log_info("ADDRESS_RESOLUTION_SUCEEDED, index %d", sm_connection->sm_le_db_index);
@@ -1027,12 +1032,15 @@ static void sm_address_resolution_handle_event(address_resolution_event_t event)
                     sm_connection->sm_bonding_requested = 0;
                     le_device_db_encryption_get(sm_connection->sm_le_db_index, &ediv, NULL, NULL, NULL, NULL, NULL);
                     if (ediv){
+                        sm_puts("SM_INITIATOR_PH0_HAS_LTK - ");
                         sm_connection->sm_engine_state = SM_INITIATOR_PH0_HAS_LTK;
                     } else {
+                        sm_puts("SM_INITIATOR_PH1_W2_SEND_PAIRING_REQUEST - ");
                         sm_connection->sm_engine_state = SM_INITIATOR_PH1_W2_SEND_PAIRING_REQUEST;
                     }
                     break;
                 case ADDRESS_RESOLUTION_FAILED:
+                    puts("ADDRESS_RESOLUTION_FAILED - ");
                     sm_connection->sm_irk_lookup_state = IRK_LOOKUP_FAILED;
                     if (sm_connection->sm_role) break;
                     if (!sm_connection->sm_bonding_requested && !sm_connection->sm_security_request_received) break;
@@ -1048,9 +1056,11 @@ static void sm_address_resolution_handle_event(address_resolution_event_t event)
 
     switch (event){
         case ADDRESS_RESOLUTION_SUCEEDED:
+            puts("notify : ADDRESS_RESOLUTION_SUCEEDED\n");
             sm_notify_client_index(SM_EVENT_IDENTITY_RESOLVING_SUCCEEDED, con_handle, sm_address_resolution_addr_type, sm_address_resolution_address, matched_device_id);
             break;
         case ADDRESS_RESOLUTION_FAILED:
+            puts("notify : ADDRESS_RESOLUTION_FAILED\n");
             sm_notify_client_base(SM_EVENT_IDENTITY_RESOLVING_FAILED, con_handle, sm_address_resolution_addr_type, sm_address_resolution_address);
             break;
     }
@@ -1267,11 +1277,12 @@ static void sm_run(void){
             sm_key_t irk;
             le_device_db_info(sm_address_resolution_test, &addr_type, addr, irk);
             log_info("device type %u, addr: %s", addr_type, bd_addr_to_str(addr));
-            sm_printf("sm : device type %u, addr: %s", addr_type, bd_addr_to_str(addr));
+
+            sm_printf("sm : resolution addr type %u, addr: %s\n", sm_address_resolution_addr_type , bd_addr_to_str(sm_address_resolution_address));
 
             if (sm_address_resolution_addr_type == addr_type && memcmp(addr, sm_address_resolution_address, 6) == 0){
                 log_info("LE Device Lookup: found CSRK by { addr_type, address} ");
-                sm_printf("sm : LE Device Lookup: found CSRK by { addr_type, address} ");
+                sm_printf("sm : LE Device Lookup: found CSRK by { addr_type, address} \n");
                 sm_address_resolution_handle_event(ADDRESS_RESOLUTION_SUCEEDED);
                 break;
             }
@@ -1336,6 +1347,9 @@ static void sm_run(void){
 						sm_puts("send\n");
                         le_l2cap_send_connectionless(sm_connection->sm_handle, L2CAP_CID_SECURITY_MANAGER_PROTOCOL, (uint8_t*) buffer, sizeof(buffer));
                     }
+                    else{
+                        l2cap_request_can_send_fix_channel_now_event(sm_connection->sm_handle, L2CAP_CID_SECURITY_MANAGER_PROTOCOL);
+                    }
                     // don't lock setup context yet
                     done = 0;
                     break;
@@ -1362,6 +1376,7 @@ static void sm_run(void){
                     sm_connection->sm_engine_state = SM_RESPONDER_PH1_SEND_PAIRING_RESPONSE;
                     break;
                 case SM_INITIATOR_PH0_HAS_LTK:
+					sm_puts(" - SM_INITIATOR_PH0_HAS_LTK\n");
                     // fetch data from device db - incl. authenticated/authorized/key size. Note all sm_connection_X require encryption enabled
                     le_device_db_encryption_get(sm_connection->sm_le_db_index, &setup->sm_peer_ediv, setup->sm_peer_rand, setup->sm_peer_ltk,
                                                 &encryption_key_size, &authenticated, &authorized);
@@ -1406,7 +1421,10 @@ static void sm_run(void){
         if (sm_active_connection == 0) return;
 
         // assert that we could send a SM PDU - not needed for all of the following
-        if (!le_l2cap_can_send_fixed_channel_packet_now(sm_active_connection)) return;
+        if (!le_l2cap_can_send_fixed_channel_packet_now(sm_active_connection)){
+            l2cap_request_can_send_fix_channel_now_event(sm_active_connection, L2CAP_CID_SECURITY_MANAGER_PROTOCOL);
+             return; 
+        } 
 
         sm_connection_t * connection = sm_get_connection_for_handle(sm_active_connection);
         if (!connection) return;
@@ -1652,7 +1670,7 @@ static void sm_run(void){
             case SM_PH3_DISTRIBUTE_KEYS:
 				/* printf("SM_PH3_DISTRIBUTE_KEYS: %x\n",  */
 						/* setup->sm_key_distribution_send_set); */
-                sm_puts("SM_PH3_DISTRIBUTE_KEYS : - "); 
+                sm_puts("\nSM_PH3_DISTRIBUTE_KEYS : - "); 
                 if (setup->sm_key_distribution_send_set &   SM_KEYDIST_FLAG_ENCRYPTION_INFORMATION){
                     setup->sm_key_distribution_send_set &= ~SM_KEYDIST_FLAG_ENCRYPTION_INFORMATION;
                     uint8_t buffer[17];
@@ -2031,7 +2049,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
     sm_connection_t  * sm_conn;
     uint16_t handle;
 
-    sm_puts("Layer - sm_event_packet_handler :");    
+    sm_puts("\nLayer - sm_event_packet_handler :");    
     switch (packet_type) {
             
 		case HCI_EVENT_PACKET:
@@ -2083,11 +2101,11 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                             // just connected -> everything else happens in sm_run()
                             if (sm_conn->sm_role){
                                 // slave - state already could be SM_RESPONDER_SEND_SECURITY_REQUEST instead
-								sm_puts(" = slave\n");
+								sm_puts(" = SLAVE\n");
                                 if (sm_conn->sm_engine_state == SM_GENERAL_IDLE){
                                     if (sm_slave_request_security) {
                                         // request security if requested by app
-										sm_puts("rsp_security\n");
+										sm_puts("SM_RESPONDER_SEND_SECURITY_REQUEST\n");
                                         sm_conn->sm_engine_state = SM_RESPONDER_SEND_SECURITY_REQUEST;
                                     } else {
                                         // otherwise, wait for pairing request 
@@ -2097,14 +2115,14 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                                 break;
                             } else {
                                 // master
-								sm_puts("master\n");
+								sm_puts(" = MASTER\n");
                                 //sm_conn->sm_engine_state = SM_INITIATOR_CONNECTED;
 								sm_conn->sm_engine_state = SM_INITIATOR_PH1_W2_SEND_PAIRING_REQUEST; 
                             }
                             break;
 
                         case HCI_SUBEVENT_LE_LONG_TERM_KEY_REQUEST:
-							sm_puts("hci_le_long_term_key_request\n");
+							sm_puts("HCI_SUBEVENT_LE_LONG_TERM_KEY_REQUEST\n");
                             handle = READ_BT_16(packet, 3);
                             sm_conn = sm_get_connection_for_handle(handle);
                             if (!sm_conn) break;
@@ -2227,7 +2245,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
 			}
 
             // forward packet to higher layer
-            sm_dispatch_event(packet_type, 0, packet, size);
+            /* sm_dispatch_event(packet_type, 0, packet, size); */
 	}
 
     sm_run();
@@ -2267,8 +2285,9 @@ static void sm_pdu_received_in_wrong_state(sm_connection_t * sm_conn){
 
 static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
 
+    //L2cap request can send fix channel now OK
     if (packet_type == HCI_EVENT_PACKET && packet[0] == L2CAP_EVENT_CAN_SEND_NOW){
-        /* sm_run(); */
+        sm_run();
     }
 
     //filter out l2cap event
@@ -2458,6 +2477,7 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pac
                     setup->sm_key_distribution_received_set |= SM_KEYDIST_FLAG_MASTER_IDENTIFICATION;
                     setup->sm_peer_ediv = READ_BT_16(packet, 1);
                     swap64(&packet[3], setup->sm_peer_rand);
+                    sm_pbuf(&packet[3], 8);
                     break;
 
                 case SM_CODE_IDENTITY_INFORMATION:

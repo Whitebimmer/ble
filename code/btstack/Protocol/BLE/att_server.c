@@ -66,7 +66,7 @@
 #include "ble/core.h"
 
 /************************ATT DEBUG CONTROL**************************/
-#define ATT_DEBUG
+/* #define ATT_DEBUG */
 
 #ifdef ATT_DEBUG
 #define att_puts     puts
@@ -151,7 +151,7 @@ static void att_handle_value_indication_timeout(struct sys_timer *ts){
 
 static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     
-    att_puts("Layer - att_event_packet_handler :");    
+    puts("\nLayer - att_event_packet_handler :");    
     switch (packet_type) {
             
         case HCI_EVENT_PACKET:
@@ -206,9 +206,11 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
                     
                 case SM_EVENT_IDENTITY_RESOLVING_STARTED:
                     log_info("SM_EVENT_IDENTITY_RESOLVING_STARTED");
+                    puts("SM_EVENT_IDENTITY_RESOLVING_STARTED\n");
                     att_ir_lookup_active = 1;
                     break;
                 case SM_EVENT_IDENTITY_RESOLVING_SUCCEEDED:
+                    puts("SM_EVENT_IDENTITY_RESOLVING_SUCCEEDED\n");
                     att_ir_lookup_active = 0;
                     att_ir_le_device_db_index = ((sm_event_t*) packet)->le_device_db_index;
                     log_info("SM_EVENT_IDENTITY_RESOLVING_SUCCEEDED id %u", att_ir_le_device_db_index);
@@ -216,12 +218,14 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
                     break;
                 case SM_EVENT_IDENTITY_RESOLVING_FAILED:
                     log_info("SM_EVENT_IDENTITY_RESOLVING_FAILED");
+                    puts("SM_EVENT_IDENTITY_RESOLVING_FAILED\n");
                     att_ir_lookup_active = 0;
                     att_ir_le_device_db_index = -1;
                     att_run();
                     break;
 
                 case SM_EVENT_AUTHORIZATION_RESULT: {
+                    puts("SM_EVENT_AUTHORIZATION_RESULT\n");
                     sm_event_t * event = (sm_event_t *) packet;
                     if (event->addr_type != att_client_addr_type) break;
                     if (memcmp(event->address, att_client_address, 6) != 0) break;

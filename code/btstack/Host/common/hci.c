@@ -302,21 +302,23 @@ static void dummy_handler(uint8_t packet_type,
     /*return connection->num_acl_packets_sent;*/
 /*}*/
 
-uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
+static int hci_number_free_acl_slots_for_connection_type(bd_addr_type_t address_type){
     
     int num_packets_sent_classic = 0;
     int num_packets_sent_le = 0;
 
-    bd_addr_type_t address_type = BD_ADDR_TYPE_UNKNOWN;
-
     linked_item_t *it;
     for (it = (linked_item_t *) hci_stack->connections; it ; it = it->next){
         hci_connection_t * connection = (hci_connection_t *) it;
-		num_packets_sent_le += connection->num_acl_packets_sent;
-        // ignore connections that are not open, e.g., in state RECEIVED_DISCONNECTION_COMPLETE
-        if (connection->con_handle == con_handle && connection->state == OPEN){
-            address_type = connection->address_type;
+        if (connection->address_type == BD_ADDR_TYPE_CLASSIC){
+            num_packets_sent_classic += connection->num_acl_packets_sent;
+        } else{
+            num_packets_sent_le += connection->num_acl_packets_sent;
         }
+        // ignore connections that are not open, e.g., in state RECEIVED_DISCONNECTION_COMPLETE
+        /* if (connection->con_handle == con_handle && connection->state == OPEN){ */
+            /* address_type = connection->address_type; */
+        /* } */
     }
 
     int free_slots_classic = hci_stack->acl_packets_total_num - num_packets_sent_classic;
@@ -348,6 +350,8 @@ uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
         case BD_ADDR_TYPE_UNKNOWN:
             log_error("hci_number_free_acl_slots: handle 0x%04x not in connection list", con_handle);
             return 0;
+        case BD_ADDR_TYPE_CLASSIC:
+            return free_slots_classic;
 
         default:
            if (hci_stack->le_acl_packets_total_num){
@@ -357,6 +361,17 @@ uint8_t hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
            return free_slots_classic; 
     }
 }
+
+int hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle){
+    // get connection type
+    hci_connection_t * connection = le_hci_connection_for_handle(con_handle);
+    if (!connection){
+        log_error("hci_number_free_acl_slots: handle 0x%04x not in connection list", con_handle);
+        return 0;
+    }
+    return hci_number_free_acl_slots_for_connection_type(connection->address_type);
+}
+
 
 // new functions replacing hci_can_send_packet_now[_using_packet_buffer]
 int hci_can_send_command_packet_now(void){
@@ -388,6 +403,28 @@ int le_hci_can_send_prepared_acl_packet_now(hci_con_handle_t con_handle) {
     }
     return hci_number_free_acl_slots_for_handle(con_handle) > 0;
 }
+
+static int hci_transport_can_send_prepared_packet_now(uint8_t packet_type){
+    // check for async hci transport implementations
+    if (!hci_stack->hci_transport->can_send_packet_now) return 1;
+    return hci_stack->hci_transport->can_send_packet_now(packet_type);
+}
+
+static int hci_can_send_prepared_acl_packet_for_address_type(bd_addr_type_t address_type){
+    if (!hci_transport_can_send_prepared_packet_now(HCI_ACL_DATA_PACKET)) return 0;
+    return hci_number_free_acl_slots_for_connection_type(address_type) > 0;
+}
+
+int hci_can_send_acl_classic_packet_now(void){
+    if (hci_stack->hci_packet_buffer_reserved) return 0;
+    return hci_can_send_prepared_acl_packet_for_address_type(BD_ADDR_TYPE_CLASSIC);
+}
+
+int hci_can_send_acl_le_packet_now(void){
+    if (hci_stack->hci_packet_buffer_reserved) return 0;
+    return hci_can_send_prepared_acl_packet_for_address_type(BD_ADDR_TYPE_LE_PUBLIC);
+}
+
 
 int hci_can_send_acl_packet_now(hci_con_handle_t con_handle){
 	//TODO

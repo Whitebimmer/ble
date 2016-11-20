@@ -1210,6 +1210,8 @@ static int ble_hci_h4_can_send_packet_now(u8 packet_type)
 REGISTER_H4_CONTROLLER_FLOW_CONTROL(ble_hci_h4_can_send_packet_now);
 
 
+/* #define ACL_RX_DEBUG_ENABLE */
+/* #define EVENT_DEBUG_ENABLE */
 
 
 static int ble_hci_h4_upload_data()
@@ -1221,16 +1223,20 @@ static int ble_hci_h4_upload_data()
 
 	event = lbuf_pop(hci_event_buf);
 	if (event){
+#ifdef EVENT_DEBUG_ENABLE
         puts("\nEMIT : EVENT ");
         printf_buf(event, sizeof(*event)+event->len);
+#endif
 		ble_h4_packet_handler(HCI_EVENT_PACKET, event, sizeof(*event)+event->len);
 		lbuf_free(event);
 	}
 
 	rx = lbuf_pop(hci_rx_buf);
 	if (rx) {
+#ifdef ACL_RX_DEBUG_ENABLE
         puts("\nRX : ACL ");
         printf_buf(rx->head, rx->len+sizeof(rx->head));
+#endif
 		ble_h4_packet_handler(HCI_ACL_DATA_PACKET, rx->head, rx->len+sizeof(rx->head));
 		lbuf_free(rx);
 	}
