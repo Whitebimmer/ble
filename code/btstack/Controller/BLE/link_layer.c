@@ -429,6 +429,12 @@ static ll_step ll_control_last_step()
     }
 }
 
+static void ll_control_procedure_finish(struct le_link *link, struct ble_rx *rx, struct ble_tx *tx)
+{
+    ll_control_procedure_finish_emit_event(link, rx, tx);
+    ll_ctrl_step.steps_ptr = NULL;
+}
+
 static void ll_control_step_verify(ll_step_extend step_ex, 
         struct le_link *link, struct ble_rx *rx, struct ble_tx *tx)
 {
@@ -451,8 +457,7 @@ static void ll_control_step_verify(ll_step_extend step_ex,
             || (step_ex == (LL_UNKNOWN_RSP|WAIT_RX)))
     {
         ll_puts("\n##ll break reson : ");ll_u32hex(step_ex);
-        ll_control_procedure_finish_emit_event(link, rx, tx);
-        ll_ctrl_step.steps_ptr = NULL;
+        ll_control_procedure_finish(link, rx, tx);
         return;
     }
 
@@ -468,8 +473,7 @@ static void ll_control_step_verify(ll_step_extend step_ex,
         {
             ll_puts("##ll finish\n");
             //procedure finish
-            ll_control_procedure_finish_emit_event(link, rx, tx);
-            ll_ctrl_step.steps_ptr = NULL;
+            ll_control_procedure_finish(link, rx, tx);
         }
         return;
     }
@@ -1954,6 +1958,7 @@ static void __set_ll_adv_state(struct le_link *link)
         case LL_ADV_SCAN_IND:
             min = (min < 100) ? 100 : min; 
             max = (max < 100) ? 100 : max; 
+            adv->interval = min;
             adv->pdu_interval = 20;    //us
             adv->adv_type = ADV_SCAN_IND;
             break;
@@ -2118,7 +2123,6 @@ static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 {
     struct le_link *link = (struct le_link*)sys_timer_get_user(timer);
 	struct ble_rx rx ;
-   	rx.data[0]=CONNECTION_TIMEOUT;	
     ASSERT(link != NULL, "%s\n", __func__);
 
     puts("LL Supervision Timeout\n");
@@ -2129,7 +2133,9 @@ static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 
     sys_timer_remove(&link->timeout);
 
-    __hci_event_emit(DISCONNECT_STEPS, link,&rx);
+   	rx.data[0] = CONNECTION_TIMEOUT;	
+
+    __hci_event_emit(DISCONNECT_STEPS, link, &rx);
 
     //resume ll thread
     thread_resume(&ll.ll_thread);
@@ -3767,6 +3773,9 @@ static const ll_step_extend version_ind_steps[] = {
 static void le_version_exchange(
         const struct read_remote_version_paramter *param)
 {
+	struct le_link *link = ll_link_for_handle(param->connection_handle);
+
+    ASSERT(link != NULL, "%s\n", __func__);
     int malloc_len;
 
     malloc_len = sizeof(struct read_remote_version_paramter);
@@ -4805,6 +4814,52 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 			break;
 	}
 }
+
+static void (*response_timeout_callback);
+
+static void ll_response_timeout_handler(struct sys_timer *timer)
+{
+    struct le_link *link = sys_timer_get_user(timer);
+
+    ASSERT(link != NULL, "%s\n", __func__);
+
+    __set_link_state(link, LL_DISCONNECT);
+
+    //emit LE Event
+    ll_control_procedure_finish(link, );
+
+   	rx.data[0] = LMP_RESPONSE_TIMEOUT_LL_RESPONSE_TIMEOUT;	
+
+    __hci_event_emit(DISCONNECT_STEPS, link, &rx);
+    //resume ll thread
+    thread_resume(&ll.ll_thread);
+}
+
+static void ll_response_timeout_start(u8 opcode, const u8 *param)
+{
+    void (*response_timeout_handler)(struct sys_timer *timer);
+
+    struct le_link *link;
+
+    switch(opcode)
+    {
+        case HCI_LE_READ_REMOTE_USED_FEATURES:
+           break; 
+
+        defalut:
+           break;
+    }
+
+    //If the procedure response timeout timer reaches 40 seconds, the connection is considered lost
+    sys_timer_register(&link->response_timeout, 40000, response_timeout_handler);
+    sys_timer_set_user(&link->response_timeout, link);
+}
+
+static void ll_response_timeout_stop(struct le_link *link)
+{
+    sys_timer_remove(&link->response_timeout);
+}
+
 
 void le_ll_push_control_data(u8 opcode, const u8 *param)
 {
