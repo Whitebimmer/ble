@@ -278,6 +278,17 @@ int main()
     bd_ram1_memory_init();
     bd_memory_init();
 
+#ifdef LE_CONTROLLER_MODE
+    ble_main();
+    h4_uart_init();
+
+    while(1)
+    {
+        h4_uart_data_rxloop();
+
+        task_run_loop();
+    }
+#else
     if(bt_power_is_poweroff_post())
     {
 		ble_main();
@@ -303,6 +314,8 @@ int main()
     /* __asm__ volatile ("mov %0,icfg" : "=r"(tmp)); */
     /* printf("icfg = %08x \n", tmp); */
     puts("------------BLE 4.2 X start run loop-----------\n");
+
+
     while(1)
     {
 		int c;
@@ -319,7 +332,6 @@ int main()
             if (c)
             {
                 /* printf("user cmd = %s \n", c); */
-
                 stdin_process(c);
             }
             if (TASK_IS_AWAKE())
@@ -331,6 +343,7 @@ int main()
     }
 
     return 0;
+#endif
 }
 
 
