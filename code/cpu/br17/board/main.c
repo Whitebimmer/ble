@@ -313,7 +313,7 @@ int main()
     /* printf("ie1 = %08x \n", tmp); */
     /* __asm__ volatile ("mov %0,icfg" : "=r"(tmp)); */
     /* printf("icfg = %08x \n", tmp); */
-    puts("------------BLE 4.2 X start run loop-----------\n");
+    puts("------------BLE 4.2 start run loop-----------\n");
 
 
     while(1)
