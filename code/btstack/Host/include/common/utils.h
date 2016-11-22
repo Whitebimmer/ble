@@ -83,10 +83,6 @@ typedef enum {
 	AUTHENTICATED_COMBINATION_KEY_GENERATED_FROM_P256,   // SSP Passkey, Number confirm, OOB
 } link_key_type_t;
 
-/**
- * @brief 128 bit key used with AES128 in Security Manager
- */
-typedef uint8_t sm_key_t[16];
 
 /**
  * @brief The device name type

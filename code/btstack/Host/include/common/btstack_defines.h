@@ -57,6 +57,10 @@ typedef struct {
     btstack_packet_handler_t callback;
 } btstack_packet_callback_registration_t;
 
+/**
+ * @brief 128 bit key used with AES128 in Security Manager
+ */
+typedef uint8_t sm_key_t[16];
 
 /**
  * packet types - used in BTstack and over the H4 UART interface

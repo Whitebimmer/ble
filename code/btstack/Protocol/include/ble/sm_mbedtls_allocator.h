@@ -35,82 +35,29 @@
  *
  */
 
-/*
- *  debug.h
- *
- *  allow to funnel debug & error messages 
- */
+#ifndef __SM_MBEDTLS_ALLOCATOR_H
+#define __SM_MBEDTLS_ALLOCATOR_H
 
-#ifndef __DEBUG_H
-#define __DEBUG_H
-
-#include "btstack-config.h"
-#include "btstack_defines.h"
-#include "ble/hci_dump.h"
-
-//#include <stdio.h>
-
-#ifdef __AVR__
-#include <avr/pgmspace.h>
+#if defined __cplusplus
+extern "C" {
 #endif
 
-#ifndef EMBEDDED
-// Avoid complaints of unused arguments when log levels are disabled.
-static inline void __log_unused(const char *format, ...) {
+#include <stdint.h>
+#include <stddef.h>
+
+typedef struct sm_allocator_node {
+    uint32_t next;  // offset from sm_allocator_buffer, 0 == last item
+    uint32_t size;  // size of free chunk incl. header
+} sm_allocator_node_t;
+
+void sm_mbedtls_allocator_init(uint8_t * buffer, uint32_t size);
+void sm_mbedtls_allocator_status(void);
+
+void * sm_mbedtls_allocator_calloc(size_t count, size_t size);
+void   sm_mbedtls_allocator_free(void * data);
+
+#if defined __cplusplus
 }
-#else
-#define __log_unused(...)
 #endif
 
-#ifdef __AVR__
-#define HCI_DUMP_LOG(format, ...) hci_dump_log_P(PSTR(format), ## __VA_ARGS__)
-#define PRINTF(format, ...)       printf_P(PSTR(format), ## __VA_ARGS__)
-#else
-#define HCI_DUMP_LOG(format, ...) hci_dump_log(format, ## __VA_ARGS__)
-#define PRINTF(format, ...)       printf(format, ## __VA_ARGS__)
 #endif
-
-#ifdef ENABLE_LOG_DEBUG
-#ifdef HAVE_HCI_DUMP
-#define log_debug(format, ...)  HCI_DUMP_LOG(format,  ## __VA_ARGS__)
-#else
-#define log_debug(format, ...)  PRINTF(format "\n",  ## __VA_ARGS__)
-#endif
-#else
-#define log_debug(...) __log_unused(__VA_ARGS__)
-#endif
-
-#ifdef ENABLE_LOG_INFO
-#ifdef HAVE_HCI_DUMP
-#define log_info(format, ...)  HCI_DUMP_LOG(format,  ## __VA_ARGS__)
-#else
-#define log_info(format, ...)  PRINTF(format "\n",  ## __VA_ARGS__)
-#endif
-#else
-#define log_info(...) __log_unused(__VA_ARGS__)
-#endif
-
-#ifdef ENABLE_LOG_ERROR
-#ifdef HAVE_HCI_DUMP
-#define log_error(format, ...)  HCI_DUMP_LOG(format,  ## __VA_ARGS__)
-#else
-#define log_error(format, ...)  PRINTF(format "\n",  ## __VA_ARGS__)
-#endif
-#else
-#define log_error(...) __log_unused(__VA_ARGS__)
-#endif
-
-/** 
- * @brief Log Security Manager key via log_info
- * @param key to log
- */
-void log_info_key(const char * name, sm_key_t key);
-
-/**
- * @brief Hexdump via log_info
- * @param data
- * @param size
- */
-void log_info_hexdump(const void *data, int size);
-
-#endif // __DEBUG_H

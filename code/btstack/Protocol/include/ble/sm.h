@@ -59,7 +59,10 @@ typedef enum {
     SM_CODE_IDENTITY_INFORMATION,
     SM_CODE_IDENTITY_ADDRESS_INFORMATION,
     SM_CODE_SIGNING_INFORMATION,
-    SM_CODE_SECURITY_REQUEST
+    SM_CODE_SECURITY_REQUEST,
+    SM_CODE_PAIRING_PUBLIC_KEY,
+    SM_CODE_PAIRING_DHKEY_CHECK,
+    SM_CODE_KEYPRESS_NOTIFICATION,
 } SECURITY_MANAGER_COMMANDS;
 
 // IO Capability Values
@@ -108,8 +111,17 @@ typedef enum {
 #define SM_REASON_COMMAND_NOT_SUPPORTED        0x07
 #define SM_REASON_UNSPECIFIED_REASON           0x08
 #define SM_REASON_REPEATED_ATTEMPTS            0x09
+#define SM_REASON_INVALID_PARAMETERS           0x0a
+#define SM_REASON_DHKEY_CHECK_FAILED           0x0b
+#define SM_REASON_NUMERIC_COMPARISON_FAILED    0x0c
 // also, invalid parameters
 // and reserved
+// Keypress Notifications
+#define SM_KEYPRESS_PASSKEY_ENTRY_STARTED      0x00
+#define SM_KEYPRESS_PASSKEY_DIGIT_ENTERED      0x01
+#define SM_KEYPRESS_PASSKEY_DIGIT_ERASED       0x02
+#define SM_KEYPRESS_PASSKEY_CLEARED            0x03
+#define SM_KEYPRESS_PASSKEY_ENTRY_COMPLETED    0x04
 
 // Only for PTS testing
 void sm_test_set_irk(sm_key_t irk);
@@ -214,11 +226,10 @@ void sm_bonding_decline(uint8_t addr_type, bd_addr_t address);
 
 /**
  * @brief Confirm Just Works bonding 
- * @param addr_type and address
+ * @param con_handle
  */
-void sm_just_works_confirm(uint8_t addr_type, bd_addr_t address);
+void sm_just_works_confirm(hci_con_handle_t con_handle);
 
-void sm_just_works_confirm1(sm_connection_t * sm_conn);
 /**
  * @brief Reports passkey input by user
  * @param addr_type and address

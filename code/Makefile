@@ -26,6 +26,7 @@ INCLUDES = \
 -Ibtstack/Profile/include/ \
 -Iuser/include/ \
 -Iuser/include/common \
+-Imbedtls/include \
 
 LIBS = \
 cpu/$(CHIPID)/driver/br16_ccm_aes.a \
@@ -82,6 +83,10 @@ objs += \
    btstack/Protocol/BLE/att_dispatch.o \
    btstack/Protocol/BLE/att_server.o \
    btstack/Protocol/BLE/sm.o \
+   btstack/Protocol/BLE/sm_mbedtls_allocator.o \
+   mbedtls/library/ecp.o \
+   mbedtls/library/ecp_curves.o \
+   mbedtls/library/bignum.o \
    #btstack/LL_TS_4_2_1_hci_test.o \
    btstack/hcitest_uart.o \
 

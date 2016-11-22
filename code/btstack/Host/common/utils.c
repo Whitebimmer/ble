@@ -445,3 +445,58 @@ uint8_t crc8_calc(uint8_t *data, uint16_t len)
     return 0xFF - crc8(data, len);
 }
 
+void log_info_hexdump(const void *data, int size){
+#ifdef ENABLE_LOG_INFO
+
+    const int items_per_line = 16;
+    const int bytes_per_byte = 6;   // strlen('0x12, ')
+    const uint8_t low = 0x0F;
+    const uint8_t high = 0xF0;
+
+    char buffer[bytes_per_byte*items_per_line+1];
+    int i, j;
+    j = 0;
+    for (i=0; i<size;i++){
+
+        // help static analyzer proof that j stays within bounds
+        if (j > bytes_per_byte * (items_per_line-1)){
+            j = 0;
+        }
+
+        uint8_t byte = ((uint8_t *)data)[i];
+        buffer[j++] = '0';
+        buffer[j++] = 'x';
+        buffer[j++] = char_for_nibble((byte & high) >> 4);
+        buffer[j++] = char_for_nibble(byte & low);
+        buffer[j++] = ',';
+        buffer[j++] = ' ';     
+
+        if (j >= bytes_per_byte * items_per_line ){
+            buffer[j] = 0;
+            log_info("%s", buffer);
+            j = 0;
+        }
+    }
+    if (j != 0){
+        buffer[j] = 0;
+        log_info("%s", buffer);
+    }
+#endif
+}
+
+void log_info_key(const char * name, sm_key_t key){
+#ifdef ENABLE_LOG_INFO
+    char buffer[16*2+1];
+    const uint8_t low = 0x0F;
+    const uint8_t high = 0xF0;
+    int i;
+    int j = 0;
+    for (i=0; i<16;i++){
+        uint8_t byte = key[i];
+        buffer[j++] = char_for_nibble((byte & high) >> 4);
+        buffer[j++] = char_for_nibble(byte & low);
+    }
+    buffer[j] = 0;
+    log_info("%-6s %s", name, buffer);
+#endif
+}

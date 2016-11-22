@@ -674,7 +674,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                 case SM_EVENT_JUST_WORKS_REQUEST: {
                     app_puts("SM_EVENT_JUST_WORKS_REQUEST\n");
                     sm_event_t * event = (sm_event_t *) packet;
-                    sm_just_works_confirm(event->addr_type, event->address);
+                    sm_just_works_confirm(event->con_handle);
                     break;
                 }
 
