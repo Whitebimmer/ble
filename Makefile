@@ -23,6 +23,8 @@ export PLATFORM = br17
 #配置是否FPGA 验证平台(FPGA/CHIP)
 export TYPE=CHIP
 
+export LE_MODE=CONTROLLER_MODE
+
 ifeq ($(HOST_OS), linux) 
 export SLASH=/
 endif
