@@ -132,7 +132,7 @@ void h4_uart_data_rxloop(void)
         return;
     }
 
-    //packet type + ocf | ogf 
+    //packet type + (ocf | ogf) / handle + packet_length
     if (uart_rx_t.wr_index <= 3)
     {
         return;
@@ -153,7 +153,7 @@ void h4_uart_data_rxloop(void)
         //command complete launch process
         if (packet_length[0] + 4 <= uart_rx_t.wr_index)
         {
-            int len = packet_length[0] + rd_offset;
+            int len = packet_length[0] + 3;
 
             //skip packet_type
             __data_pop(packet, 1);
@@ -168,15 +168,16 @@ void h4_uart_data_rxloop(void)
     case HCI_ACL_DATA_PACKET:
         /* puts("HCI_ACL_DATA_PACKET\n"); */
         memcpy(packet_length, uart_rx_t.buf + rd_offset, 2);
-        /* printf("%x / %x\n", READ_BT_16(packet_length, 0), uart_rx_t.wr_index); */
+        printf("except %x / %x\n", READ_BT_16(packet_length, 0) + 5, uart_rx_t.wr_index);
         //ACL complete launch process
-        if (READ_BT_16(packet_length, 0) + 4 <= uart_rx_t.wr_index)
+        if (READ_BT_16(packet_length, 0) + 5 <= uart_rx_t.wr_index)
         {
-            int len = READ_BT_16(packet_length, 0) + rd_offset;
+            int len = READ_BT_16(packet_length, 0) + 4;
 
             //skip packet_type
             __data_pop(packet, 1);
             __data_pop(packet, len);
+            printf_buf(packet, len);
             ble_h4_send_packet(packet_type, packet, len);
             CPU_INT_DIS();
             __data_reset();

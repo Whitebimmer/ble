@@ -10,7 +10,7 @@ void uart_init(u32 fre)
     /* PORTC_DIR |= BIT(3); */
     /* PORTC_DIR &= ~BIT(2); */
 
-#if 1
+#if 0
     PORTA_DIR |= BIT(6);
     PORTA_DIR &= ~BIT(5);
 #else 
@@ -27,13 +27,13 @@ void uart_init(u32 fre)
 
 void putbyte(char a)
 {
-    if(a == '\n')
-    {
-        UT0_BUF = '\r';
-        __asm__ volatile ("csync");
+    /* if(a == '\n') */
+    /* { */
+        /* UT0_BUF = '\r'; */
+        /* __asm__ volatile ("csync"); */
 
-        while((UT0_CON & BIT(15)) == 0);
-    }
+        /* while((UT0_CON & BIT(15)) == 0); */
+    /* } */
 
     UT0_BUF = a;
     __asm__ volatile ("csync");
