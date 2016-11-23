@@ -209,12 +209,20 @@ REG_INIT_HANDLE(uart_irq_handle);
 
 void h4_uart_init(void)
 {
+#if 0
     puts("hci_uart: TX--PA10，RX--PA11\n");
     IOMC1 &= ~(BIT(15)|BIT(14));
     IOMC1 |= BIT(14);
     PORTA_OUT |= BIT(9) ;
     PORTA_DIR |= BIT(10) ;
     PORTA_DIR &= ~BIT(9) ;
+#else 
+    puts("hci_uart: TX--PC4，RX--PC5\n");
+    IOMC1 |= (BIT(15)|BIT(14));
+    PORTC_OUT |= BIT(4) ;
+    PORTC_DIR |= BIT(5) ;
+    PORTC_DIR &= ~BIT(4) ;
+#endif
 
     //初始化，配置RX中断，波特率115200
     UART_BAUD = (48000000/115200)/4 -1;//115200
