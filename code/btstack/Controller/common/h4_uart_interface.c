@@ -163,6 +163,7 @@ static void uart_irq_handle(void)
         UART_CON |= BIT(12); //clr rx pd
         value = UART_BUF;
         
+        putchar(value);
         __data_push(value);    
     }
 

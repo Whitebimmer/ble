@@ -287,6 +287,15 @@ int main()
         h4_uart_data_rxloop();
 
         task_run_loop();
+        char c;
+        c = getchar();
+
+        /* puts("user cmd : \n"); */
+        if (c)
+        {
+            /* printf("user cmd = %s \n", c); */
+            putchar(c);
+        }
     }
 #else
     if(bt_power_is_poweroff_post())
