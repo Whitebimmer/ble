@@ -5,6 +5,9 @@
 #include "ble/ble_h4_transport.h"
 #include "hcitest.h"
 
+void h4_uart_clear(void);
+void h4_uart_dump(void);
+
 /********************************************************************************/
 /*
  *                   H4 Uart Config
@@ -60,7 +63,7 @@ REGISTER_H4_HOST(h4_uart_notify_host);
  *                   H4 Uart Rx (ACL TX & Command From Host)
  */
 
-#define UART_RX_MAX_SIZE        0x20
+#define UART_RX_MAX_SIZE        0x80
 
 
 struct uart_rx{
@@ -105,10 +108,19 @@ static int __data_pop(char *buf, int len)
     return len;
 }
 
+static int reset_timeout = 0;
+
 void h4_uart_data_rxloop(void)
 {
     u8 packet_type;
     u8 rd_offset;
+
+    if (reset_timeout++ > 500000)
+    {
+        reset_timeout = 0;
+        h4_uart_clear();
+        /* puts("clear\n"); */
+    }
 
     rd_offset = uart_rx_t.rd_index;
 
@@ -144,7 +156,7 @@ void h4_uart_data_rxloop(void)
             //skip packet_type
             __data_pop(packet, 1);
             __data_pop(packet, len);
-            /* printf_buf(packet, len); */
+            printf_buf(packet, len);
             ble_h4_send_packet(packet_type, packet, len);
             CPU_INT_DIS();
             __data_reset();
@@ -186,6 +198,7 @@ static void uart_irq_handle(void)
         value = UART_BUF;
         
         /* putchar(value); */
+        reset_timeout = 0;
         __data_push(value);    
     }
 
