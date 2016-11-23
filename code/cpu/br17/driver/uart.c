@@ -10,7 +10,7 @@ void uart_init(u32 fre)
     /* PORTC_DIR |= BIT(3); */
     /* PORTC_DIR &= ~BIT(2); */
 
-#if 0
+#if 1
     PORTA_DIR |= BIT(6);
     PORTA_DIR &= ~BIT(5);
 #else 

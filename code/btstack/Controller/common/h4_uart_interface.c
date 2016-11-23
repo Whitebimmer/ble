@@ -138,6 +138,7 @@ void h4_uart_data_rxloop(void)
         return;
     }
 
+    //packet_length index [3]
     rd_offset += 3;
 
     u8 packet_length[2];
@@ -146,17 +147,18 @@ void h4_uart_data_rxloop(void)
     switch (packet_type)
     {
     case HCI_COMMAND_DATA_PACKET:
-        puts("HCI_COMMAND_DATA_PACKET\n");
+        /* puts("HCI_COMMAND_DATA_PACKET\n"); */
         memcpy(packet_length, uart_rx_t.buf + rd_offset, 1);
         /* printf("%x / %x\n", packet_length[0], uart_rx_t.wr_index); */
-        if (packet_length[0] < uart_rx_t.wr_index)
+        //command complete launch process
+        if (packet_length[0] + 4 <= uart_rx_t.wr_index)
         {
             int len = packet_length[0] + rd_offset;
 
             //skip packet_type
             __data_pop(packet, 1);
             __data_pop(packet, len);
-            printf_buf(packet, len);
+            /* printf_buf(packet, len); */
             ble_h4_send_packet(packet_type, packet, len);
             CPU_INT_DIS();
             __data_reset();
@@ -164,10 +166,11 @@ void h4_uart_data_rxloop(void)
         }
         break;
     case HCI_ACL_DATA_PACKET:
-        puts("HCI_ACL_DATA_PACKET\n");
+        /* puts("HCI_ACL_DATA_PACKET\n"); */
         memcpy(packet_length, uart_rx_t.buf + rd_offset, 2);
-        printf("%x / %x\n", READ_BT_16(packet_length, 0), uart_rx_t.wr_index);
-        if (READ_BT_16(packet_length, 0) < uart_rx_t.wr_index)
+        /* printf("%x / %x\n", READ_BT_16(packet_length, 0), uart_rx_t.wr_index); */
+        //ACL complete launch process
+        if (READ_BT_16(packet_length, 0) + 4 <= uart_rx_t.wr_index)
         {
             int len = READ_BT_16(packet_length, 0) + rd_offset;
 
