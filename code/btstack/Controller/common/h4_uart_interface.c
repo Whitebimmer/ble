@@ -110,10 +110,25 @@ static int __data_pop(char *buf, int len)
 
 static int reset_timeout = 0;
 
+//Vol 2 Part E Figure 5.1
+enum{
+    H4_COMMAND_FORMAT_PACKET_TYPE = 0,
+    H4_COMMAND_FORMAT_OPCODE,
+    H4_COMMAND_FORMAT_LENGTH = 3,
+    H4_COMMAND_FORMAT_PACKET_PAYLOAD,
+};
+
+//Vol 2 Part E Figure 5.1
+enum{
+    H4_ACL_FORMAT_PACKET_TYPE = 0,
+    H4_ACL_FORMAT_HANDLE,
+    H4_ACL_FORMAT_LENGTH = 3,
+    H4_ACL_FORMAT_PACKET_PAYLOAD = 5,
+};
+
 void h4_uart_data_rxloop(void)
 {
     u8 packet_type;
-    u8 rd_offset;
 
     if (reset_timeout++ > 500000)
     {
@@ -122,9 +137,9 @@ void h4_uart_data_rxloop(void)
         /* puts("clear\n"); */
     }
 
-    rd_offset = uart_rx_t.rd_index;
+    /* rd_offset = H4_ACL_FORMAT_PACKET_TYPE;//uart_rx_t.rd_index; */
 
-    packet_type = uart_rx_t.buf[rd_offset];
+    packet_type = uart_rx_t.buf[H4_ACL_FORMAT_PACKET_TYPE];
     if ((packet_type != HCI_COMMAND_DATA_PACKET)
         && (packet_type != HCI_ACL_DATA_PACKET))
     {
@@ -139,21 +154,21 @@ void h4_uart_data_rxloop(void)
     }
 
     //packet_length index [3]
-    rd_offset += 3;
+    /* rd_offset += 3; */
 
     u8 packet_length[2];
-    u8 packet[0x100];
+    u8 packet[UART_RX_MAX_SIZE];
     
     switch (packet_type)
     {
     case HCI_COMMAND_DATA_PACKET:
         /* puts("HCI_COMMAND_DATA_PACKET\n"); */
-        memcpy(packet_length, uart_rx_t.buf + rd_offset, 1);
-        /* printf("%x / %x\n", packet_length[0], uart_rx_t.wr_index); */
+        memcpy(packet_length, uart_rx_t.buf + H4_COMMAND_FORMAT_LENGTH, 1);
+        /* printf("except %x / %x\n", packet_length[0] + H4_COMMAND_FORMAT_PACKET_PAYLOAD, uart_rx_t.wr_index); */
         //command complete launch process
-        if (packet_length[0] + 4 <= uart_rx_t.wr_index)
+        if (packet_length[0] + H4_COMMAND_FORMAT_PACKET_PAYLOAD <= uart_rx_t.wr_index)
         {
-            int len = packet_length[0] + 3;
+            int len = packet_length[0] + H4_COMMAND_FORMAT_PACKET_PAYLOAD - 1;
 
             //skip packet_type
             __data_pop(packet, 1);
@@ -167,17 +182,17 @@ void h4_uart_data_rxloop(void)
         break;
     case HCI_ACL_DATA_PACKET:
         /* puts("HCI_ACL_DATA_PACKET\n"); */
-        memcpy(packet_length, uart_rx_t.buf + rd_offset, 2);
-        printf("except %x / %x\n", READ_BT_16(packet_length, 0) + 5, uart_rx_t.wr_index);
+        memcpy(packet_length, uart_rx_t.buf + H4_ACL_FORMAT_LENGTH , 2);
+        /* printf("except %x / %x\n", READ_BT_16(packet_length, 0) + H4_ACL_FORMAT_PACKET_PAYLOAD, uart_rx_t.wr_index); */
         //ACL complete launch process
-        if (READ_BT_16(packet_length, 0) + 5 <= uart_rx_t.wr_index)
+        if (READ_BT_16(packet_length, 0) + H4_ACL_FORMAT_PACKET_PAYLOAD <= uart_rx_t.wr_index)
         {
-            int len = READ_BT_16(packet_length, 0) + 4;
+            int len = READ_BT_16(packet_length, 0) + H4_ACL_FORMAT_PACKET_PAYLOAD - 1;
 
             //skip packet_type
             __data_pop(packet, 1);
             __data_pop(packet, len);
-            printf_buf(packet, len);
+            /* printf_buf(packet, len); */
             ble_h4_send_packet(packet_type, packet, len);
             CPU_INT_DIS();
             __data_reset();
