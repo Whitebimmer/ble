@@ -1103,8 +1103,9 @@ static int ble_hci_command_process()
 		return awake;
 	}
 
-    /* puts("\nRX : CMD "); */
-    /* printf_buf(cmd->data, cmd->size); */
+    puts("\nRX : CMD ");
+    printf_buf(cmd->data, cmd->size);
+
 	u16 opcode = (cmd->data[1]<<8) | cmd->data[0]; 
 
 	int	ogf = opcode>>10;
@@ -1183,8 +1184,8 @@ int le_hci_push_acl_data(u8 *packet, int len)
 static void ble_hci_h4_download_data(int packet_type, u8 *packet, int len)
 {
 	if (packet_type == HCI_COMMAND_DATA_PACKET){
-        /* hci_puts("\nTX CMD "); */
-        /* hci_buf(packet, len); */
+        hci_puts("\nTX CMD ");
+        hci_buf(packet, len);
 		le_hci_push_command(packet, len);
         thread_resume(&hci_thread);
 	} else {

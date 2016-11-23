@@ -5,6 +5,10 @@
 #include "ble/ble_h4_transport.h"
 #include "hcitest.h"
 
+/********************************************************************************/
+/*
+ *                   H4 Uart Config
+ */
 #define UART_BUF        UT2_BUF
 #define UART_CON        UT2_CON
 #define UART_BAUD       UT2_BAUD 
@@ -79,7 +83,7 @@ static void __data_push(char data)
 {
     if (UART_RX_BUF_IS_EXCEED(uart_rx_t.wr_index))
     {
-        puts("UART_RX_BUF_IS_EXCEED\n");
+        printf("UART_RX_BUF_IS_EXCEED : %x\n", uart_rx_t.wr_index);
         /*-TODO-*/
         //option : do idle
         return;
@@ -95,7 +99,7 @@ static int __data_pop(char *buf, int len)
         return 0;
     }
 
-    memcpy(buf, uart_rx_t.buf[uart_rx_t.rd_index], len);
+    memcpy(buf, uart_rx_t.buf + uart_rx_t.rd_index, len);
     uart_rx_t.rd_index += len;
 
     return len;
@@ -110,12 +114,19 @@ void h4_uart_data_rxloop(void)
 
     packet_type = uart_rx_t.buf[rd_offset];
     if ((packet_type != HCI_COMMAND_DATA_PACKET)
-        || (packet_type != HCI_ACL_DATA_PACKET))
+        && (packet_type != HCI_ACL_DATA_PACKET))
+    {
+        /* puts("eror \n"); */
+        return;
+    }
+
+    //packet type + ocf | ogf 
+    if (uart_rx_t.wr_index <= 3)
     {
         return;
     }
 
-    rd_offset += 1;
+    rd_offset += 3;
 
     u8 packet_length[2];
     u8 packet[0x100];
@@ -123,24 +134,35 @@ void h4_uart_data_rxloop(void)
     switch (packet_type)
     {
     case HCI_COMMAND_DATA_PACKET:
-        memcpy(packet_length, uart_rx_t.buf[rd_offset], 1);
-        rd_offset += 1;
-        if (packet_length < uart_rx_t.wr_index)
+        puts("HCI_COMMAND_DATA_PACKET\n");
+        memcpy(packet_length, uart_rx_t.buf + rd_offset, 1);
+        /* printf("%x / %x\n", packet_length[0], uart_rx_t.wr_index); */
+        if (packet_length[0] < uart_rx_t.wr_index)
         {
-            __data_pop(packet, (packet_length + rd_offset));
-            ble_h4_send_packet(packet_type, packet, packet_length);
+            int len = packet_length[0] + rd_offset;
+
+            //skip packet_type
+            __data_pop(packet, 1);
+            __data_pop(packet, len);
+            /* printf_buf(packet, len); */
+            ble_h4_send_packet(packet_type, packet, len);
             CPU_INT_DIS();
             __data_reset();
             CPU_INT_EN();
         }
         break;
     case HCI_ACL_DATA_PACKET:
-        memcpy(packet_length, uart_rx_t.buf[rd_offset], 2);
-        rd_offset += 2;
-        if (packet_length < uart_rx_t.wr_index)
+        puts("HCI_ACL_DATA_PACKET\n");
+        memcpy(packet_length, uart_rx_t.buf + rd_offset, 2);
+        printf("%x / %x\n", READ_BT_16(packet_length, 0), uart_rx_t.wr_index);
+        if (READ_BT_16(packet_length, 0) < uart_rx_t.wr_index)
         {
-            __data_pop(packet, (packet_length + rd_offset));
-            ble_h4_send_packet(packet_type, packet, packet_length);
+            int len = READ_BT_16(packet_length, 0) + rd_offset;
+
+            //skip packet_type
+            __data_pop(packet, 1);
+            __data_pop(packet, len);
+            ble_h4_send_packet(packet_type, packet, len);
             CPU_INT_DIS();
             __data_reset();
             CPU_INT_EN();
@@ -158,12 +180,12 @@ static void uart_irq_handle(void)
 {
     u8 value;
 
-    if((UART_CON & BIT(14)) != 0) //check rx
+    if(UART_CON & BIT(14)) //check rx
     {
         UART_CON |= BIT(12); //clr rx pd
         value = UART_BUF;
         
-        putchar(value);
+        /* putchar(value); */
         __data_push(value);    
     }
 
@@ -177,9 +199,9 @@ void h4_uart_init(void)
     puts("hci_uart: TX--PA10，RX--PA11\n");
     IOMC1 &= ~(BIT(15)|BIT(14));
     IOMC1 |= BIT(14);
-    PORTA_OUT |= BIT(10) ;
-    PORTA_DIR |= BIT(11) ;
-    PORTA_DIR &=~BIT(10) ;
+    PORTA_OUT |= BIT(9) ;
+    PORTA_DIR |= BIT(10) ;
+    PORTA_DIR &= ~BIT(9) ;
 
     //初始化，配置RX中断，波特率115200
     UART_BAUD = (48000000/115200)/4 -1;//115200
@@ -188,4 +210,17 @@ void h4_uart_init(void)
     __data_reset();
     INTALL_HWI(UART_INDEX, uart_irq_handle, 3) ; //注 册中断
     UART_CON |= (BIT(3) | BIT(0)) ;//enable rx isr
+}
+
+void h4_uart_dump(void)
+{
+    printf("h4 uart dump : rd %x / wr %x\n", uart_rx_t.rd_index, uart_rx_t.wr_index);
+    printf_buf(uart_rx_t.buf, UART_RX_MAX_SIZE);
+}
+
+void h4_uart_clear(void)
+{
+    CPU_INT_DIS();
+    __data_reset();
+    CPU_INT_EN();
 }

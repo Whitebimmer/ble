@@ -295,6 +295,15 @@ int main()
         {
             /* printf("user cmd = %s \n", c); */
             putchar(c);
+            switch (c)
+            {
+            case 'A':
+                h4_uart_dump();
+                break;
+            case 'C':
+                h4_uart_clear();
+                break;
+            }
         }
     }
 #else
