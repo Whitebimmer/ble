@@ -10,8 +10,16 @@ void uart_init(u32 fre)
     /* PORTC_DIR |= BIT(3); */
     /* PORTC_DIR &= ~BIT(2); */
 
+#if 0
     PORTA_DIR |= BIT(6);
     PORTA_DIR &= ~BIT(5);
+#else 
+    IOMC0 &= ~(BIT(7)|BIT(6));
+    IOMC0 |= BIT(7);
+    PORTC_DIR |= BIT(3);
+    PORTC_DIR &= ~BIT(2);
+#endif
+
     UT0_BAUD = fre / 4 - 1;
     /* UT0_BAUD = fre / 4 - 1; */
     UT0_CON = BIT(13) | BIT(12) | BIT(0);
