@@ -3,6 +3,12 @@ CC_ARG = \
 -DNOFLOAT \
 -DEMBEDDED \
 -DBR17 \
+
+ifeq ($(LE_MODE), CONTROLLER_MODE)
+CC_ARG += \
+-DLE_CONTROLLER_MODE
+
+endif
  
 # -DFPGA \
 
@@ -58,7 +64,6 @@ objs += \
    driver/init.o \
    os/thread.o \
    os/sys_timer.o \
-   user/ble/ble_peripheral_test.o \
    btstack/Baseband/common/$(CHIPID)/RF.o \
    btstack/Baseband/BLE/$(CHIPID)/RF_ble.o \
    btstack/Baseband/BLE/$(CHIPID)/analog_ble.o \
@@ -68,6 +73,15 @@ objs += \
    btstack/Controller/BLE/ble_hci.o \
    btstack/Controller/BLE/ble_main.o \
    btstack/Controller/BLE/link_layer.o \
+   btstack/Host/common/utils.o \
+
+ifeq ($(LE_MODE), CONTROLLER_MODE)
+objs += \
+   btstack/Controller/common/h4_uart_interface.o \
+
+else
+objs += \
+   user/ble/ble_peripheral_test.o \
    btstack/Host/BLE/le_device_db_memory.o \
    btstack/Host/common/btstack_memory.o \
    btstack/Host/common/hci.o \
@@ -77,11 +91,12 @@ objs += \
    btstack/Host/common/hci_cmds.o \
    btstack/Host/common/linked_list.o \
    btstack/Host/common/memory_pool.o \
-   btstack/Host/common/utils.o \
    btstack/Protocol/BLE/att.o \
    btstack/Protocol/BLE/att_dispatch.o \
    btstack/Protocol/BLE/att_server.o \
    btstack/Protocol/BLE/sm.o \
+
+endif
    #btstack/LL_TS_4_2_1_hci_test.o \
    btstack/hcitest_uart.o \
 

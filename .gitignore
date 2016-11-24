@@ -7,13 +7,13 @@
 
 #Libraries
 *.lib
-*.a
+#*.a
 *.la
 *.lo
 
 #Executables
-*.exe
-*.out
+#*.exe
+*out
 *.app
 *.hex
 *.bin
