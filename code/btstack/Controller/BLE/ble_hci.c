@@ -3,7 +3,7 @@
 #include "stdarg.h"
 #include "ble/ble_h4_transport.h"
 
-/* #define HCI_DEBUG_EN */
+#define HCI_DEBUG_EN
 
 #ifdef HCI_DEBUG_EN
 #define hci_putchar(x)        putchar(x)
@@ -1103,8 +1103,9 @@ static int ble_hci_command_process()
 		return awake;
 	}
 
-    /* puts("\nRX : CMD "); */
-    /* printf_buf(cmd->data, cmd->size); */
+    hci_puts("\nRX : CMD ");
+    hci_buf(cmd->data, cmd->size);
+
 	u16 opcode = (cmd->data[1]<<8) | cmd->data[0]; 
 
 	int	ogf = opcode>>10;
