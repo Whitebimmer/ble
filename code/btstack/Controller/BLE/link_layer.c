@@ -6,7 +6,7 @@
 #include "RF_ble.h"
 
 
-/* #define LL_DEBUG_EN */
+#define LL_DEBUG_EN
 
 #ifdef LL_DEBUG_EN
 #define ll_putchar(x)        putchar(x)
@@ -87,9 +87,6 @@ u8 ll_error_code;
  */
 static struct hci_parameter *hci_param_t SEC(.btmem_highly_available);
 
-
-
-
 static struct link_layer ll SEC(.btmem_highly_available);
 
 
@@ -144,6 +141,7 @@ static const struct le_read_parameter le_read_param = {
 
 static struct le_parameter le_param SEC(.btmem_highly_available);
 /*******************************************************************/
+
 /*******************************************************************/
 /*
  *-------------------LE Link Memory
@@ -406,20 +404,12 @@ struct ll_control_data_step{
     const ll_step_extend *steps_ptr;
 };
 
-
-#define LL_CTRL_NO_STEPS()    (ll_ctrl_step.steps_ptr == NULL)
-
-            
-
-static void ll_control_procedure_finish_emit_event(struct le_link *link, struct ble_rx *rx, struct ble_tx *tx);
-
-static ll_step ll_control_last_step()
+//get Local Host indicate LL control procedure
+static ll_step ll_control_current_procedure_by_localhost()
 {
     u8 cnt;
 
-    cnt = ll_ctrl_step.cnt;
-
-    for(; ; cnt++) 
+    for(cnt = ll_ctrl_step.cnt; ; cnt++) 
     {
         if ((ll_ctrl_step.steps_ptr[cnt] & 0xff) == LL_FINISH)
         {
@@ -429,11 +419,95 @@ static ll_step ll_control_last_step()
     }
 }
 
+//Master LL control procedure
+static u8 master_ll_control_current_procedure;
+
+bool ll_control_procedure_push(u8 procedure)
+{
+    if (master_ll_control_current_procedure)
+    {
+        //in procedure collisions occur
+        return FALSE;
+    }
+
+    master_ll_control_current_procedure = procedure;
+
+    return TRUE;
+}
+
+void ll_control_procedure_pop(u8 procedure)
+{
+    if (master_ll_control_current_procedure == procedure)
+    {
+        //procedure end
+        master_ll_control_current_procedure = 0;
+    }
+    else{
+        //unexcepted case
+        ASSERT(0, "%s\n", __func__);
+    }
+}
+
+#define LL_PROCEDURE_IS_COLLISIONS(x)       (ll_control_procedure_push(x) == FALSE)
+
+
+#define LL_CTRL_NO_STEPS()    (ll_ctrl_step.steps_ptr == NULL)
+
+            
+typedef enum{
+    LL_CONTROL_SUCCESS = 0,
+    LL_CONTROL_REJECT,
+    LL_CONTROL_EXT_REJECT,
+    LL_CONTROL_UNKNOW_RSP,
+    LL_CONTROL_TIMEOUT,
+}LL_CONTROL_CASE;
+
+static LL_CONTROL_CASE ll_control_procedure_case_remap(u16 error_case)
+{
+    if (error_case == LL_CONTROL_SUCCESS)
+    {
+        return LL_CONTROL_SUCCESS; 
+    }
+    //make different case united
+    LL_CONTROL_CASE ll_case;
+
+    switch(error_case)
+    {
+    case (LL_REJECT_IND|WAIT_RX):
+        ll_case = LL_CONTROL_REJECT;
+        break;
+    case (LL_REJECT_IND_EXT|WAIT_RX):
+        ll_case = LL_CONTROL_EXT_REJECT;
+        break;
+    case (LL_UNKNOWN_RSP|WAIT_RX):
+        ll_case = LL_CONTROL_UNKNOW_RSP;
+        break;
+    default:
+        break;
+    }
+
+    return ll_case;
+}
+
+#define LL_CONTROL_CASE_REMAP(x)    ll_control_procedure_case_remap(x)
+
+
+static void ll_control_procedure_finish_emit_event(struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status);
+
+
+
+static void ll_control_procedure_finish(struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
+{
+    ll_control_procedure_finish_emit_event(link, rx, status);
+    ll_ctrl_step.steps_ptr = NULL;
+}
+
 static void ll_control_step_verify(ll_step_extend step_ex, 
         struct le_link *link, struct ble_rx *rx, struct ble_tx *tx)
 {
     if (ll_ctrl_step.steps_ptr == NULL)
     {
+        //filte out not Host indicate case
         return;
     }
     
@@ -451,8 +525,7 @@ static void ll_control_step_verify(ll_step_extend step_ex,
             || (step_ex == (LL_UNKNOWN_RSP|WAIT_RX)))
     {
         ll_puts("\n##ll break reson : ");ll_u32hex(step_ex);
-        ll_control_procedure_finish_emit_event(link, rx, tx);
-        ll_ctrl_step.steps_ptr = NULL;
+        ll_control_procedure_finish(link, rx, LL_CONTROL_CASE_REMAP(step_ex));
         return;
     }
 
@@ -468,8 +541,7 @@ static void ll_control_step_verify(ll_step_extend step_ex,
         {
             ll_puts("##ll finish\n");
             //procedure finish
-            ll_control_procedure_finish_emit_event(link, rx, tx);
-            ll_ctrl_step.steps_ptr = NULL;
+            ll_control_procedure_finish(link, rx, LL_CONTROL_SUCCESS);
         }
         return;
     }
@@ -527,6 +599,7 @@ static void ll_control_data_step_start(const ll_step_extend *steps)
 
     ll_send_control_data_state_machine(NULL, NULL, NULL);
 }
+
 
 /********************************************************************************/
 
@@ -1874,7 +1947,7 @@ static void ll_adv_timeout_handler(struct sys_timer *timer)
 
     sys_timer_remove(&link->adv_timeout);
 
-    //exit adv state
+    //exit adv state & close link
     __ble_ops->close(link->hw);
     ll.handle &= ~(link->handle);
     __free_link(link);
@@ -1882,7 +1955,7 @@ static void ll_adv_timeout_handler(struct sys_timer *timer)
 
     if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
     {
-        sys_timer_remove(&le_privacy.RPA_timeout);
+        ll_RPA_timeout_stop();
     }
 
 }
@@ -1954,6 +2027,7 @@ static void __set_ll_adv_state(struct le_link *link)
         case LL_ADV_SCAN_IND:
             min = (min < 100) ? 100 : min; 
             max = (max < 100) ? 100 : max; 
+            adv->interval = min;
             adv->pdu_interval = 20;    //us
             adv->adv_type = ADV_SCAN_IND;
             break;
@@ -2076,7 +2150,7 @@ static void __set_ll_init_state(struct le_link *link)
 }
 
 
-static void ll_timeout_stop(struct le_link *link);
+static void ll_supervision_timeout_stop(struct le_link *link);
 static void __set_link_state(struct le_link *link, int state)
 { 
 	switch(state)
@@ -2099,7 +2173,7 @@ static void __set_link_state(struct le_link *link, int state)
     case LL_CONNECTION_ESTABLISHED:
         break;
     case LL_DISCONNECT:
-        ll_timeout_stop(link);
+        ll_supervision_timeout_stop(link);
         if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
         {
             ll_RPA_timeout_stop();
@@ -2112,37 +2186,53 @@ static void __set_link_state(struct le_link *link, int state)
     /* printf("set link state : %02x\n", link->state); */
 }
 
+#define LE_IS_DISCONNECT(link)     (link->state == LL_DISCONNECT)
+
+static void ll_disconnect_process(struct le_link *link, u8 reason)
+{
+    //skip already disconnect 
+    if (LE_IS_DISCONNECT(link))
+        return;
+
+	struct ble_rx rx;
+
+    __set_link_state(link, LL_DISCONNECT);
+
+    rx.data[1] = reason;	
+
+    __hci_event_emit(DISCONNECT_STEPS, link, &rx);
+}
+
+#define LE_IS_CONNECT(link)     (link->state == LL_CONNECTION_ESTABLISHED)
 
 // LL Supervision TimeOut
 static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 {
     struct le_link *link = (struct le_link*)sys_timer_get_user(timer);
-	struct ble_rx rx ;
-   	rx.data[0]=CONNECTION_TIMEOUT;	
-    ASSERT(link != NULL, "%s\n", __func__);
 
-    puts("LL Supervision Timeout\n");
+    ASSERT(link != NULL, "%s\n", __func__);
     //DEBUG_IOB_1(0);
     //while(1);
+    ll_puts("\n********Supervision_Timeout***********\n");
 
-    __set_link_state(link, LL_DISCONNECT);
+    u8 reason;
+
+    reason = LE_IS_CONNECT(link) ? \
+             CONNECTION_TIMEOUT : CONNECTION_FAILED_TO_BE_ESTABLISHED ;
 
     sys_timer_remove(&link->timeout);
 
-    __hci_event_emit(DISCONNECT_STEPS, link,&rx);
-
-    //resume ll thread
-    thread_resume(&ll.ll_thread);
+    ll_disconnect_process(link, reason);
 }
 
-static void ll_timeout_start(struct le_link *link, u32 timeout)
+static void ll_supervision_timeout_start(struct le_link *link, u32 timeout)
 {
     //set ll connSupervision timeout
     sys_timer_register(&link->timeout, timeout, ll_conn_supervision_timer_handler);
     sys_timer_set_user(&link->timeout, link);
 }
 
-static void ll_timeout_stop(struct le_link *link)
+static void ll_supervision_timeout_stop(struct le_link *link)
 {
     sys_timer_remove(&link->timeout);
 }
@@ -2177,7 +2267,7 @@ static void __connection_upadte(struct le_link *link)
     //update supervision_timeout
     /* puts("\n----update---- : "); */
 
-    ll_timeout_start(link, link->conn.ll_data.timeout*10);
+    ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
 
     /* DEBUG_IO_0(4); */
 }
@@ -2221,14 +2311,31 @@ static void __le_connection_update_complete_event(struct le_link *link)
             link->conn.ll_data.timeout);
 }
 
-static void __le_read_remote_used_features_complete_event(struct le_link *link, struct ble_rx *rx)
+static void __le_read_remote_used_features_complete_event(struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
 {
     ll_puts("LE_READ_REMOTE_USED_FEATURES_COMPLETE_EVENT\n");
-    __hci_emit_le_meta_event(LE_READ_REMOTE_USED_FEATURES_COMPLETE_EVENT, 
-            "1Hc08", 
-            0,
-            link->handle,
-            rx->data[1]);
+    switch (status)
+    {
+    case LL_CONTROL_UNKNOW_RSP:
+        status = UNSUPPORTED_REMOTE_FEATURE_UNSUPPORTED_LMP_FEATURE;
+        break;
+    case LL_CONTROL_REJECT:
+    case LL_CONTROL_EXT_REJECT:
+    default:
+        ASSERT(0, "%s\n", __func__);
+        break;
+    }
+    if (rx == NULL)
+    {
+        __hci_emit_le_meta_event(LE_READ_REMOTE_USED_FEATURES_COMPLETE_EVENT, "1Hc08", status,
+                link->handle,
+                0);
+    }
+    else {
+        __hci_emit_le_meta_event(LE_READ_REMOTE_USED_FEATURES_COMPLETE_EVENT, "1Hc08", status,
+                link->handle,
+                rx->data[1]);
+    }
 }
 
 static bool __le_long_term_key_request_event(struct le_link *link, struct ble_rx *rx)
@@ -2355,6 +2462,26 @@ static void __le_data_length_change_event(struct le_link *link)
             link->pdu_len.connEffectiveMaxRxTime);
 }
 
+static void __le_disconnect_complete_event(struct le_link *link, LL_CONTROL_CASE status)
+{
+    switch (status)
+    {
+    case LL_CONTROL_SUCCESS:
+        status = CONNECTION_TERMINATED_BY_LOCAL_HOST;
+        break;
+    case LL_CONTROL_TIMEOUT:
+        status = LMP_RESPONSE_TIMEOUT_LL_RESPONSE_TIMEOUT;
+        break;
+
+    case LL_CONTROL_UNKNOW_RSP:
+    case LL_CONTROL_REJECT:
+    case LL_CONTROL_EXT_REJECT:
+    default:
+        ASSERT(0, "%s\n", __func__);
+        break;
+    }
+    ll_disconnect_process(link, status);
+}
 
 
 /*----------------------------------------------------------------------
@@ -2653,7 +2780,7 @@ static void slave_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
 static void rx_probe_adv_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
-    u32 ll_timeout;
+    u32 supervison_timeout;
 
 	struct ble_adv *adv = &link->adv;
 
@@ -2665,9 +2792,9 @@ static void rx_probe_adv_pdu_handler(struct le_link *link, struct ble_rx *rx)
             /* putchar('C'); */
             slave_set_connection_param(link, rx);
             //LL_CONNECTION_ESTABLISHED set ll connSupervision timeout 6*interval
-            ll_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
-            /* put_u32hex(ll_timeout); */
-            ll_timeout_start(link, ll_timeout);
+            supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
+            /* put_u32hex(supervison_timeout); */
+            ll_supervision_timeout_start(link, supervison_timeout);
             break;
     }
 }
@@ -2700,7 +2827,7 @@ static void master_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
 static void rx_probe_init_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
-    u32 ll_timeout;
+    u32 supervison_timeout;
 
     switch (rx->type)
     {
@@ -2716,8 +2843,8 @@ static void rx_probe_init_pdu_handler(struct le_link *link, struct ble_rx *rx)
 		putchar('A');
 		master_set_connection_param(link, rx);
 		//LL_CONNECTION_ESTABLISHED set ll connSupervision timeout
-		ll_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
-		ll_timeout_start(link, ll_timeout);
+		supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
+		ll_supervision_timeout_start(link, supervison_timeout);
         break;
     case ADV_NONCONN_IND:
     case ADV_SCAN_IND:
@@ -2752,15 +2879,15 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
 {
     if (link->state == LL_CONNECTION_ESTABLISHED)
     {
-        /* putchar('#'); */
-        //set ll connSupervision timeout
-        ll_timeout_start(link, link->conn.ll_data.timeout*10);
+        putchar('#');
+        //set ll supervisonTO to connSupervision timeout when receive first packet
+        ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
     }
     else if (link->state == LL_CONNECTION_CREATE)
     {
         putchar('%');
         /* put_u32hex(link->conn.ll_data.timeout*10); */
-        ll_timeout_start(link, link->conn.ll_data.timeout*10);
+        ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
         __set_link_state(link, LL_CONNECTION_ESTABLISHED);
     }
 
@@ -3045,6 +3172,31 @@ static void rx_data_pdu_handler(struct le_link *link, struct ble_rx *rx)
 /*
  *                      LL Control Procedure 
  */
+static void ll_response_timeout_handler(struct sys_timer *timer)
+{
+    struct le_link *link = sys_timer_get_user(timer);
+
+    ASSERT(link != NULL, "%s\n", __func__);
+
+    ll_puts("\n********Response_Timeout***********\n");
+
+    //emit LE Event
+    ll_control_procedure_finish(link, NULL, LL_CONTROL_TIMEOUT);
+
+    ll_disconnect_process(link, LMP_RESPONSE_TIMEOUT_LL_RESPONSE_TIMEOUT);
+}
+
+static void ll_response_timeout_start(struct le_link *link)
+{
+    //If the procedure response timeout timer reaches 40 seconds, the connection is considered lost
+    sys_timer_register(&link->response_timeout, 40000, ll_response_timeout_handler);
+    sys_timer_set_user(&link->response_timeout, link);
+}
+
+static void ll_response_timeout_stop(struct le_link *link)
+{
+    sys_timer_remove(&link->response_timeout);
+}
 
 struct connection_param_request{
     u16 interval_max;
@@ -3096,6 +3248,12 @@ static void __ll_send_conn_param_req_auto(struct le_link *link)
             conn_param_req.offset[3],
             conn_param_req.offset[4],
             conn_param_req.offset[5]);
+
+    //Master procedure record
+    if (!ROLE_IS_SLAVE(link))
+    {
+        ll_control_procedure_push(LL_CONNECTION_PARAM_REQ);
+    }
 }
 
 static void __ll_send_conn_param_req(void)
@@ -3148,6 +3306,14 @@ static void __ll_send_conn_param_req(void)
             conn_param_req.offset[3],
             conn_param_req.offset[4],
             conn_param_req.offset[5]);
+
+    //Master procedure record
+    if (!ROLE_IS_SLAVE(link))
+    {
+        ll_control_procedure_push(LL_CONNECTION_PARAM_REQ);
+        
+        __hci_param_free(le_param.conn_update_param);
+    }
 }
 
 typedef enum{
@@ -3217,10 +3383,20 @@ static void __master_ll_receive_connection_param_rsp(struct le_link *link, struc
     //TO*DO
     u8 *data = &rx->data[1];
 
+    conn_param_req.interval_min = READ_BT16(data, 0);
+    conn_param_req.interval_max = READ_BT16(data, 2);
+    conn_param_req.latency  = READ_BT16(data, 4);
+    conn_param_req.timeout  = READ_BT16(data, 6);
 
+    conn_param_req.PreferredPeriodicity  = data[8];
+    conn_param_req.ReferenceConnEventCount = READ_BT16(data, 9);
+
+    u8 i;
+    for (i = 0; i < 6; i++){
+        conn_param_req.offset[i] = READ_BT16(data, 11 + 2*i);
+    }
 }
 
-#define LE_IS_CONNECT(link)     (link->state == LL_CONNECTION_ESTABLISHED)
 
 /*
  *      LL Control Procedure - Connection Update
@@ -3304,6 +3480,12 @@ static void __master_ll_send_conn_update_req_auto(struct le_link *link)
     __event_oneshot_add(link, __le_connection_update_complete_event, instant);
 }
 
+static void __master_ll_send_conn_update_req_done(struct le_link *link)
+{
+    ll_control_procedure_pop(LL_CONNECTION_UPDATE_REQ);
+
+    __le_connection_update_complete_event(link);
+}
 
 static void __master_ll_send_conn_update_req(void)
 {
@@ -3317,14 +3499,75 @@ static void __master_ll_send_conn_update_req(void)
 
     ASSERT(link != NULL, "%s\n", __func__);
 
-    //update conn param
-    link->conn.ll_data.latency  = param->Conn_Latency;
-    link->conn.ll_data.interval = param->Conn_Interval_Min;
-    link->conn.ll_data.timeout  = param->Supervision_Timeout;
-
-    __hci_param_free(le_param.conn_update_param);
-
     u16 instant = __ble_ops->get_conn_event(link->hw) + 10;
+
+    if (master_ll_control_current_procedure == LL_CONNECTION_PARAM_REQ)
+    {
+        ll_control_procedure_pop(LL_CONNECTION_PARAM_REQ);
+
+        u16 interval_old = link->conn.ll_data.interval;
+
+        //calc interval new by Preferredperiodicity * n
+        if (conn_param_req.interval_max == conn_param_req.interval_min)
+        {
+            link->conn.ll_data.interval = conn_param_req.interval_min;
+        }
+        else 
+        {
+            u8 i;
+
+            for (i = 1; i < 255; i++)
+            {
+                u16 interval;
+
+                interval = conn_param_req.PreferredPeriodicity * i;
+                if ((interval >= conn_param_req.interval_min) 
+                    && (interval <= conn_param_req.interval_max))
+                {
+                    link->conn.ll_data.interval = interval;
+                    break;
+                }
+            }
+        }
+        u16 t;
+
+        if (conn_param_req.ReferenceConnEventCount > instant)
+        {
+            /* Δt = ( (ReferenceConnEventCount – Instant)*connIntervalOLD + offset0 ) % connIntervalNEW */
+            t = ((conn_param_req.ReferenceConnEventCount - instant) * interval_old + conn_param_req.offset[0]) % link->conn.ll_data.interval ; 
+        }
+        else
+        {
+            /* Δt = connIntervalNEW - ( (Instant - ReferenceConnEventCount )*connIntervalOLD - offset0 ) % connIntervalNEW */
+            t = link->conn.ll_data.interval - ((instant - conn_param_req.ReferenceConnEventCount)*interval_old - conn_param_req.offset[0]) % link->conn.ll_data.interval;
+        }
+
+        //Option 1: the first packet sent after the instant by the master is inside the Transmit Window and 3.75 ms from the beginning of the Transmit Window.
+        if (t > 3)
+        {
+            link->conn.ll_data.winoffset = t - 1;
+            link->conn.ll_data.winsize = 2;
+        }
+        else 
+        {
+            // t = 3~0
+            link->conn.ll_data.winoffset = 0;
+            link->conn.ll_data.winsize = 4;
+        }
+
+        //chanege respond by Local Host
+        link->conn.ll_data.latency = conn_param_req.latency;
+        link->conn.ll_data.timeout = conn_param_req.timeout;
+    }
+    else{
+
+        //update conn param
+        link->conn.ll_data.latency  = param->Conn_Latency;
+        link->conn.ll_data.interval = param->Conn_Interval_Min;
+        link->conn.ll_data.timeout  = param->Supervision_Timeout;
+
+        __hci_param_free(le_param.conn_update_param);
+    }
 
     ll_send_control_data(link, LL_CONNECTION_UPDATE_REQ, 
             "122222",
@@ -3339,7 +3582,10 @@ static void __master_ll_send_conn_update_req(void)
 
     __event_oneshot_add(link, __connection_upadte, instant - 1);
 
-    __event_oneshot_add(link, __le_connection_update_complete_event, instant);
+    //avoid procedure collisions
+    ll_control_procedure_push(LL_CONNECTION_UPDATE_REQ);
+
+    __event_oneshot_add(link, __master_ll_send_conn_update_req_done, instant);
 }
 
 static void __slave_ll_receive_conn_update_req(struct le_link *link, struct ble_rx *rx)
@@ -3351,7 +3597,7 @@ static void __slave_ll_receive_conn_update_req(struct le_link *link, struct ble_
     if (__instant_link_lost(instant, rx->event_count) == TRUE)
     {
         puts(__func__);
-        __set_link_state(link, LL_DISCONNECT);
+        ll_disconnect_process(link, INSTANT_PASSED);
         return;
     }
 
@@ -3539,7 +3785,12 @@ static void le_reject_ext(
 /*
  *      LL Control Procedure - Channel Map Update
  */
-static void __master_ll_send_channel_map_req()
+static void __master_ll_send_channel_map_req_done(struct le_link *link)
+{
+    ll_control_procedure_pop(LL_CHANNEL_MAP_REQ);    
+}
+
+static void __master_ll_send_channel_map_req(void)
 {
     struct le_link *link = ll_link_for_state(LL_CONNECTION_ESTABLISHED);
 
@@ -3562,6 +3813,10 @@ static void __master_ll_send_channel_map_req()
     __hci_param_free(le_param.channel_map_update_param);
 
     __event_oneshot_add(link, __channel_map_upadte, instant - 1);
+
+    ll_control_procedure_push(LL_CHANNEL_MAP_REQ);
+
+    __event_oneshot_add(link, __master_ll_send_channel_map_req_done, instant);
 }
 
 static void __slave_ll_receive_channel_map_req(struct le_link *link, struct ble_rx *rx)
@@ -3573,7 +3828,7 @@ static void __slave_ll_receive_channel_map_req(struct le_link *link, struct ble_
     if (__instant_link_lost(instant, rx->event_count) == TRUE)
     {
         puts(__func__);
-        __set_link_state(link, LL_DISCONNECT);
+        ll_disconnect_process(link, INSTANT_PASSED);
         return;
     }
 
@@ -3767,6 +4022,12 @@ static const ll_step_extend version_ind_steps[] = {
 static void le_version_exchange(
         const struct read_remote_version_paramter *param)
 {
+	struct le_link *link = ll_link_for_handle(param->connection_handle);
+
+    ASSERT(link != NULL, "%s\n", __func__);
+
+    ll_response_timeout_start(link);
+
     int malloc_len;
 
     malloc_len = sizeof(struct read_remote_version_paramter);
@@ -4219,9 +4480,9 @@ static void __ll_send_terminate_ind()
 
 static void __ll_receive_terminate_ind(struct le_link *link, struct ble_rx *rx)
 {
-    u8 error_code = rx->data[1];
+    u8 reason = rx->data[1];
 
-    __set_link_state(link, LL_DISCONNECT);
+    ll_disconnect_process(link, reason);
 }
 
 static const ll_step_extend disconnect_steps[] = {
@@ -4246,6 +4507,8 @@ void le_disconnect(
 
     if (LE_IS_CONNECT(link))
     {
+        ll_response_timeout_start(link);
+
         int malloc_len;
 
         malloc_len = sizeof(struct disconnect_paramter);
@@ -4396,14 +4659,14 @@ static void __ll_send_unknow_rsp_auto(struct le_link *link, struct ble_rx *rx)
  *
  * -----------------------------------------------------------------*/
 
-static void ll_control_procedure_finish_emit_event(struct le_link *link, struct ble_rx *rx, struct ble_tx *tx)
+static void ll_control_procedure_finish_emit_event(struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
 {
     ll_step procedure = LL_STEPS();
     
     if (!LL_IS_FINSH())
     {
         //accident break
-        procedure =  ll_control_last_step();
+        procedure =  ll_control_current_procedure_by_localhost();
     }
     
     switch(procedure)
@@ -4429,10 +4692,10 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
         case MASTER_CHANNEL_MAP_REQUEST_STEPS:
             break;
         case MASTER_FEATURES_EXCHANGE_STEPS:
-            __le_read_remote_used_features_complete_event(link, rx);
+            __le_read_remote_used_features_complete_event(link, rx, status);
             break;
         case SLAVE_FEATURES_EXCHANGE_STEPS:
-            __le_read_remote_used_features_complete_event(link, rx);
+            __le_read_remote_used_features_complete_event(link, rx, status);
             break;
         case VERSION_IND_STEPS:
             __hci_event_emit(procedure, link, rx);
@@ -4452,8 +4715,7 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
         case SLAVE_REJECT_STEPS:
             break;
         case DISCONNECT_STEPS:
-            __set_link_state(link, LL_DISCONNECT);
-            __hci_event_emit(procedure, link, rx);
+            __le_disconnect_complete_event(link, status);
             break;
         case DATA_LENGTH_UPDATE_STEPS:
             __le_data_length_change_event(link);
@@ -4482,7 +4744,6 @@ static void master_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             break;
 		case LL_TERMINATE_IND:
             __ll_receive_terminate_ind(link, rx);
-            __hci_event_emit(DISCONNECT_STEPS, link, rx);
 			break;
         
         case LL_ENC_REQ:
@@ -4536,6 +4797,21 @@ static void master_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 
 		case LL_CONNECTION_PARAM_REQ: //4.2 new feature
 			/* master_conn_param_req(link, data, rx->event_count); */
+            switch(master_ll_control_current_procedure)
+            {
+                //autonomously & indicate by LocalHost procedure
+                case LL_CONNECTION_PARAM_REQ:
+                case LL_CONNECTION_UPDATE_REQ:
+                    if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                        __ll_send_reject_ind_ext_auto(link, opcode, LMP_ERROR_TRANSACTION_COLLISION);
+                    }
+                    break;
+                case LL_CHANNEL_MAP_REQ:
+                    if (LE_FEATURES_IS_SUPPORT(EXTENDED_REJECT_INDICATION)){
+                        __ll_send_reject_ind_ext_auto(link, opcode, DIFFERENT_TRANSACTION_COLLISION);
+                    }
+                    break;
+            }
             if (LE_FEATURES_IS_SUPPORT(CONNECTION_PARAMETER_REQUEST))
             {
                 CONN_PARAM_RES res;
@@ -4639,6 +4915,7 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 	{
 		case LL_CONNECTION_UPDATE_REQ:
             ll_puts("--LL_CONNECTION_UPDATE_REQ\n");
+            //avoid the ll_control_procedure_collisions
             __slave_ll_receive_conn_update_req(link, rx);
 			break;
 		case LL_CHANNEL_MAP_REQ:
@@ -4648,7 +4925,6 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 		case LL_TERMINATE_IND:
             ll_puts("--LL_TERMINATE_IND\n");
             __ll_receive_terminate_ind(link, rx);
-            __hci_event_emit(DISCONNECT_STEPS, link, rx);
 			break;
 
 		case LL_ENC_REQ:
@@ -4805,6 +5081,8 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 			break;
 	}
 }
+
+
 
 void le_ll_push_control_data(u8 opcode, const u8 *param)
 {

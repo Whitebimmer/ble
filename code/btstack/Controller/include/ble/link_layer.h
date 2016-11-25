@@ -278,7 +278,7 @@ struct le_link{
     //supervision timeout
     struct sys_timer timeout;
     struct sys_timer adv_timeout;
-    struct sys_timer pr_timeout;    //control procedures response timeout Tprt
+    struct sys_timer response_timeout;    //control procedures response timeout Tprt
     
     //Data Length Update
     struct data_length pdu_len;
