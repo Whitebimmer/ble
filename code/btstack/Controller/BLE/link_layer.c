@@ -808,10 +808,10 @@ void ll_send_acl_packet(int handle, u8 *packet, int total_len)
 
 /********************************************************************************/
 
-static void __hci_event_emit(u8 procedure, struct le_link *link, struct ble_rx *rx)
+static void __hci_event_emit(u8 procedure, struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
 {
     if (ll.handler && ll.handler->event_handler){
-        ll.handler->event_handler(procedure, link, rx);
+        ll.handler->event_handler(procedure, link, rx, status);
     }
 }
 
@@ -2200,7 +2200,7 @@ static void ll_disconnect_process(struct le_link *link, u8 reason)
 
     rx.data[1] = reason;	
 
-    __hci_event_emit(DISCONNECT_STEPS, link, &rx);
+    __hci_event_emit(DISCONNECT_STEPS, link, &rx, reason);
 }
 
 #define LE_IS_CONNECT(link)     (link->state == LL_CONNECTION_ESTABLISHED)
@@ -2336,6 +2336,24 @@ static void __le_read_remote_used_features_complete_event(struct le_link *link, 
                 link->handle,
                 rx->data[1]);
     }
+}
+
+static void __hci_read_remote_version_information_complete_event(struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
+{
+    ll_puts("LE_READ_REMOTE_USED_FEATURES_COMPLETE_EVENT\n");
+    switch (status)
+    {
+    case LL_CONTROL_TIMEOUT:
+        status = LMP_RESPONSE_TIMEOUT_LL_RESPONSE_TIMEOUT;
+        break;
+    case LL_CONTROL_UNKNOW_RSP:
+    case LL_CONTROL_REJECT:
+    case LL_CONTROL_EXT_REJECT:
+    default:
+        ASSERT(0, "%s\n", __func__);
+        break;
+    }
+    __hci_event_emit(VERSION_IND_STEPS, link, rx, status);
 }
 
 static bool __le_long_term_key_request_event(struct le_link *link, struct ble_rx *rx)
@@ -4698,19 +4716,19 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
             __le_read_remote_used_features_complete_event(link, rx, status);
             break;
         case VERSION_IND_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_read_remote_version_information_complete_event(link, rx, status);
             break;
         case START_ENCRYPTION_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case RESTART_ENCRYPTION_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case START_ENCRYPTION_REQ_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case RESTART_ENCRYPTION_REQ_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case SLAVE_REJECT_STEPS:
             break;
@@ -5248,7 +5266,7 @@ static void rx_unknow_pdu_handler(struct le_link *link, struct ble_rx *rx)
     {
         puts(__func__);
         rx->data[1] = CONNECTION_TERMINATED_DUE_TO_MIC_FAILURE;
-        __hci_event_emit(DISCONNECT_STEPS, link, rx);
+        __hci_event_emit(DISCONNECT_STEPS, link, rx, NULL);
     }
 }
 

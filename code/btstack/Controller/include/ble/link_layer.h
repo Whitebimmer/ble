@@ -291,7 +291,7 @@ struct lc_handler {
 
     void (*tx_handler)(struct le_link *link, struct ble_tx *tx);
 
-    void (*event_handler)(u8 procedure, struct le_link *link, struct ble_rx *rx)
+    void (*event_handler)(u8 procedure, struct le_link *link, struct ble_rx *rx, u8 status)
 };
 
 struct ll_interface{
