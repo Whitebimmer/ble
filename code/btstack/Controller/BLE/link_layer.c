@@ -2186,8 +2186,14 @@ static void __set_link_state(struct le_link *link, int state)
     /* printf("set link state : %02x\n", link->state); */
 }
 
+#define LE_IS_DISCONNECT(link)     (link->state == LL_DISCONNECT)
+
 static void ll_disconnect_process(struct le_link *link, u8 reason)
 {
+    //skip already disconnect 
+    if (LE_IS_DISCONNECT(link))
+        return;
+
 	struct ble_rx rx;
 
     __set_link_state(link, LL_DISCONNECT);
@@ -2197,6 +2203,7 @@ static void ll_disconnect_process(struct le_link *link, u8 reason)
     __hci_event_emit(DISCONNECT_STEPS, link, &rx);
 }
 
+#define LE_IS_CONNECT(link)     (link->state == LL_CONNECTION_ESTABLISHED)
 
 // LL Supervision TimeOut
 static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
@@ -2206,11 +2213,12 @@ static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
     ASSERT(link != NULL, "%s\n", __func__);
     //DEBUG_IOB_1(0);
     //while(1);
+    ll_puts("\n********Supervision_Timeout***********\n");
 
     u8 reason;
 
-    reason = (link->state == LL_CONNECTION_ESTABLISHED) ? \
-             CONNECTION_FAILED_TO_BE_ESTABLISHED : CONNECTION_TIMEOUT;
+    reason = LE_IS_CONNECT(link) ? \
+             CONNECTION_TIMEOUT : CONNECTION_FAILED_TO_BE_ESTABLISHED ;
 
     sys_timer_remove(&link->timeout);
 
@@ -2454,6 +2462,26 @@ static void __le_data_length_change_event(struct le_link *link)
             link->pdu_len.connEffectiveMaxRxTime);
 }
 
+static void __le_disconnect_complete_event(struct le_link *link, LL_CONTROL_CASE status)
+{
+    switch (status)
+    {
+    case LL_CONTROL_SUCCESS:
+        status = CONNECTION_TERMINATED_BY_LOCAL_HOST;
+        break;
+    case LL_CONTROL_TIMEOUT:
+        status = LMP_RESPONSE_TIMEOUT_LL_RESPONSE_TIMEOUT;
+        break;
+
+    case LL_CONTROL_UNKNOW_RSP:
+    case LL_CONTROL_REJECT:
+    case LL_CONTROL_EXT_REJECT:
+    default:
+        ASSERT(0, "%s\n", __func__);
+        break;
+    }
+    ll_disconnect_process(link, status);
+}
 
 
 /*----------------------------------------------------------------------
@@ -2851,7 +2879,7 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
 {
     if (link->state == LL_CONNECTION_ESTABLISHED)
     {
-        /* putchar('#'); */
+        putchar('#');
         //set ll supervisonTO to connSupervision timeout when receive first packet
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
     }
@@ -3150,6 +3178,8 @@ static void ll_response_timeout_handler(struct sys_timer *timer)
 
     ASSERT(link != NULL, "%s\n", __func__);
 
+    ll_puts("\n********Response_Timeout***********\n");
+
     //emit LE Event
     ll_control_procedure_finish(link, NULL, LL_CONTROL_TIMEOUT);
 
@@ -3367,7 +3397,6 @@ static void __master_ll_receive_connection_param_rsp(struct le_link *link, struc
     }
 }
 
-#define LE_IS_CONNECT(link)     (link->state == LL_CONNECTION_ESTABLISHED)
 
 /*
  *      LL Control Procedure - Connection Update
@@ -4478,6 +4507,8 @@ void le_disconnect(
 
     if (LE_IS_CONNECT(link))
     {
+        ll_response_timeout_start(link);
+
         int malloc_len;
 
         malloc_len = sizeof(struct disconnect_paramter);
@@ -4684,7 +4715,7 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
         case SLAVE_REJECT_STEPS:
             break;
         case DISCONNECT_STEPS:
-            ll_disconnect_process(link, CONNECTION_TERMINATED_BY_LOCAL_HOST);
+            __le_disconnect_complete_event(link, status);
             break;
         case DATA_LENGTH_UPDATE_STEPS:
             __le_data_length_change_event(link);
