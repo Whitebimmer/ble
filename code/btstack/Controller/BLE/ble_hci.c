@@ -307,22 +307,22 @@ static void __hci_event_encryption_refresh_complete(struct le_link *link)
                 0, link->handle);
 }
 
-static void __hci_event_disconnection_complete(struct le_link *link, u8 reason)
+static void __hci_event_disconnection_complete(struct le_link *link, u8 reason, u8 status)
 {
     hci_puts("HCI_EVENT_DISCONNECTION_COMPLETE\n");
     le_send_event(HCI_EVENT_DISCONNECTION_COMPLETE, "1H1",
-            0, link->handle, reason);
+            status, link->handle, reason);
 }
 
 
 #define HCI_EVENT_READ_REMOTE_VERSION_INFORMATION_COMPLETE  0x0C
 
-static void __hci_event_read_remote_version_information_complete(struct le_link *link, u8 *data)
+static void __hci_event_read_remote_version_information_complete(struct le_link *link, u8 *data, u8 status)
 {
     hci_puts("HCI_EVENT_READ_REMOTE_VERSION_INFORMATION_COMPLETE\n");
     le_send_event(HCI_EVENT_READ_REMOTE_VERSION_INFORMATION_COMPLETE,
             "1H122",
-            0, link->handle, 
+            status, link->handle, 
             data[0], READ_BT_16(data, 1), READ_BT_16(data, 3));
 }
 
@@ -595,7 +595,7 @@ static void le_hci_tx_handler(struct le_link *link, struct ble_tx *tx)
     }
 }
 
-static void le_hci_event_handler(u8 procedure, struct le_link *link, struct ble_rx *rx)
+static void le_hci_event_handler(u8 procedure, struct le_link *link, struct ble_rx *rx, u8 status)
 {
     //basic pdu
 	u8 opcode = rx->data[0];
@@ -620,7 +620,7 @@ static void le_hci_event_handler(u8 procedure, struct le_link *link, struct ble_
         case SLAVE_FEATURES_EXCHANGE_STEPS:
             break;
         case VERSION_IND_STEPS:
-            __hci_event_read_remote_version_information_complete(link, data);
+            __hci_event_read_remote_version_information_complete(link, data, status);
             break;
         case START_ENCRYPTION_STEPS:
             __hci_event_encryption_change(link, data);
@@ -637,7 +637,7 @@ static void le_hci_event_handler(u8 procedure, struct le_link *link, struct ble_
         case SLAVE_REJECT_STEPS:
             break;
         case DISCONNECT_STEPS:
-            __hci_event_disconnection_complete(link, data[0]);
+            __hci_event_disconnection_complete(link, data[0], status);
             break;
         case DATA_LENGTH_UPDATE_STEPS:
             break;
