@@ -7,7 +7,7 @@
 #define UART1   1
 #define UART2   2
 #ifdef __DEBUG
-#define DEBUG_UART   UART1 /*select uart port*/
+#define DEBUG_UART   UART0 /*select uart port*/
 #else
 #define DEBUG_UART   0xFF  /*uart invalid*/
 #endif
