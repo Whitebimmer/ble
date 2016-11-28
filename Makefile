@@ -24,7 +24,7 @@ export PLATFORM = br17
 export TYPE=CHIP
 
 #配置蓝牙层模式(CONTROLLER_MODE/HOST_MODE/FULL_MODE)
-export LE_MODE=FULL_MODE
+export LE_MODE=CONTROLLER_MODE
 
 ifeq ($(HOST_OS), linux) 
 export SLASH=/
