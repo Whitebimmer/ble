@@ -317,13 +317,13 @@ static bool meta_event_mask(int subevent_code)
 {
     if (hci_param_t->event_mask[LE_META_EVENT/8] & BIT(LE_META_EVENT%8))
     {
-        puts("LE_META_EVENT SET - ");
-        subevent_code -= 1;
+        /* subevent_code -= 1; */
         if (le_param.event_mask[subevent_code/8] & BIT(subevent_code%8))
         {
             return TRUE;            
         }
     }
+    ll_puts("LE event mask - disable");
     return FALSE;
 }
 
@@ -331,7 +331,7 @@ static bool __hci_emit_le_meta_event(u8 subevent_code, const char *format, ...)
 {
 	struct le_event *event;
 
-    if (meta_event_mask(subevent_code) == TRUE)
+    if (meta_event_mask(subevent_code) == FALSE)
     {
         return FALSE;
     }
@@ -2528,6 +2528,17 @@ static void __le_disconnect_complete_event(struct le_link *link, LL_CONTROL_CASE
     ll_disconnect_process(link, status);
 }
 
+static void __le_connection_complete_event_emit(struct le_link *link)
+{
+    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
+    {
+        __le_enhanced_connection_complete_event(link, 0x0);
+    }
+    else
+    {
+        __le_connection_complete_event(link, 0x0);
+    }
+}
 
 /*----------------------------------------------------------------------
  *
@@ -2740,7 +2751,7 @@ static void le_ll_init_addr_process(struct le_link *link, struct ble_rx *rx)
             {
                 if (rx->type == ADV_DIRECT_IND)
                 {
-					putchar('f');
+					/* putchar('f'); */
                     struct resolving_list *resolving_list_t1 = NULL;
 
                     //resolve InitA
@@ -2818,6 +2829,8 @@ static void slave_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
     __rx_oneshot_add(link, __set_conn_winsize);
 
+    __rx_oneshot_add(link, __le_connection_complete_event_emit);
+
 }
 
 
@@ -2867,6 +2880,9 @@ static void master_set_connection_param(struct le_link *link, struct ble_rx *rx)
     __set_link_state(link, LL_CONNECTION_CREATE);
 
     __rx_oneshot_add(link, __set_conn_winsize);
+
+    __rx_oneshot_add(link, __le_connection_complete_event_emit);
+    
 }
 
 
@@ -2885,7 +2901,7 @@ static void rx_probe_init_pdu_handler(struct le_link *link, struct ble_rx *rx)
 				return;
 			}
 		}
-		putchar('A');
+		/* putchar('A'); */
 		master_set_connection_param(link, rx);
 		//LL_CONNECTION_ESTABLISHED set ll connSupervision timeout
 		supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
@@ -2908,11 +2924,11 @@ static void le_ll_probe_pdu_handler(struct le_link *link, struct ble_rx *rx)
             rx_probe_adv_pdu_handler(link, rx);
             break;
         case LL_SCANNING:
-			putchar('S');
+			/* putchar('S'); */
             rx_probe_scan_pdu_handler(link, rx);
             break;
         case LL_INITIATING:
-			putchar('I');
+			/* putchar('I'); */
             rx_probe_init_pdu_handler(link, rx);
             break;
     }
@@ -2924,7 +2940,7 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
 {
     if (link->state == LL_CONNECTION_ESTABLISHED)
     {
-        putchar('#');
+        /* putchar('#'); */
         //set ll supervisonTO to connSupervision timeout when receive first packet
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
     }
@@ -2933,6 +2949,19 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
         putchar('%');
         /* put_u32hex(link->conn.ll_data.timeout*10); */
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
+        __set_link_state(link, LL_CONNECTION_ESTABLISHED);
+    }
+
+    __rx_oneshot_run(link);
+}
+
+static void le_ll_probe_data_pdu_crc_handler(struct le_link *link, struct ble_rx *rx)
+{
+    //CRC error emit connection event & change LL state
+    if (link->state == LL_CONNECTION_CREATE)
+    {
+        putchar('@');
+        /* put_u32hex(link->conn.ll_data.timeout*10); */
         __set_link_state(link, LL_CONNECTION_ESTABLISHED);
     }
 
@@ -2970,6 +2999,9 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
         case LL_CONTROL_PDU:
             /* le_ll_ctrl_pdu_handler(link, rx); */
             break;
+        case LL_DATA_PDU_CRC:
+            le_ll_probe_data_pdu_crc_handler(link, rx);
+            break;
     }
     
     //empty packet not notify upper layer
@@ -2985,8 +3017,8 @@ static void debug_info(struct le_link *link)
     struct ble_conn *conn = &link->conn;
 
     /* printf("role is slave : %02x\n",   ROLE_IS_SLAVE(link)); */
-    /* puts("\naa"); printf_buf(conn->ll_data.aa, 4); */
-    /* puts("\ncrcinit"); printf_buf(conn->ll_data.crcinit, 3); */
+    puts("\naa"); printf_buf(conn->ll_data.aa, 4);
+    puts("\ncrcinit"); printf_buf(conn->ll_data.crcinit, 3);
     printf("winsize : %02x\n",    conn->ll_data.winsize);
     printf("winoffset : %04x\n",  conn->ll_data.winoffset);
     printf("interval: %04x\n",    conn->ll_data.interval);
@@ -3039,7 +3071,7 @@ static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
         puts("AdvA resolve fail\n");
         return;
     }
-	putchar('c');
+	/* putchar('c'); */
     //AdvA resolve 
     __ble_ops->ioctrl(link->hw, BLE_SET_RPA_RESOLVE_RESULT, rx, ADDR_IS_FAIL());
 	/* puts(__FUNCTION__); */
@@ -3163,14 +3195,6 @@ static void rx_conn_state_handler(struct le_link *link, struct ble_rx *rx)
         }
     }
 
-    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
-    {
-        __le_enhanced_connection_complete_event(link, 0x0);
-    }
-    else
-    {
-        __le_connection_complete_event(link, 0x0);
-    }
 
     debug_info(link);
 }
@@ -3189,11 +3213,11 @@ static bool rx_pdu_handler(struct le_link *link, struct ble_rx *rx)
             rx_adv_state_handler(link, rx);
             break;
         case LL_SCANNING:
-			putchar('a');
+			/* putchar('a'); */
             rx_scan_state_handler(link, rx);
             break;
         case LL_INITIATING:
-			putchar('d');
+			/* putchar('d'); */
             rx_init_state_handler(link, rx);
             break;
         case LL_CONNECTION_CREATE:
@@ -3207,7 +3231,6 @@ static bool rx_pdu_handler(struct le_link *link, struct ble_rx *rx)
 
 static void rx_data_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
-
 }
 
 
@@ -5317,7 +5340,7 @@ static void ll_rx_post_handler(void *priv, struct ble_rx *rx)
     switch(rx->llid)
     {
         case LL_RESERVED:
-			putchar('b');
+			/* putchar('b'); */
             upper_pass = rx_pdu_handler(link, rx);
             break;
         case LL_DATA_PDU_START:
