@@ -317,7 +317,7 @@ static bool meta_event_mask(int subevent_code)
 {
     if (hci_param_t->event_mask[LE_META_EVENT/8] & BIT(LE_META_EVENT%8))
     {
-        subevent_code -= 1;
+        /* subevent_code -= 1; */
         if (le_param.event_mask[subevent_code/8] & BIT(subevent_code%8))
         {
             return TRUE;            
@@ -2528,6 +2528,17 @@ static void __le_disconnect_complete_event(struct le_link *link, LL_CONTROL_CASE
     ll_disconnect_process(link, status);
 }
 
+static void __le_connection_complete_event_emit(struct le_link *link)
+{
+    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
+    {
+        __le_enhanced_connection_complete_event(link, 0x0);
+    }
+    else
+    {
+        __le_connection_complete_event(link, 0x0);
+    }
+}
 
 /*----------------------------------------------------------------------
  *
@@ -2818,6 +2829,8 @@ static void slave_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
     __rx_oneshot_add(link, __set_conn_winsize);
 
+    __rx_oneshot_add(link, __le_connection_complete_event_emit);
+
 }
 
 
@@ -2867,6 +2880,9 @@ static void master_set_connection_param(struct le_link *link, struct ble_rx *rx)
     __set_link_state(link, LL_CONNECTION_CREATE);
 
     __rx_oneshot_add(link, __set_conn_winsize);
+
+    __rx_oneshot_add(link, __le_connection_complete_event_emit);
+    
 }
 
 
@@ -2919,7 +2935,6 @@ static void le_ll_probe_pdu_handler(struct le_link *link, struct ble_rx *rx)
 }
 
 
-u8 post_emit_conn_event;
 
 static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
@@ -2931,11 +2946,10 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
     }
     else if (link->state == LL_CONNECTION_CREATE)
     {
-        /* putchar('%'); */
+        putchar('%');
         /* put_u32hex(link->conn.ll_data.timeout*10); */
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
         __set_link_state(link, LL_CONNECTION_ESTABLISHED);
-        post_emit_conn_event = 1;
     }
 
     __rx_oneshot_run(link);
@@ -2987,8 +3001,8 @@ static void debug_info(struct le_link *link)
     struct ble_conn *conn = &link->conn;
 
     /* printf("role is slave : %02x\n",   ROLE_IS_SLAVE(link)); */
-    /* puts("\naa"); printf_buf(conn->ll_data.aa, 4); */
-    /* puts("\ncrcinit"); printf_buf(conn->ll_data.crcinit, 3); */
+    puts("\naa"); printf_buf(conn->ll_data.aa, 4);
+    puts("\ncrcinit"); printf_buf(conn->ll_data.crcinit, 3);
     printf("winsize : %02x\n",    conn->ll_data.winsize);
     printf("winoffset : %04x\n",  conn->ll_data.winoffset);
     printf("interval: %04x\n",    conn->ll_data.interval);
@@ -3201,28 +3215,6 @@ static bool rx_pdu_handler(struct le_link *link, struct ble_rx *rx)
 
 static void rx_data_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
-    //only one time when connection from create to established
-    if (post_emit_conn_event)
-    {
-        post_emit_conn_event = 0;
-    }
-    else {
-        return;
-    }
-
-    switch (link->state)
-    {
-    case LL_CONNECTION_ESTABLISHED:
-        if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
-        {
-            __le_enhanced_connection_complete_event(link, 0x0);
-        }
-        else
-        {
-            __le_connection_complete_event(link, 0x0);
-        }
-        break;
-    }
 }
 
 
