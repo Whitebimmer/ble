@@ -2919,6 +2919,7 @@ static void le_ll_probe_pdu_handler(struct le_link *link, struct ble_rx *rx)
 }
 
 
+u8 post_emit_conn_event;
 
 static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
@@ -2934,6 +2935,7 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
         /* put_u32hex(link->conn.ll_data.timeout*10); */
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
         __set_link_state(link, LL_CONNECTION_ESTABLISHED);
+        post_emit_conn_event = 1;
     }
 
     __rx_oneshot_run(link);
@@ -3163,14 +3165,6 @@ static void rx_conn_state_handler(struct le_link *link, struct ble_rx *rx)
         }
     }
 
-    if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
-    {
-        __le_enhanced_connection_complete_event(link, 0x0);
-    }
-    else
-    {
-        __le_connection_complete_event(link, 0x0);
-    }
 
     debug_info(link);
 }
@@ -3207,7 +3201,28 @@ static bool rx_pdu_handler(struct le_link *link, struct ble_rx *rx)
 
 static void rx_data_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
+    //only one time when connection from create to established
+    if (post_emit_conn_event)
+    {
+        post_emit_conn_event = 0;
+    }
+    else {
+        return;
+    }
 
+    switch (link->state)
+    {
+    case LL_CONNECTION_ESTABLISHED:
+        if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
+        {
+            __le_enhanced_connection_complete_event(link, 0x0);
+        }
+        else
+        {
+            __le_connection_complete_event(link, 0x0);
+        }
+        break;
+    }
 }
 
 
@@ -5317,7 +5332,7 @@ static void ll_rx_post_handler(void *priv, struct ble_rx *rx)
     switch(rx->llid)
     {
         case LL_RESERVED:
-			putchar('b');
+			/* putchar('b'); */
             upper_pass = rx_pdu_handler(link, rx);
             break;
         case LL_DATA_PDU_START:
