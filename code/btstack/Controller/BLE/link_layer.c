@@ -2924,13 +2924,13 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
 {
     if (link->state == LL_CONNECTION_ESTABLISHED)
     {
-        putchar('#');
+        /* putchar('#'); */
         //set ll supervisonTO to connSupervision timeout when receive first packet
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
     }
     else if (link->state == LL_CONNECTION_CREATE)
     {
-        putchar('%');
+        /* putchar('%'); */
         /* put_u32hex(link->conn.ll_data.timeout*10); */
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
         __set_link_state(link, LL_CONNECTION_ESTABLISHED);

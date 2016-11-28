@@ -756,6 +756,11 @@ static const struct hci_read_parameter hci_read_param = {
     .public_addr = {0x9e, 0x3a, 0xba, 0x98, 0x22, 0x71},
     #endif
 #endif
+    .hci_version = 0x8,     //4.2
+    .hci_revision = 0x0000,
+    .lmp_pal_version = 0x00,
+    .manufacturer_name = 0x0000,
+    .lmp_pal_subversion = 0x0000,
 };
 
 
@@ -769,8 +774,15 @@ static void hci_informational_handler(u16 opcode, u8 *data, int len)
 			hci_puts("HCI_READ_BD_ADDR\n");
             __hci_emit_event_of_cmd_complete(opcode, "1A", 0, hci_read_param.public_addr);	
 		   break;
-        case HCI_READ_LOCAL_SUPPORT_FEATURES:
-            puts("LL - local support features\n");
+        case HCI_READ_LOCAL_VERSION_INFORMATION:
+           puts("HCI_READ_LOCAL_VERSION_INFORMATION\n");
+            __hci_emit_event_of_cmd_complete(opcode, "112122", 0, hci_read_param.hci_version, hci_read_param.hci_revision, hci_read_param.lmp_pal_version, hci_read_param.manufacturer_name, hci_read_param.lmp_pal_subversion);
+           break;
+        /* case HCI_READ_LOCAL_SUPPORTED_COMMAND: */
+            /* puts("HCI_READ_LOCAL_SUPPORTED_COMMAND\n"); */
+            /* break; */
+        case HCI_READ_LOCAL_SUPPORTED_FEATURES:
+            puts("HCI_READ_LOCAL_SUPPORT_FEATURES\n");
             __hci_emit_event_of_cmd_complete(opcode, "1c08", 0, hci_read_param.features);	
            break; 
         case HCI_READ_REMOTE_VERSION_INFORMATION:
