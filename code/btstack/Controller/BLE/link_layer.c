@@ -317,13 +317,13 @@ static bool meta_event_mask(int subevent_code)
 {
     if (hci_param_t->event_mask[LE_META_EVENT/8] & BIT(LE_META_EVENT%8))
     {
-        puts("LE_META_EVENT SET - ");
         subevent_code -= 1;
         if (le_param.event_mask[subevent_code/8] & BIT(subevent_code%8))
         {
             return TRUE;            
         }
     }
+    ll_puts("LE event mask - disable");
     return FALSE;
 }
 
@@ -331,7 +331,7 @@ static bool __hci_emit_le_meta_event(u8 subevent_code, const char *format, ...)
 {
 	struct le_event *event;
 
-    if (meta_event_mask(subevent_code) == TRUE)
+    if (meta_event_mask(subevent_code) == FALSE)
     {
         return FALSE;
     }
@@ -2740,7 +2740,7 @@ static void le_ll_init_addr_process(struct le_link *link, struct ble_rx *rx)
             {
                 if (rx->type == ADV_DIRECT_IND)
                 {
-					putchar('f');
+					/* putchar('f'); */
                     struct resolving_list *resolving_list_t1 = NULL;
 
                     //resolve InitA
@@ -2885,7 +2885,7 @@ static void rx_probe_init_pdu_handler(struct le_link *link, struct ble_rx *rx)
 				return;
 			}
 		}
-		putchar('A');
+		/* putchar('A'); */
 		master_set_connection_param(link, rx);
 		//LL_CONNECTION_ESTABLISHED set ll connSupervision timeout
 		supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
@@ -2908,11 +2908,11 @@ static void le_ll_probe_pdu_handler(struct le_link *link, struct ble_rx *rx)
             rx_probe_adv_pdu_handler(link, rx);
             break;
         case LL_SCANNING:
-			putchar('S');
+			/* putchar('S'); */
             rx_probe_scan_pdu_handler(link, rx);
             break;
         case LL_INITIATING:
-			putchar('I');
+			/* putchar('I'); */
             rx_probe_init_pdu_handler(link, rx);
             break;
     }
@@ -3041,7 +3041,7 @@ static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
         puts("AdvA resolve fail\n");
         return;
     }
-	putchar('c');
+	/* putchar('c'); */
     //AdvA resolve 
     __ble_ops->ioctrl(link->hw, BLE_SET_RPA_RESOLVE_RESULT, rx, ADDR_IS_FAIL());
 	/* puts(__FUNCTION__); */
@@ -3183,11 +3183,11 @@ static bool rx_pdu_handler(struct le_link *link, struct ble_rx *rx)
             rx_adv_state_handler(link, rx);
             break;
         case LL_SCANNING:
-			putchar('a');
+			/* putchar('a'); */
             rx_scan_state_handler(link, rx);
             break;
         case LL_INITIATING:
-			putchar('d');
+			/* putchar('d'); */
             rx_init_state_handler(link, rx);
             break;
         case LL_CONNECTION_CREATE:

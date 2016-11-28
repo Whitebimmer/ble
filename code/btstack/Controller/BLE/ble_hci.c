@@ -668,7 +668,7 @@ void link_control_cmd_handler(u16 opcode, u8 *data, int len)
             __hci_emit_event_of_cmd_status(0, opcode);
             break;
         default:
-            puts("cmd not finish\n");
+            puts("link_control_cmd_handler cmd not finish\n");
             break;
     }
 }
@@ -703,14 +703,16 @@ void ctrl_baseband_cmd_handler(u16 opcode, u8 *data, int len)
 			__hci_emit_event_of_cmd_complete(opcode, "1", 0);	
 		   break;
         case HCI_SET_EVENT_MASK:
+			hci_puts("HCI_SET_EVENT_MASK\n");
             memcpy(hci_param.event_mask, data, 8);
             __hci_emit_event_of_cmd_complete(opcode, "1", 0);	
-           break;
+            break;
         case HCI_WRITE_SECURE_CONNECTIONS_HOST_SUPPORT:
-           hci_param.secure_conn_host_support = data[0];
-           break;
+			hci_puts("HCI_WRITE_SECURE_CONNECTIONS_HOST_SUPPORT\n");
+            hci_param.secure_conn_host_support = data[0];
+            break;
         default:
-            puts("cmd not finish\n");
+            puts("ctrl_baseband_cmd_handler cmd not finish\n");
             break;
 	}
 }
@@ -789,7 +791,7 @@ static void hci_informational_handler(u16 opcode, u8 *data, int len)
            break;
 
         default:
-            puts("cmd not finish\n");
+            puts("hci_informational_handler cmd not finish\n");
             break;
 	}
 
@@ -828,6 +830,7 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
 	switch(ocf)
 	{
 		case HCI_LE_SET_EVENT_MASK:
+			hci_puts("HCI_LE_SET_EVENT_MASK\n");
             memcpy(le_param_t->event_mask, data, 8);
 			__hci_emit_event_of_cmd_complete(opcode, "1", 0);
 			break;
@@ -1099,7 +1102,7 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
             break;
             
         default:
-            puts("cmd not finish\n");
+            puts("le_hci_command_handler cmd not finish\n");
             break;
 	}
 }
