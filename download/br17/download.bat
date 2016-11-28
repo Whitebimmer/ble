@@ -16,8 +16,8 @@ if exist %1.lst del %1.lst
 
 REM  del %1.bin %1.lst %1.map
 
-set OBJDUMP=C:\JL\pi32\bin\llvm-objdump
-set OBJCOPY=C:\JL\pi32\bin\llvm-objcopy
+REM  set OBJDUMP=C:\JL\pi32\bin\llvm-objdump
+REM  set OBJCOPY=C:\JL\pi32\bin\llvm-objcopy
 
 %OBJDUMP% -disassemble %1.or32 > %1.lst
 %OBJCOPY% -O binary -j .code  %1.or32  %1.bin

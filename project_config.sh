@@ -23,6 +23,7 @@
 DIR=.
 export TARGET=br17
 export EXCEPT=br16
+export EXCEPT1=bt16
 # echo ${DIR}
 # echo ${TARGET}
 

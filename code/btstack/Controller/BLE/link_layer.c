@@ -808,10 +808,10 @@ void ll_send_acl_packet(int handle, u8 *packet, int total_len)
 
 /********************************************************************************/
 
-static void __hci_event_emit(u8 procedure, struct le_link *link, struct ble_rx *rx)
+static void __hci_event_emit(u8 procedure, struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
 {
     if (ll.handler && ll.handler->event_handler){
-        ll.handler->event_handler(procedure, link, rx);
+        ll.handler->event_handler(procedure, link, rx, status);
     }
 }
 
@@ -2200,7 +2200,7 @@ static void ll_disconnect_process(struct le_link *link, u8 reason)
 
     rx.data[1] = reason;	
 
-    __hci_event_emit(DISCONNECT_STEPS, link, &rx);
+    __hci_event_emit(DISCONNECT_STEPS, link, &rx, reason);
 }
 
 #define LE_IS_CONNECT(link)     (link->state == LL_CONNECTION_ESTABLISHED)
@@ -2299,12 +2299,33 @@ static bool __instant_link_lost(u16 instant, u16 eventcnt)
 /*
  *                  Link Layer Event 
  */
-static void __le_connection_update_complete_event(struct le_link *link)
+static void __le_connection_update_complete_event(struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
 {
     ll_puts("LE_CONNECTION_UPDATE_COMPLETE_EVENT\n");
+    switch (status)
+    {
+    case LL_CONTROL_SUCCESS:
+        status= 0;
+        break;
+    case LL_CONTROL_UNKNOW_RSP:
+        status = UNSUPPORTED_REMOTE_FEATURE_UNSUPPORTED_LMP_FEATURE;
+        break;
+    case LL_CONTROL_REJECT:
+        ASSERT(rx, "REJECT why no reason %s\n", __func__);
+        status = rx->data[0];
+        break;
+    case LL_CONTROL_EXT_REJECT:
+        ASSERT(rx, "EXT REJECT why no reason %s\n", __func__);
+        status = rx->data[1];
+        break;
+    default:
+        ASSERT(0, "%s\n", __func__);
+        break;
+    }
+
     __hci_emit_le_meta_event(LE_CONNECTION_UPDATE_COMPLETE_EVENT,
             "1H222", 
-            0,
+            status,
             link->handle,
             link->conn.ll_data.interval,
             link->conn.ll_data.latency,
@@ -2316,6 +2337,9 @@ static void __le_read_remote_used_features_complete_event(struct le_link *link, 
     ll_puts("LE_READ_REMOTE_USED_FEATURES_COMPLETE_EVENT\n");
     switch (status)
     {
+    case LL_CONTROL_SUCCESS:
+        status= 0;
+        break;
     case LL_CONTROL_UNKNOW_RSP:
         status = UNSUPPORTED_REMOTE_FEATURE_UNSUPPORTED_LMP_FEATURE;
         break;
@@ -2336,6 +2360,27 @@ static void __le_read_remote_used_features_complete_event(struct le_link *link, 
                 link->handle,
                 rx->data[1]);
     }
+}
+
+static void __hci_read_remote_version_information_complete_event(struct le_link *link, struct ble_rx *rx, LL_CONTROL_CASE status)
+{
+    ll_puts("LE_READ_REMOTE_USED_FEATURES_COMPLETE_EVENT\n");
+    switch (status)
+    {
+    case LL_CONTROL_SUCCESS:
+        status = 0;
+        break;
+    case LL_CONTROL_TIMEOUT:
+        status = LMP_RESPONSE_TIMEOUT_LL_RESPONSE_TIMEOUT;
+        break;
+    case LL_CONTROL_UNKNOW_RSP:
+    case LL_CONTROL_REJECT:
+    case LL_CONTROL_EXT_REJECT:
+    default:
+        ASSERT(0, "%s\n", __func__);
+        break;
+    }
+    __hci_event_emit(VERSION_IND_STEPS, link, rx, status);
 }
 
 static bool __le_long_term_key_request_event(struct le_link *link, struct ble_rx *rx)
@@ -3234,6 +3279,12 @@ static void __ll_send_conn_param_req_auto(struct le_link *link)
         ASSERT(0, "Conn Param Request err TimeOut in %s\n", __func__);
     }
 
+    //Master procedure record
+    if (!ROLE_IS_SLAVE(link))
+    {
+        ll_control_procedure_push(LL_CONNECTION_PARAM_REQ);
+    }
+
     ll_send_control_data(link, LL_CONNECTION_PARAM_REQ,
             "222212222222",
             conn_param_req.interval_min,
@@ -3248,12 +3299,6 @@ static void __ll_send_conn_param_req_auto(struct le_link *link)
             conn_param_req.offset[3],
             conn_param_req.offset[4],
             conn_param_req.offset[5]);
-
-    //Master procedure record
-    if (!ROLE_IS_SLAVE(link))
-    {
-        ll_control_procedure_push(LL_CONNECTION_PARAM_REQ);
-    }
 }
 
 static void __ll_send_conn_param_req(void)
@@ -3273,6 +3318,12 @@ static void __ll_send_conn_param_req(void)
 	struct le_link *link = ll_link_for_handle(param->connection_handle);
 
     ASSERT(link != NULL, "%s\n", __func__);
+
+    //Master procedure record
+    if (!ROLE_IS_SLAVE(link))
+    {
+        ll_control_procedure_push(LL_CONNECTION_PARAM_REQ);
+    }
 
     conn_param_req.interval_min = param->Conn_Interval_Min;
     conn_param_req.interval_max = param->Conn_Interval_Max;
@@ -3310,8 +3361,6 @@ static void __ll_send_conn_param_req(void)
     //Master procedure record
     if (!ROLE_IS_SLAVE(link))
     {
-        ll_control_procedure_push(LL_CONNECTION_PARAM_REQ);
-        
         __hci_param_free(le_param.conn_update_param);
     }
 }
@@ -3401,6 +3450,11 @@ static void __master_ll_receive_connection_param_rsp(struct le_link *link, struc
 /*
  *      LL Control Procedure - Connection Update
  */
+static void __master_ll_send_conn_update_req_auto_done(struct le_link *link)
+{
+    __le_connection_update_complete_event(link, NULL, LL_CONTROL_SUCCESS);
+}
+
 static void __master_ll_send_conn_update_req_auto(struct le_link *link)
 {
     //TO*DO
@@ -3477,14 +3531,14 @@ static void __master_ll_send_conn_update_req_auto(struct le_link *link)
 
     __event_oneshot_add(link, __connection_upadte, instant - 1);
 
-    __event_oneshot_add(link, __le_connection_update_complete_event, instant);
+    __event_oneshot_add(link, __master_ll_send_conn_update_req_auto_done, instant);
 }
 
 static void __master_ll_send_conn_update_req_done(struct le_link *link)
 {
     ll_control_procedure_pop(LL_CONNECTION_UPDATE_REQ);
 
-    __le_connection_update_complete_event(link);
+    __le_connection_update_complete_event(link, NULL, LL_CONTROL_SUCCESS);
 }
 
 static void __master_ll_send_conn_update_req(void)
@@ -3500,6 +3554,11 @@ static void __master_ll_send_conn_update_req(void)
     ASSERT(link != NULL, "%s\n", __func__);
 
     u16 instant = __ble_ops->get_conn_event(link->hw) + 10;
+
+    //avoid procedure collisions
+    ll_control_procedure_push(LL_CONNECTION_UPDATE_REQ);
+
+    __event_oneshot_add(link, __master_ll_send_conn_update_req_done, instant);
 
     if (master_ll_control_current_procedure == LL_CONNECTION_PARAM_REQ)
     {
@@ -3582,10 +3641,11 @@ static void __master_ll_send_conn_update_req(void)
 
     __event_oneshot_add(link, __connection_upadte, instant - 1);
 
-    //avoid procedure collisions
-    ll_control_procedure_push(LL_CONNECTION_UPDATE_REQ);
+}
 
-    __event_oneshot_add(link, __master_ll_send_conn_update_req_done, instant);
+static void __slave_ll_receive_conn_update_req_done(struct le_link *link)
+{
+    __le_connection_update_complete_event(link, NULL, LL_CONTROL_SUCCESS);
 }
 
 static void __slave_ll_receive_conn_update_req(struct le_link *link, struct ble_rx *rx)
@@ -3615,7 +3675,7 @@ static void __slave_ll_receive_conn_update_req(struct le_link *link, struct ble_
 
     __event_oneshot_add(link, __connection_upadte, instant - 1);
 
-    __event_oneshot_add(link, __le_connection_update_complete_event, instant);
+    __event_oneshot_add(link, __slave_ll_receive_conn_update_req_done, instant);
 }
 
 static const ll_step_extend slave_connection_parameter_request_steps[] = {
@@ -3804,6 +3864,10 @@ static void __master_ll_send_channel_map_req(void)
 
     u16 instant = __ble_ops->get_conn_event(link->hw) + 10;
 
+    ll_control_procedure_push(LL_CHANNEL_MAP_REQ);
+
+    __event_oneshot_add(link, __master_ll_send_channel_map_req_done, instant);
+
     memcpy(link->conn.ll_data.channel, param->channel_map, 5);
 
     ll_send_control_data(link, LL_CHANNEL_MAP_REQ, "c052", 
@@ -3814,9 +3878,6 @@ static void __master_ll_send_channel_map_req(void)
 
     __event_oneshot_add(link, __channel_map_upadte, instant - 1);
 
-    ll_control_procedure_push(LL_CHANNEL_MAP_REQ);
-
-    __event_oneshot_add(link, __master_ll_send_channel_map_req_done, instant);
 }
 
 static void __slave_ll_receive_channel_map_req(struct le_link *link, struct ble_rx *rx)
@@ -4482,6 +4543,7 @@ static void __ll_receive_terminate_ind(struct le_link *link, struct ble_rx *rx)
 {
     u8 reason = rx->data[1];
 
+    //reason : REMOTE_USER_TERMINATED_CONNECTION
     ll_disconnect_process(link, reason);
 }
 
@@ -4672,16 +4734,10 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
     switch(procedure)
     {
         case SLAVE_CONNECTION_PARAMETER_REQUEST_STEPS:
-            if (!LL_IS_FINSH())
-            {
-                __le_connection_update_complete_event(link);
-            }
+            __le_connection_update_complete_event(link, rx, status);
             break;
         case MASTER_CONNECTION_PARAMETER_REQUEST_STEPS:
-            if (!LL_IS_FINSH())
-            {
-                __le_connection_update_complete_event(link);
-            }
+            __le_connection_update_complete_event(link, rx, status);
             break;
         case MASTER_CONNECTION_UPDATE_STEPS:
             break;
@@ -4698,19 +4754,19 @@ static void ll_control_procedure_finish_emit_event(struct le_link *link, struct 
             __le_read_remote_used_features_complete_event(link, rx, status);
             break;
         case VERSION_IND_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_read_remote_version_information_complete_event(link, rx, status);
             break;
         case START_ENCRYPTION_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case RESTART_ENCRYPTION_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case START_ENCRYPTION_REQ_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case RESTART_ENCRYPTION_REQ_STEPS:
-            __hci_event_emit(procedure, link, rx);
+            __hci_event_emit(procedure, link, rx, status);
             break;
         case SLAVE_REJECT_STEPS:
             break;
@@ -5248,7 +5304,7 @@ static void rx_unknow_pdu_handler(struct le_link *link, struct ble_rx *rx)
     {
         puts(__func__);
         rx->data[1] = CONNECTION_TERMINATED_DUE_TO_MIC_FAILURE;
-        __hci_event_emit(DISCONNECT_STEPS, link, rx);
+        __hci_event_emit(DISCONNECT_STEPS, link, rx, NULL);
     }
 }
 
