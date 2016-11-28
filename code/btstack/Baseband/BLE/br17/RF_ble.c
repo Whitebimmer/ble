@@ -1227,8 +1227,8 @@ static void __set_hw_frame_init(struct ble_hw *hw)
     /* ble_fp->MDM_SET = 0;  */
     /* ble_fp->OSC_SET = 0;  */
 #else
-    ble_agc_normal_set(hw, 0, 25);
-    ble_txpwr_normal_set(hw, 0, 9);
+    ble_agc_normal_set(hw, 0, 19);
+    ble_txpwr_normal_set(hw, 0, 7);
 #endif
 	ble_fp->RFPRIOCNTL= (2<<8) | 30;                 //PRIO_INC  PRIO_INIT
 	ble_fp->RFPRIOSTAT= 30;                         //PRIO_CURR
@@ -1968,10 +1968,11 @@ static void __hw_rx_process(struct ble_hw *hw)
 
 	if (hw->state == SLAVE_CONN_ST || hw->state == MASTER_CONN_ST)
     {
-        ble_agc_normal_set(hw, 1, 0);
+        /* ble_agc_normal_set(hw, 1, 0); */
+        ble_agc_normal_set(hw, 0, 19);
     }
     else{
-        ble_agc_normal_set(hw, 0, 16);
+        ble_agc_normal_set(hw, 0, 19);
     }
 
 	ind = !(ble_fp->RXTOG & BIT(0));
@@ -1997,9 +1998,17 @@ static void __hw_rx_process(struct ble_hw *hw)
 	rx->event_count = ble_fp->EVTCOUNT;
 
 	if (rx_check != 0x01){
-		rf_putchar('E');rf_u8hex(rx_check); rf_putchar('\n');
-        //TO*DO
-        return;
+        if (rx_check == BIT(2))
+        {
+            //bypass CRC error packet LL_DATA_PDU_CRC
+            rx->llid = 0x9;
+            rx->len = 0;
+        }
+        else{
+            rf_putchar('E');rf_u8hex(rx_check); rf_putchar('\n');
+            //TO*DO
+            return;
+        }
 	}
 #ifndef FPGA
 	/* fsk_offset(1); */
