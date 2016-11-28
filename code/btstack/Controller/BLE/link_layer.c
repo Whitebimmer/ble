@@ -2955,6 +2955,19 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
     __rx_oneshot_run(link);
 }
 
+static void le_ll_probe_data_pdu_crc_handler(struct le_link *link, struct ble_rx *rx)
+{
+    //CRC error emit connection event & change LL state
+    if (link->state == LL_CONNECTION_CREATE)
+    {
+        putchar('@');
+        /* put_u32hex(link->conn.ll_data.timeout*10); */
+        __set_link_state(link, LL_CONNECTION_ESTABLISHED);
+    }
+
+    __rx_oneshot_run(link);
+}
+
 //emit ll command
 static void le_ll_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
@@ -2985,6 +2998,9 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
             break;
         case LL_CONTROL_PDU:
             /* le_ll_ctrl_pdu_handler(link, rx); */
+            break;
+        case LL_DATA_PDU_CRC:
+            le_ll_probe_data_pdu_crc_handler(link, rx);
             break;
     }
     

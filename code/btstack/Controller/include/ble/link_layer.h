@@ -46,6 +46,7 @@
 #define LL_DATA_PDU_CONTINUE    0x1
 #define LL_DATA_PDU_START       0x2
 #define LL_CONTROL_PDU          0x3
+#define LL_DATA_PDU_CRC         0x9
 
 enum {
 	LL_STANDBY = 0,
