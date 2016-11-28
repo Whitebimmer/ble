@@ -1019,6 +1019,20 @@ int stdin_process(char cmd){
                 1000       // max ce length
                 );
             break;
+        case 'q':
+            {
+                u32 event_mask_low = 0x00018890;
+                u32 event_mask_high = 0x20000800;
+                le_hci_send_cmd(&hci_set_event_mask, event_mask_low, event_mask_high);
+            }
+            break;
+        case 'Q':
+            {
+
+                u32 le_event_mask_low = 0x0000001f;
+                u32 le_event_mask_high = 0x00000000;
+                le_hci_send_cmd(&hci_le_set_event_mask, le_event_mask_low, le_event_mask_high);
+            }
         default:
             show_usage();
             break;
