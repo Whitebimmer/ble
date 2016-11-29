@@ -779,6 +779,8 @@ struct resolving_list_parameter rpa[] = {
    },
 };
 
+static bd_addr_t tester_address = {0x00, 0xA0, 0x50, 0xB4, 0x51, 0x58};
+
 // assumption: hci_can_send_command_packet_now() == true
 static void hci_initializing_run()
 {
@@ -813,6 +815,11 @@ static void hci_initializing_run()
 			hci_puts("HCI_INIT_READ_WHITE_LIST_SIZE\n");
             hci_stack->substate = HCI_INIT_W4_READ_WHITE_LIST_SIZE;
             le_hci_send_cmd(&hci_le_read_white_list_size);
+            break;
+        case HCI_INIT_ADD_DEVICE_TO_WHITE_LIST:
+            puts("HCI_INIT_ADD_DEVICE_TO_WHITE_LIST\n");
+            hci_stack->substate = HCI_INIT_W4_ADD_DEVICE_TO_WHITE_LIST;
+            le_hci_send_cmd(&hci_le_add_device_to_white_list,0,&tester_address);
             break;
 
 #if 0

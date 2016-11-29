@@ -1603,7 +1603,7 @@ static void ble_rx_adv_process(struct ble_hw *hw, struct ble_rx *rx)
     if (rx->type == SCAN_REQ)
     {
         __set_peer_addr(hw, rx->txadd, rx->data);
-        rf_putchar('S');
+        putchar('S');
     }
     else if (rx->type == CONNECT_REQ)
     {

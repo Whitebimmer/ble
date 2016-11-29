@@ -902,6 +902,9 @@ static void ll_white_list_remove(const u8 *data)
 
 static void __white_list_upadte(struct le_link *link, struct white_list *device)
 {
+    /* printf("white list addr type : %02x\n", device->white_list_param.Address_Type); */
+    /* printf_buf(device->white_list_param.Address, 6); */
+
     __ble_ops->ioctrl(link->hw, BLE_WHITE_LIST_ADDR,
             device->white_list_param.Address_Type, 
             device->white_list_param.Address); 
@@ -928,11 +931,18 @@ static struct white_list *ll_white_list_match(struct le_link *link, u8 addr_type
 
 	list_for_each_entry(p, &le_param.white_list_head, entry)
     {
+        /* printf("white list addr type : %02x\n", p->white_list_param.Address_Type); */
+        /* printf_buf(p->white_list_param.Address, 6); */
+
+        /* printf("2 -white list addr type : %02x\n", addr_type); */
+        /* printf_buf(addr, 6); */
+
 		if ((!memcmp(addr, p->white_list_param.Address, 6)) 
             && (p->white_list_param.Address_Type == addr_type))
         {
             //high frequently
-            __white_list_weighted_round_robin(link, p);
+            /* __white_list_weighted_round_robin(link, p); */
+            __white_list_upadte(link, p);
             return p;
         }
     }
@@ -2588,6 +2598,7 @@ static struct resolving_list *le_ll_adv_addr_process(struct le_link *link, struc
     {
         if (rx->type == SCAN_REQ)
         {
+            /* puts("filter policy : SCAN_REQ\n"); */
             //check ScanA is in white list
             if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
             {
@@ -2610,6 +2621,7 @@ static struct resolving_list *le_ll_adv_addr_process(struct le_link *link, struc
     {
         if (rx->type == CONNECT_REQ)
         {
+            /* puts("filter policy : CONNECT_REQ\n"); */
             //check InitA is in white list
             if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
             {
@@ -5340,7 +5352,7 @@ static void ll_rx_post_handler(void *priv, struct ble_rx *rx)
     switch(rx->llid)
     {
         case LL_RESERVED:
-			/* putchar('b'); */
+            /* putchar('b'); */
             upper_pass = rx_pdu_handler(link, rx);
             break;
         case LL_DATA_PDU_START:
