@@ -579,7 +579,7 @@ static void gap_run(void){
             case 0:
             case 2:
             case 3:
-                le_hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, 0, &null_addr, 0x07, 0x00);
+                le_hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, 0, &null_addr, 0x07, 0x03);
                 break;
             case 1:
             case 4:
@@ -1033,6 +1033,7 @@ int stdin_process(char cmd){
                 u32 le_event_mask_high = 0x00000000;
                 le_hci_send_cmd(&hci_le_set_event_mask, le_event_mask_low, le_event_mask_high);
             }
+            break;
         case 'W':
             le_hci_send_cmd(&hci_reset);
         default:
