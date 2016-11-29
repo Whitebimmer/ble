@@ -327,6 +327,44 @@ static bool meta_event_mask(int subevent_code)
     return FALSE;
 }
 
+#define EVENT_PACKET_BUFFER_SIZE    0x80
+static u8 event_packet_buffer[EVENT_PACKET_BUFFER_SIZE];
+
+static bool __hci_emit_le_meta_event_static(u8 subevent_code, const char *format, ...)
+{
+	struct le_event *event_static;
+
+    if (meta_event_mask(subevent_code) == FALSE)
+    {
+        return FALSE;
+    }
+
+    event_static = event_packet_buffer;
+	event_static->event = HCI_EVENT_LE_META;
+	event_static->data[0] = subevent_code;
+
+	va_list argptr;
+	va_start(argptr, format);
+	event_static->len = __vsprintf(event_static->data+1, format, argptr);
+	va_end(argptr);
+
+	struct le_event *event;
+
+	event = lbuf_alloc(le_event_buf, sizeof(*event)+event_static->len);
+	if (event == NULL){
+		ASSERT(event!= NULL, "%d, %s\n", event_static->len, format);
+		return NULL;
+	}
+    memcpy(event, event_static, sizeof(*event)+event_static->len);
+
+	lbuf_push(event);
+
+    //resume ll thread
+    thread_resume(&ll.ll_thread);
+
+    return TRUE;
+}
+
 static bool __hci_emit_le_meta_event(u8 subevent_code, const char *format, ...)
 {
 	struct le_event *event;
@@ -338,6 +376,7 @@ static bool __hci_emit_le_meta_event(u8 subevent_code, const char *format, ...)
 
 	event = __alloc_event(1, format);
 	ASSERT(event != NULL);
+    printf("event len : %x\n", event->len);
 
 	event->event = HCI_EVENT_LE_META;
 	event->data[0] = subevent_code;
@@ -2471,12 +2510,17 @@ static void __le_advertising_report_event(struct le_link *link, struct ble_rx *r
 
     ll_puts("LE_ADVERTISING_REPORT_EVENT\n");
 
-    __hci_emit_le_meta_event(LE_ADVERTISING_REPORT_EVENT,
+    /* printf("event type %02x/ address type %02x/address \n",event_type, rx->txadd); */
+    /* printf_buf(rx->data, 6); */
+    /* printf("data length : %02x\n", rx->len - 6); */
+    /* printf_buf(rx->data+6, rx->len - 6); */
+    __hci_emit_le_meta_event_static(LE_ADVERTISING_REPORT_EVENT,
             "111A1LB1", 
             1,
             event_type,         //event type
             rx->txadd,          //address type
             rx->data,           //address
+            rx->len - 6,
             rx->len - 6,
             rx->data + 6,
             link->rssi);

@@ -1034,8 +1034,14 @@ int stdin_process(char cmd){
                 le_hci_send_cmd(&hci_le_set_event_mask, le_event_mask_low, le_event_mask_high);
             }
             break;
+        case 'w':
+            /* le_hci_send_cmd(&hci_reset); */
+			le_hci_send_cmd(&hci_le_set_scan_parameters, 1, 320, 300, 0, 0);
+            break;
         case 'W':
-            le_hci_send_cmd(&hci_reset);
+            /* le_hci_send_cmd(&hci_reset); */
+            le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
+            break;
         default:
             show_usage();
             break;
