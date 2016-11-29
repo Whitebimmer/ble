@@ -5906,3 +5906,26 @@ void debug_ll_privacy(void)
 
     puts("---------------LL privacy debug end---------\n");
 }
+
+void ll_vendor_shutdown(void)
+{   
+    struct le_link *link, *n;
+
+    if (ll.handle == 0x00)
+        return;
+
+    thread_delete(&ll.ll_thread);
+	list_for_each_entry_safe(link, n, &ll.head, entry)
+	{
+        puts("\nll_shutdown");
+        put_u8hex(link->handle);
+
+        __ble_ops->close(link->hw);
+
+        /* memcpy(local_addr, link->local.addr, 6); */
+
+        ll.handle &= ~(link->handle);
+        
+        __free_link(link);
+	}
+}
