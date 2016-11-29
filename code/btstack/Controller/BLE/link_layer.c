@@ -2472,7 +2472,7 @@ static void __le_advertising_report_event(struct le_link *link, struct ble_rx *r
     ll_puts("LE_ADVERTISING_REPORT_EVENT\n");
 
     __hci_emit_le_meta_event(LE_ADVERTISING_REPORT_EVENT,
-            "111A1c311", 
+            "111A1LB1", 
             1,
             event_type,         //event type
             rx->txadd,          //address type
