@@ -311,7 +311,7 @@ static void __hci_event_disconnection_complete(struct le_link *link, u8 reason, 
 {
     hci_puts("HCI_EVENT_DISCONNECTION_COMPLETE\n");
     le_send_event(HCI_EVENT_DISCONNECTION_COMPLETE, "1H1",
-            status, link->handle, reason);
+            0, link->handle, reason);
 }
 
 
