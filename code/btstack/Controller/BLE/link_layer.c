@@ -327,6 +327,44 @@ static bool meta_event_mask(int subevent_code)
     return FALSE;
 }
 
+#define EVENT_PACKET_BUFFER_SIZE    0x80
+static u8 event_packet_buffer[EVENT_PACKET_BUFFER_SIZE];
+
+static bool __hci_emit_le_meta_event_static(u8 subevent_code, const char *format, ...)
+{
+	struct le_event *event_static;
+
+    if (meta_event_mask(subevent_code) == FALSE)
+    {
+        return FALSE;
+    }
+
+    event_static = event_packet_buffer;
+	event_static->event = HCI_EVENT_LE_META;
+	event_static->data[0] = subevent_code;
+
+	va_list argptr;
+	va_start(argptr, format);
+	event_static->len = __vsprintf(event_static->data+1, format, argptr);
+	va_end(argptr);
+
+	struct le_event *event;
+
+	event = lbuf_alloc(le_event_buf, sizeof(*event)+event_static->len);
+	if (event == NULL){
+		ASSERT(event!= NULL, "%d, %s\n", event_static->len, format);
+		return NULL;
+	}
+    memcpy(event, event_static, sizeof(*event)+event_static->len);
+
+	lbuf_push(event);
+
+    //resume ll thread
+    thread_resume(&ll.ll_thread);
+
+    return TRUE;
+}
+
 static bool __hci_emit_le_meta_event(u8 subevent_code, const char *format, ...)
 {
 	struct le_event *event;
@@ -338,6 +376,7 @@ static bool __hci_emit_le_meta_event(u8 subevent_code, const char *format, ...)
 
 	event = __alloc_event(1, format);
 	ASSERT(event != NULL);
+    printf("event len : %x\n", event->len);
 
 	event->event = HCI_EVENT_LE_META;
 	event->data[0] = subevent_code;
@@ -902,6 +941,9 @@ static void ll_white_list_remove(const u8 *data)
 
 static void __white_list_upadte(struct le_link *link, struct white_list *device)
 {
+    /* printf("white list addr type : %02x\n", device->white_list_param.Address_Type); */
+    /* printf_buf(device->white_list_param.Address, 6); */
+
     __ble_ops->ioctrl(link->hw, BLE_WHITE_LIST_ADDR,
             device->white_list_param.Address_Type, 
             device->white_list_param.Address); 
@@ -928,11 +970,18 @@ static struct white_list *ll_white_list_match(struct le_link *link, u8 addr_type
 
 	list_for_each_entry(p, &le_param.white_list_head, entry)
     {
+        /* printf("white list addr type : %02x\n", p->white_list_param.Address_Type); */
+        /* printf_buf(p->white_list_param.Address, 6); */
+
+        /* printf("2 -white list addr type : %02x\n", addr_type); */
+        /* printf_buf(addr, 6); */
+
 		if ((!memcmp(addr, p->white_list_param.Address, 6)) 
             && (p->white_list_param.Address_Type == addr_type))
         {
             //high frequently
-            __white_list_weighted_round_robin(link, p);
+            /* __white_list_weighted_round_robin(link, p); */
+            __white_list_upadte(link, p);
             return p;
         }
     }
@@ -2461,12 +2510,17 @@ static void __le_advertising_report_event(struct le_link *link, struct ble_rx *r
 
     ll_puts("LE_ADVERTISING_REPORT_EVENT\n");
 
-    __hci_emit_le_meta_event(LE_ADVERTISING_REPORT_EVENT,
-            "111A1c311", 
+    /* printf("event type %02x/ address type %02x/address \n",event_type, rx->txadd); */
+    /* printf_buf(rx->data, 6); */
+    /* printf("data length : %02x\n", rx->len - 6); */
+    /* printf_buf(rx->data+6, rx->len - 6); */
+    __hci_emit_le_meta_event_static(LE_ADVERTISING_REPORT_EVENT,
+            "111A1LB1", 
             1,
             event_type,         //event type
             rx->txadd,          //address type
             rx->data,           //address
+            rx->len - 6,
             rx->len - 6,
             rx->data + 6,
             link->rssi);
@@ -2588,6 +2642,7 @@ static struct resolving_list *le_ll_adv_addr_process(struct le_link *link, struc
     {
         if (rx->type == SCAN_REQ)
         {
+            /* puts("filter policy : SCAN_REQ\n"); */
             //check ScanA is in white list
             if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
             {
@@ -2610,6 +2665,7 @@ static struct resolving_list *le_ll_adv_addr_process(struct le_link *link, struc
     {
         if (rx->type == CONNECT_REQ)
         {
+            /* puts("filter policy : CONNECT_REQ\n"); */
             //check InitA is in white list
             if (LE_FEATURES_IS_SUPPORT(LL_PRIVACY) && (le_param.resolution_enable))
             {
@@ -5340,7 +5396,7 @@ static void ll_rx_post_handler(void *priv, struct ble_rx *rx)
     switch(rx->llid)
     {
         case LL_RESERVED:
-			/* putchar('b'); */
+            /* putchar('b'); */
             upper_pass = rx_pdu_handler(link, rx);
             break;
         case LL_DATA_PDU_START:
@@ -5905,4 +5961,27 @@ void debug_ll_privacy(void)
     }
 
     puts("---------------LL privacy debug end---------\n");
+}
+
+void ll_vendor_shutdown(void)
+{   
+    struct le_link *link, *n;
+
+    if (ll.handle == 0x00)
+        return;
+
+    thread_delete(&ll.ll_thread);
+	list_for_each_entry_safe(link, n, &ll.head, entry)
+	{
+        puts("\nll_shutdown");
+        put_u8hex(link->handle);
+
+        __ble_ops->close(link->hw);
+
+        /* memcpy(local_addr, link->local.addr, 6); */
+
+        ll.handle &= ~(link->handle);
+        
+        __free_link(link);
+	}
 }

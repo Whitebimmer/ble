@@ -694,6 +694,7 @@ void ctrl_baseband_cmd_handler(u16 opcode, u8 *data, int len)
 	{
 		case HCI_RESET:
 			hci_puts("HCI_RESET\n");
+            ll_vendor_shutdown();
 			le_param_t = (struct le_parameter *)__ll_api->init(&hci_param);
 			__ll_api->handler_register(&le_hci_handler);
 			__hci_emit_event_of_cmd_complete(opcode, "1", 0);	
