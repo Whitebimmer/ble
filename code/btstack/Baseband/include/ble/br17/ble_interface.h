@@ -408,6 +408,11 @@ struct le_parameter{
 struct hci_read_parameter{
     u8 features[8];
     u8 public_addr[6];
+    u8 hci_version;
+    u16 hci_revision;
+    u8 lmp_pal_version;
+    u16 manufacturer_name;
+    u16 lmp_pal_subversion;
 };
 
 struct read_remote_version_paramter{
@@ -517,7 +522,9 @@ struct le_event_parameter{
 #define  HCI_LE_READ_MAXIMUM_DATA_LENGTH                0x2F
 
 
-#define HCI_READ_LOCAL_SUPPORT_FEATURES     0x03
+#define HCI_READ_LOCAL_VERSION_INFORMATION  0x01
+#define HCI_READ_LOCAL_SUPPORTED_COMMAND    0x02
+#define HCI_READ_LOCAL_SUPPORTED_FEATURES   0x03
 #define HCI_READ_BD_ADDR                    0x09
 
 #define HCI_READ_REMOTE_VERSION_INFORMATION 0x1D
