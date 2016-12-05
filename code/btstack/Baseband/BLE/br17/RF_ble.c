@@ -1603,7 +1603,7 @@ static void ble_rx_adv_process(struct ble_hw *hw, struct ble_rx *rx)
     if (rx->type == SCAN_REQ)
     {
         __set_peer_addr(hw, rx->txadd, rx->data);
-        rf_putchar('S');
+        putchar('S');
     }
     else if (rx->type == CONNECT_REQ)
     {
@@ -2001,6 +2001,7 @@ static void __hw_rx_process(struct ble_hw *hw)
         if (rx_check == BIT(2))
         {
             //bypass CRC error packet LL_DATA_PDU_CRC
+            rf_putchar('C');
             rx->llid = 0x9;
             rx->len = 0;
         }

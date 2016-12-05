@@ -3,6 +3,7 @@
 int __vsprintf_len(const char *format)
 {
 	int len = 0;
+    int copy_len;
 
 	if (format == 0){
 		return 0;
