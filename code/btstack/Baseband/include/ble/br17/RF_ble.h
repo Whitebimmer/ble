@@ -150,6 +150,7 @@ struct ble_hw{
 	u8 state;
 	u8 agc;
 	u8 power;
+    u16 latency;
 
     u32 clkn_cnt;
     u32 interval;

@@ -225,29 +225,22 @@ static void __set_hw_state(struct ble_hw *hw, int state,
 	   	int latency_en, int latency)
 {
 	hw->state = state;
+	hw->latency = latency;
 	BLE_ANCHOR_CON1 = (state<<12)|((latency_en)<<11)|latency;
 	BLE_ANCHOR_CON0 = (2<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
 }
 
-static int __pop_latency(struct ble_hw *hw)
-{
-	BLE_ANCHOR_CON0 = (2<<12) | (HW_ID(hw)<<8) | BIT(1);
-	return BLE_ANCHOR_CON2;
-}
-
-static void __push_latency(struct ble_hw *hw, int latency)
-{
-	BLE_ANCHOR_CON1 = latency; 
-	BLE_ANCHOR_CON0 = (2<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
-}
-
-static void __set_latency_disable(struct ble_hw *hw)
+static void __set_latency_suspend(struct ble_hw *hw)
 {
 	BLE_ANCHOR_CON1 = (hw->state<<12);
 	BLE_ANCHOR_CON0 = (2<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
 }
 
-
+static void __set_latency_resume(struct ble_hw *hw)
+{
+	BLE_ANCHOR_CON1 = (hw->state<<12)|((!!hw->latency)<<11)|hw->latency;
+	BLE_ANCHOR_CON0 = (2<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
+}
 
 static void __set_event_count(struct ble_hw *hw, int count)
 {
@@ -1859,17 +1852,15 @@ static void __hw_tx_process(struct ble_hw *hw)
 	struct ble_tx empty;
 	struct ble_param *ble_fp = &hw->ble_fp;
 
-    static int latency;
-
 	if (hw->state == SLAVE_CONN_ST || hw->state == MASTER_CONN_ST)
 	{
 		if (!hw->rx_ack){
 			rf_putchar('N');
-            latency = __pop_latency(hw);
-            __set_latency_disable(hw);
+            //Nack no latency
+            __set_latency_suspend(hw);
 			return;
 		}
-        __push_latency(hw, latency);
+        __set_latency_resume(hw);
 
 		i = !(ble_fp->TXTOG & BIT(0));
         /* rf_putchar('0'+i); */
