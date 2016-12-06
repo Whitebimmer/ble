@@ -3057,6 +3057,7 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
             break;
         case LL_DATA_PDU_START:
         case LL_DATA_PDU_CONTINUE:
+        case LL_DATA_PDU_SN:
             le_ll_probe_data_pdu_handler(link, rx);
             break;
         case LL_CONTROL_PDU:

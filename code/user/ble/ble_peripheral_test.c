@@ -1042,6 +1042,7 @@ int stdin_process(char cmd){
             /* le_hci_send_cmd(&hci_reset); */
             le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
             break;
+
         default:
             show_usage();
             break;
