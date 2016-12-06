@@ -369,7 +369,7 @@ void RF_mdm_init(void)
     SFR(BT_MDM_CON2, 7, 3, 1);         // fsk preamble number threshold
     SFR(BT_MDM_CON2, 10, 1, 0);        // fsm preamble n sample match,  0: 4 sample  1: 3 sample
     SFR(BT_MDM_CON2, 12, 2, 3);        // fsk syncword mode,  01: by best sample phase  10: by syncword window  11: by both
-    SFR(BT_MDM_CON2, 16, 4, 0);        // ble v4.x fsk sync word error bit margin
+    SFR(BT_MDM_CON2, 16, 4, 1);        // ble v4.x fsk sync word error bit margin
     SFR(BT_MDM_CON2, 20, 4, 0);        // noise level power select, np = 1 << nlp_sel
     SFR(BT_MDM_CON2, 24, 8, 0);        // fsk tx preamble early time select, time = (n)uS, set '0' means disable
     SFR(BT_MDM_CON3, 0, 10, 256);      // psk amplitude i channel
