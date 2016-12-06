@@ -1998,11 +1998,18 @@ static void __hw_rx_process(struct ble_hw *hw)
 	rx->event_count = ble_fp->EVTCOUNT;
 
 	if (rx_check != 0x01){
-        if (rx_check == BIT(2))
+        if (rx_check & BIT(2))
         {
             //bypass CRC error packet LL_DATA_PDU_CRC
             rf_putchar('C');
             rx->llid = 0x9;
+            rx->len = 0;
+        }
+        else if (rx_check & BIT(3))
+        {
+            //bypass SN error packet LL_DATA_PDU_SN
+            rf_putchar('W');
+            rx->llid = 0x8;
             rx->len = 0;
         }
         else{
