@@ -2489,6 +2489,9 @@ static void __le_connection_complete_event(struct le_link *link, u8 status)
 {
     ll_puts("LE_CONNECTION_COMPLETE_EVENT\n");
 
+    //set slave
+    link->role = 1,
+
     __hci_emit_le_meta_event(LE_CONNECTION_COMPLETE_EVENT,
             "1H11A2221", 
             status,
