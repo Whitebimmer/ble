@@ -346,7 +346,7 @@ static bool __hci_emit_le_meta_event_static(u8 subevent_code, const char *format
 
 	va_list argptr;
 	va_start(argptr, format);
-	event_static->len = __vsprintf(event_static->data+1, format, argptr);
+	event_static->len += __vsprintf(event_static->data+1, format, argptr);
 	va_end(argptr);
 
 	struct le_event *event;
@@ -1993,6 +1993,9 @@ static void ll_adv_timeout_handler(struct sys_timer *timer)
 
     ll_puts("LL Adv High Duty Timeout\n");
 
+    //set slave
+    link->role = 1,
+
     __le_connection_complete_event(link, DIRECTED_ADVERTISING_TIMEOUT);
 
     sys_timer_remove(&link->adv_timeout);
@@ -2489,9 +2492,6 @@ static void __le_connection_complete_event(struct le_link *link, u8 status)
 {
     ll_puts("LE_CONNECTION_COMPLETE_EVENT\n");
 
-    //set slave
-    link->role = 1,
-
     __hci_emit_le_meta_event(LE_CONNECTION_COMPLETE_EVENT,
             "1H11A2221", 
             status,
@@ -2519,6 +2519,7 @@ static void __le_advertising_report_event(struct le_link *link, struct ble_rx *r
     /* printf("data length : %02x\n", rx->len - 6); */
     /* printf_buf(rx->data+6, rx->len - 6); */
     link->rssi = 0xff;
+
     __hci_emit_le_meta_event_static(LE_ADVERTISING_REPORT_EVENT,
             "111A1LB1", 
             1,

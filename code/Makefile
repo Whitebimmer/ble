@@ -76,8 +76,11 @@ objs += \
    btstack/Host/common/utils.o \
 
 ifeq ($(LE_MODE), CONTROLLER_MODE)
-objs += \
+# objs += \
    btstack/Controller/common/h4_uart_interface.o \
+   #
+objs += \
+   btstack/Controller/common/h4_uart_interface_loop.o \
 
 else
 objs += \
