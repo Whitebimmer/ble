@@ -342,6 +342,7 @@ static bool __hci_emit_le_meta_event_static(u8 subevent_code, const char *format
     event_static = event_packet_buffer;
 	event_static->event = HCI_EVENT_LE_META;
 	event_static->data[0] = subevent_code;
+    event_static->len = 1;
 
 	va_list argptr;
 	va_start(argptr, format);
@@ -2514,6 +2515,7 @@ static void __le_advertising_report_event(struct le_link *link, struct ble_rx *r
     /* printf_buf(rx->data, 6); */
     /* printf("data length : %02x\n", rx->len - 6); */
     /* printf_buf(rx->data+6, rx->len - 6); */
+    link->rssi = 0xff;
     __hci_emit_le_meta_event_static(LE_ADVERTISING_REPORT_EVENT,
             "111A1LB1", 
             1,
@@ -2536,6 +2538,7 @@ static void __le_direct_advertising_report_event(struct le_link *link, struct bl
 
     ll_puts("LE_DIRECT_ADVERTISING_REPORT_EVENT\n");
 
+    link->rssi = 0xff;
     __hci_emit_le_meta_event(LE_DIRECT_ADVERTISING_REPORT_EVENT,
             "111A1A1", 
             1,
