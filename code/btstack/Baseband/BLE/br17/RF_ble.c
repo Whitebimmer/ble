@@ -1968,8 +1968,8 @@ static void __hw_rx_process(struct ble_hw *hw)
 
 	if (hw->state == SLAVE_CONN_ST || hw->state == MASTER_CONN_ST)
     {
-        /* ble_agc_normal_set(hw, 1, 0); */
-        ble_agc_normal_set(hw, 0, 19);
+        ble_agc_normal_set(hw, 1, 0);
+        /* ble_agc_normal_set(hw, 0, 19); */
     }
     else{
         ble_agc_normal_set(hw, 0, 19);
