@@ -179,7 +179,8 @@ static void update_advertisements(void);
 
 
 // static bd_addr_t tester_address = {0x00, 0x1B, 0xDC, 0x06, 0x07, 0x5F};
-static bd_addr_t tester_address = {0x00, 0x1B, 0xDC, 0x07, 0x32, 0xef};
+/* static bd_addr_t tester_address = {0x00, 0x1B, 0xDC, 0x07, 0x32, 0xef}; */
+static bd_addr_t tester_address = {0x00, 0xA0, 0x50, 0xB4, 0x51, 0x58};
 static int tester_address_type = 0;
 
 // general discoverable flags
@@ -1117,7 +1118,7 @@ int btstack_main()
  *-------------------HCI Tester Sample
  */
 const char test_sequence1[] = {
-    {'C', 'A'},
+    {'Q', 'q', 'X', 'C', 'A'},
 };
 
 const char *test[] = {

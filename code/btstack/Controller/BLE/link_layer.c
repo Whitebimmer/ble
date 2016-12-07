@@ -2071,6 +2071,7 @@ static void __set_ll_adv_state(struct le_link *link)
             adv->adv_type = ADV_DIRECT_IND;
             //TO*DO timeout
             ll_adv_timeout_start(link, 1280);
+            /* ll_adv_timeout_start(link, 21280); */
             /* The Advertising_Filter_Policy parameter shall be ignored when directed */
             /* advertising is enabled. */
             adv->filter_policy = 0;
@@ -2911,7 +2912,8 @@ static void rx_probe_adv_pdu_handler(struct le_link *link, struct ble_rx *rx)
         case SCAN_REQ:
             break;
         case CONNECT_REQ:
-            /* putchar('C'); */
+            putchar('G');
+            ll_adv_timeout_stop(link);
             slave_set_connection_param(link, rx);
             //LL_CONNECTION_ESTABLISHED set ll connSupervision timeout 6*interval
             supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
@@ -2992,7 +2994,7 @@ static void le_ll_probe_pdu_handler(struct le_link *link, struct ble_rx *rx)
             rx_probe_scan_pdu_handler(link, rx);
             break;
         case LL_INITIATING:
-			/* putchar('I'); */
+            /* putchar('I'); */
             rx_probe_init_pdu_handler(link, rx);
             break;
     }
@@ -4638,7 +4640,9 @@ static void __master_receive_terminte_ind(struct le_link *link, struct ble_rx *r
 {
     g_master_reason = rx->data[1];
 
-    __rx_oneshot_add(link, __master_receive_terminte_ind_done);
+    u16 instant = __ble_ops->get_conn_event(link->hw);
+
+    __event_oneshot_add(link, __master_receive_terminte_ind_done, instant);
 }
 
 static void __ll_receive_terminate_ind(struct le_link *link, struct ble_rx *rx)
