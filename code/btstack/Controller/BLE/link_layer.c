@@ -100,7 +100,7 @@ static struct link_layer ll SEC(.btmem_highly_available);
 #define LL_TRANSMIT_POWER_LEVEL         0x1
 
 #define LL_ACL_PDU_LENGTH               64
-#define LL_TOTAL_NUM_LE_DATA_PACKET     (BLE_HW_TX_SIZE/LL_ACL_PDU_LENGTH - 1)
+#define LL_TOTAL_NUM_LE_DATA_PACKET     (BLE_HW_TX_SIZE/LL_ACL_PDU_LENGTH - 5)
 #if (LL_TOTAL_NUM_LE_DATA_PACKET > (BLE_HW_TX_SIZE/LL_ACL_PDU_LENGTH))
         #error LL_TOTAL_NUM_LE_DATA_PACKET OVERFLOW
 #endif
@@ -2078,15 +2078,16 @@ static void __set_ll_adv_state(struct le_link *link)
             __set_ll_adv_peer_addr(link);
             break;
         case LL_ADV_SCAN_IND:
-            min = (min < 100) ? 100 : min; 
-            max = (max < 100) ? 100 : max; 
+            //not be set to less than 100ms
+            min = (min < 0xA0) ? 0xA0 : min; 
+            max = (max < 0xA0) ? 0xA0 : max; 
             adv->interval = min;
             adv->pdu_interval = 20;    //us
             adv->adv_type = ADV_SCAN_IND;
             break;
         case LL_ADV_NONCONN_IND:
-            min = (min < 100) ? 100 : min; 
-            max = (max < 100) ? 100 : max; 
+            min = (min < 0xA0) ? 0xA0 : min; 
+            max = (max < 0xA0) ? 0xA0 : max; 
             adv->interval = min;
             adv->pdu_interval = 20;    //us
             adv->adv_type = ADV_NONCONN_IND;
