@@ -4627,6 +4627,20 @@ static void __ll_send_terminate_ind()
     __hci_param_free(hci_param_t->disconn_param);
 }
 
+u8 g_master_reason;
+
+static void __master_receive_terminte_ind_done(struct le_link *link)
+{
+    ll_disconnect_process(link, g_master_reason);
+}
+
+static void __master_receive_terminte_ind(struct le_link *link, struct ble_rx *rx)
+{
+    g_master_reason = rx->data[1];
+
+    __rx_oneshot_add(link, __master_receive_terminte_ind_done);
+}
+
 static void __ll_receive_terminate_ind(struct le_link *link, struct ble_rx *rx)
 {
     u8 reason = rx->data[1];
@@ -4887,7 +4901,7 @@ static void master_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
             ASSERT(0, "%s\n", "M LL_CHANNEL_MAP_REQ");
             break;
 		case LL_TERMINATE_IND:
-            __ll_receive_terminate_ind(link, rx);
+            __master_receive_terminte_ind(link, rx);
 			break;
         
         case LL_ENC_REQ:
