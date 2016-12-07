@@ -2274,7 +2274,7 @@ static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
     reason = LE_IS_CONNECT(link) ? \
              CONNECTION_TIMEOUT : CONNECTION_FAILED_TO_BE_ESTABLISHED ;
 
-    sys_timer_remove(&link->timeout);
+    /* sys_timer_remove(&link->timeout); */
 
     ll_disconnect_process(link, reason);
 }
@@ -3059,14 +3059,14 @@ static void ll_rx_probe_handler(void *priv, struct ble_rx *rx)
         case LL_DATA_PDU_START:
         case LL_DATA_PDU_CONTINUE:
         case LL_DATA_PDU_SN:
+        case LL_DATA_PDU_CRC:
             le_ll_probe_data_pdu_handler(link, rx);
             break;
         case LL_CONTROL_PDU:
             /* le_ll_ctrl_pdu_handler(link, rx); */
             break;
-        case LL_DATA_PDU_CRC:
-            le_ll_probe_data_pdu_crc_handler(link, rx);
-            break;
+            /* le_ll_probe_data_pdu_crc_handler(link, rx); */
+            /* break; */
     }
     
     //empty packet not notify upper layer
