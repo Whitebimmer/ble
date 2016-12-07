@@ -1189,7 +1189,7 @@ int le_hci_push_acl_data(u8 *packet, int len)
     /* printf_buf(packet->data, packet->len - 4); */
     /* printf_buf(packet->data, size); */
 
-    ll_send_acl_packet(handle, packet, len);
+    ll_send_acl_packet(handle, packet, size);
 
     ll_flow_control.free_num_hci_acl_packets--;
 
