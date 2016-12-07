@@ -468,7 +468,8 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         }
 
         // update header len
-        bt_store_16(hci_stack->hci_packet_buffer, acl_header_pos + 2, current_acl_data_packet_length);
+        const int size = current_acl_data_packet_length + 4;
+        bt_store_16(hci_stack->hci_packet_buffer, acl_header_pos + 2, size);
 
         // count packet
         connection->num_acl_packets_sent++;
@@ -476,7 +477,6 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection)
         // send packet
         uint8_t * packet = &hci_stack->hci_packet_buffer[acl_header_pos];
         /* _printf_buf(packet, 0x8); */
-        const int size = current_acl_data_packet_length + 4;
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);
 
         /* hci_deg("pos %x - size 0x%x\n", acl_header_pos, size); */

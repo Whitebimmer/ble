@@ -2055,13 +2055,13 @@ static void __hw_event_process(struct ble_hw *hw)
 	switch(hw->state)
 	{
 		case ADV_ST:
-			putchar('0' + HW_ID(hw));
             __set_adv_channel_index(hw, hw->adv_channel);
 			i = ble_fp->TXTOG & BIT(0);
 			memcpy(hw->tx_buf[0], hw->tx[0], TX_PACKET_SIZE(hw->tx[0]->len));
 			memcpy(hw->tx_buf[1], hw->tx[1], TX_PACKET_SIZE(hw->tx[1]->len));
 			ble_hw_tx(hw, hw->tx_buf[0], i);
 			ble_hw_tx(hw, hw->tx_buf[1], !i);
+            putchar('0' + HW_ID(hw));
 			break;
 		case SCAN_ST:
 		case INIT_ST:
@@ -2332,13 +2332,19 @@ static void le_hw_advertising(struct ble_hw *hw, struct ble_adv *adv)
     __set_adv_channel_map_patch(hw, adv->channel_map);
 
     hw->tx[0] = __adv_pdu(hw, adv);
-    hw->tx[1] = __scan_rsp_pdu(hw, adv);
+    if (adv->adv_type == ADV_DIRECT_IND)
+    {
+        hw->tx[1] = __adv_pdu(hw, adv);
+    }
+    else {
+        hw->tx[1] = __scan_rsp_pdu(hw, adv);
+    }
 
 	/* __hw_event_process(hw); */
     //new feature 
     __set_addr_match_enable(ble_fp);
 
-	ble_hw_enable(hw, 10);
+	ble_hw_enable(hw, 1);
 
 	hw->ble_fp.FORMAT |= BIT(2);
 }
