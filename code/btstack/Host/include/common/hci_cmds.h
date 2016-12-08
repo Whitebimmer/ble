@@ -254,6 +254,7 @@ extern const hci_cmd_t hci_le_set_address_resolution_enable;
 extern const hci_cmd_t hci_le_set_resolvable_private_address_timeout;
 extern const hci_cmd_t hci_le_clear_resolving_list;
 extern const hci_cmd_t hci_le_read_maximum_data_length;
+extern const hci_cmd_t hci_read_remote_version_information;
     
 extern const hci_cmd_t l2cap_accept_connection;
 extern const hci_cmd_t l2cap_create_channel;

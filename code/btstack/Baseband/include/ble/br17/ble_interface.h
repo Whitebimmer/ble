@@ -417,7 +417,7 @@ struct hci_read_parameter{
 
 struct read_remote_version_paramter{
     u16 connection_handle;
-};
+}__attribute__((packed));
 
 struct disconnect_paramter{
     u16 connection_handle;

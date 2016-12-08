@@ -330,6 +330,7 @@ static void __disable_adv_random(struct ble_hw *hw)
 
 static void ble_hw_enable(struct ble_hw *hw, int slot)
 { 
+	BLE_CON0  = BIT(0);          //ble_en
     __set_anchor_cnt(hw, slot);
     //clr pending
 	SFR(BLE_INT_CON1, HW_ID(hw), 1, 1);         /*open event int*/ 
@@ -341,6 +342,7 @@ static void ble_hw_enable(struct ble_hw *hw, int slot)
 
 static void ble_hw_disable(struct ble_hw *hw)
 {
+	BLE_CON0  = 0;          //ble_en
     //
     __anchor_cnt_disable(hw);
 
@@ -2358,7 +2360,7 @@ static void le_hw_advertising(struct ble_hw *hw, struct ble_adv *adv)
     //new feature 
     __set_addr_match_enable(ble_fp);
 
-	ble_hw_enable(hw, 1);
+	ble_hw_enable(hw, 10);
 
 	hw->ble_fp.FORMAT |= BIT(2);
 }

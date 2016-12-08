@@ -668,6 +668,10 @@ void link_control_cmd_handler(u16 opcode, u8 *data, int len)
             le_hci_push_control_data(opcode, data);
             __hci_emit_event_of_cmd_status(0, opcode);
             break;
+        case HCI_READ_REMOTE_VERSION_INFORMATION:
+			hci_puts("HCI_READ_REMOTE_VERSION_INFORMATION\n");
+            le_hci_push_control_data(opcode, data);
+           break;
         default:
             puts("link_control_cmd_handler cmd not finish\n");
             break;
@@ -789,9 +793,6 @@ static void hci_informational_handler(u16 opcode, u8 *data, int len)
             puts("HCI_READ_LOCAL_SUPPORT_FEATURES\n");
             __hci_emit_event_of_cmd_complete(opcode, "1c08", 0, hci_read_param.features);	
            break; 
-        case HCI_READ_REMOTE_VERSION_INFORMATION:
-            le_hci_push_control_data(opcode, data);
-           break;
 
         default:
             puts("hci_informational_handler cmd not finish\n");

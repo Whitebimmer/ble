@@ -1041,7 +1041,8 @@ int stdin_process(char cmd){
             break;
         case 'W':
             /* le_hci_send_cmd(&hci_reset); */
-            le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
+            /* le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0); */
+            le_hci_send_cmd(&hci_read_remote_version_information, 0x0001);
             break;
 
         default:
