@@ -230,14 +230,19 @@ static void __set_hw_state(struct ble_hw *hw, int state,
 	BLE_ANCHOR_CON0 = (2<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
 }
 
+static u8 g_latency_is_suspend;
 static void __set_latency_suspend(struct ble_hw *hw)
 {
 	BLE_ANCHOR_CON1 = (hw->state<<12);
 	BLE_ANCHOR_CON0 = (2<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
+    g_latency_is_suspend = 1;
 }
 
 static void __set_latency_resume(struct ble_hw *hw)
 {
+    if (g_latency_is_suspend == 0)
+        return;
+
 	BLE_ANCHOR_CON1 = (hw->state<<12)|((!!hw->latency)<<11)|hw->latency;
 	BLE_ANCHOR_CON0 = (2<<12)|(HW_ID(hw)<<8)|(1<<2)|1;
 }
