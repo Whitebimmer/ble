@@ -542,6 +542,7 @@ static void ll_control_procedure_finish(struct le_link *link, struct ble_rx *rx,
     ll_ctrl_step.steps_ptr = NULL;
 }
 
+static void ll_response_timeout_stop(struct le_link *link);
 static void ll_control_step_verify(ll_step_extend step_ex, 
         struct le_link *link, struct ble_rx *rx, struct ble_tx *tx)
 {
@@ -565,6 +566,7 @@ static void ll_control_step_verify(ll_step_extend step_ex,
             || (step_ex == (LL_UNKNOWN_RSP|WAIT_RX)))
     {
         ll_puts("\n##ll break reson : ");ll_u32hex(step_ex);
+        ll_response_timeout_stop(link);
         ll_control_procedure_finish(link, rx, LL_CONTROL_CASE_REMAP(step_ex));
         return;
     }
@@ -581,6 +583,7 @@ static void ll_control_step_verify(ll_step_extend step_ex,
         {
             ll_puts("##ll finish\n");
             //procedure finish
+            ll_response_timeout_stop(link);
             ll_control_procedure_finish(link, rx, LL_CONTROL_SUCCESS);
         }
         return;
