@@ -2053,8 +2053,6 @@ static void __set_ll_adv_state(struct le_link *link)
     /* Time Range: 20 ms to 10.24 sec */
     min = le_param.adv_param.Advertising_Interval_Max;
     max = le_param.adv_param.Advertising_Interval_Min;
-    ll_printf("interval min : %x\n", min);
-    ll_printf("interval max : %x\n", max);
 
     adv->filter_policy = le_param.adv_param.Advertising_Filter_Policy;
 
@@ -2105,6 +2103,11 @@ static void __set_ll_adv_state(struct le_link *link)
             break;
     }
 
+    ll_printf("adv type: %x\n", adv->adv_type);
+    ll_printf("adv interval (N*625us): %x\n", adv->interval);
+    ll_printf("adv pdu interval : %x\n", adv->pdu_interval);
+    ll_printf("adv filter policy: %x\n", adv->filter_policy);
+
     __set_ll_adv_local_addr(link);
 
     adv->adv_len = le_param.adv_data.length;
@@ -2133,6 +2136,10 @@ static void __set_ll_scan_state(struct le_link *link)
     scan->window = le_param.scan_param.LE_Scan_Window;
 
     scan->filter_policy = le_param.scan_param.Scanning_Filter_Policy;
+    ll_printf("scan active: %x\n", scan->type);
+    ll_printf("scan interval (N*625us): %x\n", scan->interval);
+    ll_printf("scan window: %x\n", scan->window);
+    ll_printf("scan filter_policy: %x\n", scan->filter_policy);
     //not standard
     if (!LE_FEATURES_IS_SUPPORT(EXTENDED_SCANNER_FILTER_POLICIES))
     {
@@ -3170,7 +3177,7 @@ static void rx_scan_state_handler(struct le_link *link, struct ble_rx *rx)
         //InitA match ScanA
         if (rx_adv_direct_verify(link, rx) == TRUE)
         {
-            __le_advertising_report_event(link, rx, 0x2);
+            __le_advertising_report_event(link, rx, 0x1);
         }
         break;
     case ADV_SCAN_IND:

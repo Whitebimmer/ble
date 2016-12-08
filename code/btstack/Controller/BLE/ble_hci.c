@@ -584,6 +584,7 @@ static void le_hci_tx_handler(struct le_link *link, struct ble_tx *tx)
             //LL Ack
             if (ll_packet_is_send())   
             {
+                puts("ACL send \n");
                 ll_flow_control.free_num_hci_acl_packets++;
                 le_send_event(HCI_EVENT_NUMBER_OF_COMPLETED_PACKETS, "1H2", 1,
                         link->handle, 1);
@@ -789,6 +790,7 @@ static void hci_informational_handler(u16 opcode, u8 *data, int len)
             __hci_emit_event_of_cmd_complete(opcode, "1c08", 0, hci_read_param.features);	
            break; 
         case HCI_READ_REMOTE_VERSION_INFORMATION:
+            le_hci_push_control_data(opcode, data);
            break;
 
         default:
