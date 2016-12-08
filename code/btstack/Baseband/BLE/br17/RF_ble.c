@@ -206,6 +206,12 @@ static void __set_init_end(struct ble_hw *hw)
 	BLE_ANCHOR_CON0 = (9<<12)|(HW_ID(hw)<<8)|(1<<2)|1; 
 }
 
+static void __anchor_cnt_disable(struct ble_hw *hw)
+{
+	BLE_ANCHOR_CON1 = 0;
+	BLE_ANCHOR_CON0 = (0<<12)|(HW_ID(hw)<<8)|(1<<2)|1; 
+}
+
 static void __set_anchor_cnt(struct ble_hw *hw, int slot)
 {
 	BLE_ANCHOR_CON1 = 0;
@@ -335,6 +341,9 @@ static void ble_hw_enable(struct ble_hw *hw, int slot)
 
 static void ble_hw_disable(struct ble_hw *hw)
 {
+    //
+    __anchor_cnt_disable(hw);
+
 	SFR(BLE_INT_CON0, HW_ID(hw), 1, 0);  		/*open event int*/ 
 	SFR(BLE_INT_CON0, (HW_ID(hw)+8), 1, 0);  	/*open rx int*/   
 }
