@@ -2919,6 +2919,8 @@ static void slave_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
 	link->role = 1;
 
+    link->peer.addr_type = rx->txadd;
+    memcpy(link->peer.addr, rx->data, 6);
 	__read_connection_param(&conn->ll_data, rx->data+12);
 
     conn->ll_data.widening = LL_SLAVE_CONN_WINSIZE>>1;
@@ -2928,7 +2930,8 @@ static void slave_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
     __rx_oneshot_add(link, __set_conn_winsize);
 
-    __rx_oneshot_add(link, __le_connection_complete_event_emit);
+    __le_connection_complete_event_emit(link);
+    /* __rx_oneshot_add(link, __le_connection_complete_event_emit); */
 
 }
 
@@ -2946,7 +2949,7 @@ static void rx_probe_adv_pdu_handler(struct le_link *link, struct ble_rx *rx)
         case SCAN_REQ:
             break;
         case CONNECT_REQ:
-            putchar('G');
+            putchar('g');
             ll_adv_timeout_stop(link);
             slave_set_connection_param(link, rx);
             //LL_CONNECTION_ESTABLISHED set ll connSupervision timeout 6*interval
@@ -3047,7 +3050,7 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
 {
     if (link->state == LL_CONNECTION_ESTABLISHED)
     {
-        __event_oneshot_remove(link, ll_conn_supervision_timer_handler, 6);
+        __event_oneshot_remove(link, ll_conn_fast_supervision_timer_handler, 6);
         /* putchar('#'); */
         //set ll supervisonTO to connSupervision timeout when receive first packet
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
@@ -5673,8 +5676,8 @@ static void ll_tx_probe_handler(void *priv, struct ble_tx *tx)
 
 static void ll_event_handler(struct le_link *link, int event)
 {
+    putchar('#');put_u16hex(event);
 	__event_oneshot_run(link, event);
-
 }
 
 //Bottom upload from Baseband API

@@ -581,7 +581,7 @@ static void gap_run(void){
             case 0:
             case 2:
             case 3:
-                le_hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, 0, &null_addr, 0x07, 0x03);
+                le_hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, 0, &null_addr, 0x07, 0x00);
                 break;
             case 1:
             case 4:
