@@ -242,6 +242,8 @@ static void __event_oneshot_run(struct le_link *link, int event_cnt)
 {
 	struct oneshot *p, *n;
 
+    /* putchar('#'); */
+    /* put_u16hex(event_cnt); */
 	list_for_each_entry_safe(p, n, &link->event_oneshot_head, entry){
 		if (event_cnt == p->data[0]){
 			list_del(&p->entry);
@@ -2957,7 +2959,11 @@ static void master_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
     __rx_oneshot_add(link, __set_conn_winsize);
 
-    __rx_oneshot_add(link, __le_connection_complete_event_emit);
+    u16 instant = __ble_ops->get_conn_event(link->hw) + 1;
+
+    /* putchar('@'); */
+    /* put_u16hex(instant); */
+    __event_oneshot_add(link, __le_connection_complete_event_emit, instant);
     
 }
 
