@@ -758,7 +758,6 @@ static void __set_connection_param(struct ble_hw *hw,
 	ble_fp->CRCWORD0 = READ_BT16(conn_param->crcinit, 0);
 	ble_fp->CRCWORD1 = conn_param->crcinit[2];
 
-    __set_event_count(hw, 0);
 
     __set_event_instant(hw, 0);
 
@@ -785,6 +784,7 @@ static void __set_connection_param(struct ble_hw *hw,
         //----Channel map
         __set_widen(hw, conn_param->widening);
 	}
+    __set_event_count(hw, 0);
     //----Winsize
     __set_winsize(hw, 50, conn_param->winsize*1250 + SLOT_UNIT_US);
     //----Interval
