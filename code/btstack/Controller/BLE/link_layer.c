@@ -253,6 +253,21 @@ static void __event_oneshot_run(struct le_link *link, int event_cnt)
 	}
 }
 
+static void __event_oneshot_remove(struct le_link *link, 
+        void (*func)(struct le_link *), int instant)
+{
+	struct oneshot *p, *n;
+
+    /* putchar('#'); */
+    /* put_u16hex(event_cnt); */
+	list_for_each_entry_safe(p, n, &link->event_oneshot_head, entry){
+		if ((func == p->func) && (instant == p->data[0])){
+			list_del(&p->entry);
+			__free(p);
+		}
+	}
+}
+
 static void __rx_oneshot_add(struct le_link *link, void (*func)(struct le_link*))
 {
 	struct oneshot *p = __malloc(sizeof(struct oneshot));
@@ -2273,6 +2288,13 @@ static void ll_disconnect_process(struct le_link *link, u8 reason)
 #define LE_IS_CONNECT(link)     (link->state == LL_CONNECTION_ESTABLISHED)
 
 // LL Supervision TimeOut
+static void ll_conn_fast_supervision_timer_handler(struct le_link *link)
+{
+    ll_puts("\n********Fast Supervision_Timeout : CONNECTION_FAILED_TO_BE_ESTABLISHED***********\n");
+
+    ll_disconnect_process(link, CONNECTION_FAILED_TO_BE_ESTABLISHED);
+}
+
 static void ll_conn_supervision_timer_handler(struct sys_timer *timer)
 {
     struct le_link *link = (struct le_link*)sys_timer_get_user(timer);
@@ -2915,7 +2937,7 @@ static void slave_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
 static void rx_probe_adv_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
-    u32 supervison_timeout;
+    /* u32 supervison_timeout; */
 
 	struct ble_adv *adv = &link->adv;
 
@@ -2928,9 +2950,10 @@ static void rx_probe_adv_pdu_handler(struct le_link *link, struct ble_rx *rx)
             ll_adv_timeout_stop(link);
             slave_set_connection_param(link, rx);
             //LL_CONNECTION_ESTABLISHED set ll connSupervision timeout 6*interval
-            supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
-            /* put_u32hex(supervison_timeout); */
-            ll_supervision_timeout_start(link, supervison_timeout);
+            /* supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000; */
+            /* [> put_u32hex(supervison_timeout); <] */
+            /* ll_supervision_timeout_start(link, supervison_timeout); */
+            __event_oneshot_add(link, ll_conn_fast_supervision_timer_handler, 6);
             break;
     }
 }
@@ -2959,18 +2982,18 @@ static void master_set_connection_param(struct le_link *link, struct ble_rx *rx)
 
     __rx_oneshot_add(link, __set_conn_winsize);
 
-    u16 instant = __ble_ops->get_conn_event(link->hw) + 1;
+    /* u16 instant = __ble_ops->get_conn_event(link->hw) + 1; */
 
-    /* putchar('@'); */
-    /* put_u16hex(instant); */
-    __event_oneshot_add(link, __le_connection_complete_event_emit, instant);
-    
+    /* [> putchar('@'); <] */
+    /* [> put_u16hex(instant); <] */
+    /* __event_oneshot_add(link, __le_connection_complete_event_emit, instant); */
+    __le_connection_complete_event_emit(link);
 }
 
 
 static void rx_probe_init_pdu_handler(struct le_link *link, struct ble_rx *rx)
 {
-    u32 supervison_timeout;
+    /* u32 supervison_timeout; */
 
     switch (rx->type)
     {
@@ -2986,8 +3009,10 @@ static void rx_probe_init_pdu_handler(struct le_link *link, struct ble_rx *rx)
 		/* putchar('A'); */
 		master_set_connection_param(link, rx);
 		//LL_CONNECTION_ESTABLISHED set ll connSupervision timeout
-		supervison_timeout = (link->conn.ll_data.interval*1250*6L)/1000;
-		ll_supervision_timeout_start(link, supervison_timeout);
+        //1.25ms + winsize + winoffset | 6 interval
+		/* supervison_timeout = (1250+link->conn.ll_data.interval*1250*6L)/1000; */
+		/* ll_supervision_timeout_start(link, supervison_timeout); */
+        __event_oneshot_add(link, ll_conn_fast_supervision_timer_handler, 6);
         break;
     case ADV_NONCONN_IND:
     case ADV_SCAN_IND:
@@ -3022,6 +3047,7 @@ static void le_ll_probe_data_pdu_handler(struct le_link *link, struct ble_rx *rx
 {
     if (link->state == LL_CONNECTION_ESTABLISHED)
     {
+        __event_oneshot_remove(link, ll_conn_supervision_timer_handler, 6);
         /* putchar('#'); */
         //set ll supervisonTO to connSupervision timeout when receive first packet
         ll_supervision_timeout_start(link, link->conn.ll_data.timeout*10);
