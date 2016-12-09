@@ -181,6 +181,7 @@ static void update_advertisements(void);
 // static bd_addr_t tester_address = {0x00, 0x1B, 0xDC, 0x06, 0x07, 0x5F};
 /* static bd_addr_t tester_address = {0x00, 0x1B, 0xDC, 0x07, 0x32, 0xef}; */
 static bd_addr_t tester_address = {0x00, 0xA0, 0x50, 0xB4, 0x51, 0x58};
+static bd_addr_t tester_address1 = {0x54, 0x36, 0x98, 0xba, 0x3a, 0x2e};
 static int tester_address_type = 0;
 
 // general discoverable flags
@@ -1037,12 +1038,16 @@ int stdin_process(char cmd){
             break;
         case 'w':
             /* le_hci_send_cmd(&hci_reset); */
-			le_hci_send_cmd(&hci_le_set_scan_parameters, 1, 320, 300, 0, 0);
+			le_hci_send_cmd(&hci_le_set_scan_parameters, 1, 320, 300, 0, 1);
             break;
         case 'W':
             /* le_hci_send_cmd(&hci_reset); */
-            /* le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0); */
-            le_hci_send_cmd(&hci_read_remote_version_information, 0x0001);
+            le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
+            /* le_hci_send_cmd(&hci_read_remote_version_information, 0x0001); */
+            break;
+        case 'T':
+            /* le_hci_send_cmd(&hci_reset); */
+            le_hci_send_cmd(&hci_le_create_connection, 0x320, 0x300, 0, 0, &tester_address1, 0, 0x320, 0x320, 0, 0x3000, 0x0, 0x0);
             break;
 
         default:

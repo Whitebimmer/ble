@@ -779,7 +779,8 @@ struct resolving_list_parameter rpa[] = {
    },
 };
 
-static bd_addr_t tester_address = {0x00, 0xA0, 0x50, 0xB4, 0x51, 0x58};
+/* static bd_addr_t tester_address = {0x00, 0xA0, 0x50, 0xB4, 0x51, 0x58}; */
+static bd_addr_t tester_address = {0x54, 0x36, 0x98, 0xba, 0x3a, 0x2e};
 
 // assumption: hci_can_send_command_packet_now() == true
 static void hci_initializing_run()

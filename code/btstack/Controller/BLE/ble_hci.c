@@ -671,6 +671,7 @@ void link_control_cmd_handler(u16 opcode, u8 *data, int len)
         case HCI_READ_REMOTE_VERSION_INFORMATION:
 			hci_puts("HCI_READ_REMOTE_VERSION_INFORMATION\n");
             le_hci_push_control_data(opcode, data);
+            __hci_emit_event_of_cmd_status(0, opcode);
            break;
         default:
             puts("link_control_cmd_handler cmd not finish\n");
