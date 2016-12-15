@@ -468,7 +468,7 @@ static void bt_rccl_trim(void)
         }
     }
     bt_printf("\nbw_set: 0x%x  %d \n", bw_set, cnt[bw_set]);
-	if((bw_set >= 0x28) || (bw_set <= 0x18)) {
+	if((bw_set > 0x2A) || (bw_set <= 0x18)) {
 		bt_printf("bt_trim_error---1\n");
 		bt_trim_error = 1;		
 		bw_set = 0x20;
@@ -708,7 +708,7 @@ void bt_analog_init(void)
   //======================= osc ===========================//
     //SFR(WLA_CON17, 0,  5,  0X00); // BTOSC_CLSEL 0x12
     //SFR(WLA_CON17, 5,  5,  0X00); // BTOSC_CRSEL 0x12
-    SFR(WLA_CON17, 10, 4,  7); // BTOSC_Hcs
+    SFR(WLA_CON17, 10, 4,  3); // BTOSC_Hcs
 
     SFR(WLA_CON29, 11, 1,  0); // BTOSC_EN_SEL_BASEBAND
     SFR(WLA_CON14, 10, 1,  1); // BTOSC_EN
@@ -823,7 +823,7 @@ void RF_analog_init(char en)
         SFR(WLA_CON29, 2 , 1, 1);       //1 bt_pllb_sel
         SFR(WLA_CON29, 3 , 1, 1);       //1 bt_pllrn_sel
         SFR(WLA_CON29, 4 , 1, 1);       //1 bt_pll_sel
-        SFR(WLA_CON29, 15 ,1, 1);       // bt_pll_acc
+        SFR(WLA_CON29, 15 ,1, 0);       // bt_pll_acc
         SFR(WLA_CON28, 8 , 1, 1);       // wl_pllmode_sel
         SFR(WLA_CON28, 9 , 1, 1);       // wl_pllref_sel
         SFR(WLA_CON28, 10, 1, 0);       // wl_dsm_sel

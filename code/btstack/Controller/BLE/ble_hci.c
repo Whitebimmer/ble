@@ -3,7 +3,7 @@
 #include "stdarg.h"
 #include "ble/ble_h4_transport.h"
 
-#define HCI_DEBUG_EN
+/* #define HCI_DEBUG_EN */
 
 #ifdef HCI_DEBUG_EN
 #define hci_putchar(x)        putchar(x)
