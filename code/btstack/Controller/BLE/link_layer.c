@@ -332,6 +332,7 @@ static struct le_event *__alloc_event(int len, const char *format)
 
 static bool meta_event_mask(int subevent_code)
 {
+    return TRUE;
     if (hci_param_t->event_mask[LE_META_EVENT/8] & BIT(LE_META_EVENT%8))
     {
         /* subevent_code -= 1; */
@@ -893,10 +894,13 @@ static const u8 connection_data[] = {
     //channel map
 	0xff, 0xff, 0xff, 0xff, 0x1f,
     //hop
-   	0x87
+   	0x07
 };
 
 
+static const u16 master_sca[] = {
+    500, 250, 150, 100, 75, 50, 30, 20,
+};
 
 static void __read_connection_param(struct ble_conn_param *param, u8 *data)
 {
@@ -911,7 +915,11 @@ static void __read_connection_param(struct ble_conn_param *param, u8 *data)
 
 	memcpy(param->channel, data+16, 5);
 	param->hop = data[21]&0x1f;
+	param->sca = (data[21]&0xe0)>>6;
 	/*printf("hop: %d\n", param->hop);*/
+
+    //windowWidening = ((masterSCA + slaveSCA) / 1000000) * timeSinceLastAnchor
+    param->widening = (((master_sca[param->sca] + 500) * param->interval*1250) / 1000000);
 }
 
 /********************************************************************************/
@@ -2191,8 +2199,6 @@ const static struct ble_conn_param sample_conn_param = {
     .hop        = 0x87,
 };
 
-#define LL_SLAVE_CONN_WINSIZE    800
-#define LL_MASTER_CONN_WINSIZE   30
 
 static void __set_ll_init_state(struct le_link *link)
 {
@@ -2226,7 +2232,6 @@ static void __set_ll_init_state(struct le_link *link)
     conn_param->latency = le_param.conn_param.conn_latency;
     conn_param->timeout = le_param.conn_param.supervision_timeout;
 
-    conn_param->widening = LL_MASTER_CONN_WINSIZE>>1;
     
     __ble_ops->initiating(link->hw, conn);
 }
@@ -2335,11 +2340,11 @@ static void __set_conn_winsize(struct le_link *link)
     /* DEBUG_IO_1(3); */
     if (link->role)
     {
-        __ble_ops->ioctrl(link->hw, BLE_SET_WINSIZE, 50, LL_SLAVE_CONN_WINSIZE);
+        __ble_ops->ioctrl(link->hw, BLE_SET_WINSIZE, 50, link->conn.ll_data.widening*2);
     }
     else //master
     {
-		__ble_ops->ioctrl(link->hw, BLE_SET_WINSIZE, LL_MASTER_CONN_WINSIZE, 0);
+		__ble_ops->ioctrl(link->hw, BLE_SET_WINSIZE, 30, 0);
     }
     /* DEBUG_IO_0(3); */
     /* puts("\n----widen----"); */
@@ -2365,6 +2370,7 @@ static void __connection_upadte(struct le_link *link)
 static void __channel_map_upadte(struct le_link *link)
 {
     __ble_ops->ioctrl(link->hw, BLE_CHANNEL_MAP, link->conn.ll_data.channel);
+    /* ll_puts("__channel_map_upadte\n");ll_printf("channel map update : %02x\n", link->conn.ll_data.channel); */
 }
 
 static bool __instant_link_lost(u16 instant, u16 eventcnt)
@@ -2923,8 +2929,6 @@ static void slave_set_connection_param(struct le_link *link, struct ble_rx *rx)
     memcpy(link->peer.addr, rx->data, 6);
 	__read_connection_param(&conn->ll_data, rx->data+12);
 
-    conn->ll_data.widening = LL_SLAVE_CONN_WINSIZE>>1;
-
     /* link->master_clock_accuracy = (rx->data)[34]; */
 	__set_link_state(link, LL_CONNECTION_CREATE);
 
@@ -3136,9 +3140,10 @@ static void debug_info(struct le_link *link)
     printf("interval: %04x\n",    conn->ll_data.interval);
     printf("latency : %04x\n",    conn->ll_data.latency);
     printf("timeout : %04x\n",    conn->ll_data.timeout);
-    printf("widening : %04x\n",   conn->ll_data.widening);
     puts("channel map"); printf_buf(conn->ll_data.channel, 5);
     printf("hop: %02x\n",         conn->ll_data.hop);
+    printf("sca: %02x\n",         conn->ll_data.sca);
+    printf("widening : %04x\n",   conn->ll_data.widening);
 }
 
 
@@ -3803,8 +3808,6 @@ static void __slave_ll_receive_conn_update_req(struct le_link *link, struct ble_
 	conn_param->interval  = READ_BT16(data, 3);
 	conn_param->latency   = READ_BT16(data, 5);
 	conn_param->timeout   = READ_BT16(data, 7);
-
-    conn_param->widening = LL_SLAVE_CONN_WINSIZE>>1;
 
 	__ble_ops->ioctrl(link->hw, BLE_SET_INSTANT, instant);
 
@@ -5676,7 +5679,7 @@ static void ll_tx_probe_handler(void *priv, struct ble_tx *tx)
 
 static void ll_event_handler(struct le_link *link, int event)
 {
-    putchar('#');put_u16hex(event);
+    /* putchar('#');put_u16hex(event); */
 	__event_oneshot_run(link, event);
 }
 

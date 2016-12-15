@@ -117,6 +117,7 @@ struct ble_conn_param{
     u16 widening;
     u8 channel[5];
     u8 hop;
+    u8 sca;
 };
 
 struct ble_conn {

@@ -72,6 +72,41 @@ static u8 test_buf[32]={0x04, 'a', 'b', 'c', 'd'};
 //服务0xfff1,属性0xff01
 // test profile
 /*#include "profile.h"*/
+#if 1
+const uint8_t profile_data[] =
+{
+    // 0x0001 PRIMARY_SERVICE-GAP_SERVICE
+    0x0a, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x28, 0x00, 0x18, 
+    // 0x0002 CHARACTERISTIC-GAP_DEVICE_NAME-READ
+    0x0d, 0x00, 0x02, 0x00, 0x02, 0x00, 0x03, 0x28, 0x02, 0x03, 0x00, 0x00, 0x2a, 
+    // 0x0003 VALUE-GAP_DEVICE_NAME-READ-''
+    0x08, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x2a, 
+
+    // 0x0004 PRIMARY_SERVICE-GAP_SERVICE
+    0x0a, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00, 0x28, 0x00, 0x18, 
+    // 0x0005 CHARACTERISTIC-GAP_APPEARANCE-READ
+    0x0d, 0x00, 0x02, 0x00, 0x05, 0x00, 0x03, 0x28, 0x02, 0x06, 0x00, 0x01, 0x2a, 
+    // 0x0006 VALUE-GAP_APPEARANCE-READ-''
+    0x08, 0x00, 0x02, 0x00, 0x06, 0x00, 0x01, 0x2a, 
+
+    // 0x0007 PRIMARY_SERVICE-180F
+    0x0a, 0x00, 0x02, 0x00, 0x07, 0x00, 0x00, 0x28, 0x0f, 0x18, 
+    // 0x0008 CHARACTERISTIC-2A19-READ
+    0x0d, 0x00, 0x02, 0x00, 0x08, 0x00, 0x03, 0x28, 0x02, 0x09, 0x00, 0x19, 0x2a, 
+    // 0x0009 VALUE-2A19-READ-''
+    0x08, 0x00, 0x02, 0x00, 0x09, 0x00, 0x19, 0x2a, 
+    // END
+    0x00, 0x00, 
+}; // total size 71 bytes 
+
+
+//
+// list mapping between characteristics and handles
+//
+#define ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE 0x0003
+#define ATT_CHARACTERISTIC_GAP_APPEARANCE_00_VALUE_HANDLE 0x0006
+#define ATT_CHARACTERISTIC_2A19_01_VALUE_HANDLE 0x0009
+#else
 const uint8_t profile_data[] =
 {
     // 0x0001 PRIMARY_SERVICE-GAP_SERVICE
@@ -123,6 +158,7 @@ const uint8_t profile_data[] =
 #endif
     0x00, 0x00, 
 }; // total size 99 bytes 
+#endif
 
 enum {
     DISABLE_ADVERTISEMENTS   = 1 << 0,
@@ -399,6 +435,27 @@ static uint16_t att_read_callback(uint16_t con_handle, uint16_t attribute_handle
 			}
 			return test_buf[0];
 
+        case ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE:
+            puts("ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE\n");
+            att_value_len = strlen(gap_device_name);
+            if (buffer) {
+                memcpy(buffer, gap_device_name, att_value_len);
+            }
+            return att_value_len; 
+        case ATT_CHARACTERISTIC_GAP_APPEARANCE_00_VALUE_HANDLE:
+            puts("ATT_CHARACTERISTIC_GAP_APPEARANCE_00_VALUE_HANDLE \n");
+            if (buffer){
+                little_endian_store_16(buffer, 0, gap_appearance);
+            }
+            return 2;
+        case ATT_CHARACTERISTIC_2A19_01_VALUE_HANDLE:
+            puts("ATT_CHARACTERISTIC_2A19_01_VALUE_HANDLE \n");
+            if (buffer){
+                static u8 data = 0;
+                buffer[0] = data++;
+            }
+            return 1;
+
         // handle device name
         // handle appearance
         default:
@@ -548,6 +605,25 @@ static uint8_t gap_adv_type(void){
     return 0x00;
 }
 
+static const u8 adv_ind_data[] = {
+	0x02, 0x01, 0x06,
+	0x03, 0x02, 0x12, 0x18, 
+};
+
+
+//len, type, Manufacturer Specific data
+static const u8 scan_rsp_data[] = {
+    /* 0x02, 0x0A, 0x00, */
+#ifdef BT16
+	0x05, 0x09, 'b','t', '1', '6',
+#endif
+#ifdef BR16
+	0x09, 0x09, 'b','r', '1', '6', '-','4', '.', '1',
+#endif
+#ifdef BR17
+	0x09, 0x09, 'b','r', '1', '7', '-','b', 'l', 'e',
+#endif
+};
 
 static void gap_run(void){
     if (!hci_can_send_command_packet_now()) return;
@@ -565,7 +641,8 @@ static void gap_run(void){
         printf("GAP_RUN: set advertisement data\n");
         todos &= ~SET_ADVERTISEMENT_DATA;
         /* printf_buf(adv_data, adv_data_len); */
-        le_hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data_len, adv_data);
+        /* le_hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data_len, adv_data); */
+        le_hci_send_cmd(&hci_le_set_advertising_data, sizeof(adv_ind_data), sizeof(adv_ind_data), adv_ind_data);
         return;
     }    
 
@@ -594,7 +671,9 @@ static void gap_run(void){
     if (todos & SET_SCAN_RESPONSE_DATA){
         printf("GAP_RUN: set scan response data\n");
         todos &= ~SET_SCAN_RESPONSE_DATA;
-        le_hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data_len, adv_data);
+
+        /* le_hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data_len, adv_data); */
+        le_hci_send_cmd(&hci_le_set_scan_response_data, sizeof(scan_rsp_data), sizeof(scan_rsp_data), scan_rsp_data);
         // hack for menu
         /* if ((todos & ENABLE_ADVERTISEMENTS) == 0) show_usage(); */
         return;
@@ -1047,7 +1126,7 @@ int stdin_process(char cmd){
             break;
         case 'T':
             /* le_hci_send_cmd(&hci_reset); */
-            le_hci_send_cmd(&hci_le_create_connection, 0x320, 0x300, 0, 0, &tester_address1, 0, 0x320, 0x320, 0, 0x3000, 0x0, 0x0);
+            le_hci_send_cmd(&hci_le_create_connection, 0x320, 0x300, 0, 0, &tester_address1, 0, 0x320, 0x320, 5, 0x3000, 0x0, 0x0);
             break;
 
         default:
@@ -1087,8 +1166,8 @@ int btstack_main()
     sm_init();
 
     // setup ATT server
-	att_server_init(profile_data, att_read_callback, att_write_callback); 
-	att_server_register_packet_handler(app_packet_handler);
+    att_server_init(profile_data, att_read_callback, att_write_callback); 
+    att_server_register_packet_handler(app_packet_handler);
 	/*att_write_queue_init();*/
 	/*att_attributes_init();*/
 
@@ -1105,6 +1184,7 @@ int btstack_main()
     /* sm_set_authentication_requirements(SM_AUTHREQ_MITM_PROTECTION); */
     sm_register_oob_data_callback(get_oob_data_callback);
     sm_set_encryption_key_size_range(sm_min_key_size, 16);
+    /* sm_set_request_security(1); */
     /*sm_test_set_irk(test_irk);*/
 
     // set one-shot timer
