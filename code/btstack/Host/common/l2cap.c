@@ -610,6 +610,9 @@ static void l2cap_register_signaling_response(hci_con_handle_t handle, uint8_t c
  */
 int gap_request_connection_parameter_update(hci_con_handle_t con_handle, uint16_t conn_interval_min,
     uint16_t conn_interval_max, uint16_t conn_latency, uint16_t supervision_timeout){
+    static u8 le_con_param_update_identifier = 0x1;
+
+
     hci_connection_t * connection = le_hci_connection_for_handle(con_handle);
     if (!connection) return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     connection->le_conn_interval_min = conn_interval_min;
@@ -617,7 +620,11 @@ int gap_request_connection_parameter_update(hci_con_handle_t con_handle, uint16_
     connection->le_conn_latency = conn_latency;
     connection->le_supervision_timeout = supervision_timeout;
     connection->le_con_parameter_update_state = CON_PARAMETER_UPDATE_SEND_REQUEST;
+    connection->le_con_param_update_identifier = le_con_param_update_identifier;
     l2cap_run();
+
+    if (le_con_param_update_identifier++ == 0)
+        le_con_param_update_identifier = 0x1;
     return 0;
 }
 
