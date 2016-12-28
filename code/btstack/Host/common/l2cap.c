@@ -273,7 +273,7 @@ int le_l2cap_send_prepared_connectionless(uint16_t handle, uint16_t cid, uint16_
         return BTSTACK_ACL_BUFFERS_FULL;
     }
 
-    if (!le_hci_can_send_prepared_acl_packet_now(handle)){
+    if (!hci_can_send_prepared_acl_packet_now(handle)){
         log_info("l2cap_send_prepared_connectionless handle %u,, cid %u, cannot send", handle, cid);
         return BTSTACK_ACL_BUFFERS_FULL;
     }
@@ -613,7 +613,7 @@ int gap_request_connection_parameter_update(hci_con_handle_t con_handle, uint16_
     static u8 le_con_param_update_identifier = 0x1;
 
 
-    hci_connection_t * connection = le_hci_connection_for_handle(con_handle);
+    hci_connection_t * connection = hci_connection_for_handle(con_handle);
     if (!connection) return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     connection->le_conn_interval_min = conn_interval_min;
     connection->le_conn_interval_max = conn_interval_max;
@@ -696,7 +696,7 @@ static void le_l2cap_dispatch_cid(uint16_t cid, uint8_t *packet, uint16_t size)
                     event[1] = 8;
                     memcpy(&event[2], &packet[12], 8);
                 
-                    hci_connection_t * connection = le_hci_connection_for_handle(handle);
+                    hci_connection_t * connection = hci_connection_for_handle(handle);
                     if (connection){ 
                         if (connection->role != HCI_ROLE_MASTER){
                             // reject command without notifying upper layer when not in master role

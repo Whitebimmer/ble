@@ -131,6 +131,20 @@ void exception_isr(void)
 {
     puts("\n\n---------------------------SDK exception_isr---------------------\n\n");
     put_u32hex(DEBUG_MSG);
+    if (DEBUG_MSG & BIT(2))
+        puts("Peripheral ex limit err\n");
+    if (DEBUG_MSG & BIT(8))
+        puts("DSP MMU err,DSP write MMU All 1\n");
+    if (DEBUG_MSG & BIT(9))
+        puts("PRP MMU err,PRP write MMU 1\n");
+    if (DEBUG_MSG & BIT(16))
+        puts("PC err,PC over limit\n");
+    if (DEBUG_MSG & BIT(17))
+        puts("DSP ex err,DSP store over limit\n");
+    if (DEBUG_MSG & BIT(18))
+        puts("DSP illegal,DSP instruction\n");
+    if (DEBUG_MSG & BIT(19))
+        puts("DSP misaligned err\n");
     /* PWR_CON |= BIT(4); */
     while(1);
 }
@@ -350,7 +364,7 @@ int main()
             if (c)
             {
                 /* printf("user cmd = %s \n", c); */
-                stdin_process(c);
+                /* stdin_process(c); */
             }
             if (TASK_IS_AWAKE())
                 break;

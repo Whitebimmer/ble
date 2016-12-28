@@ -2,7 +2,7 @@
 #include "cpu.h"
 #include "typedef.h"
 
-#define bt_printf   printf
+#define bt_printf(...)
 /*
     bt trim vlaue deal
 */

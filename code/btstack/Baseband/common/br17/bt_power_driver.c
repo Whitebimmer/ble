@@ -8,7 +8,7 @@
 
 
 
-#define PD_DEBUG_EN
+/* #define PD_DEBUG_EN */
 
 #ifdef PD_DEBUG_EN
 #define pd_putchar(x)        putchar(x)

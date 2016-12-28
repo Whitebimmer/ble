@@ -395,7 +395,7 @@ static bool __hci_emit_le_meta_event(u8 subevent_code, const char *format, ...)
 
 	event = __alloc_event(1, format);
 	ASSERT(event != NULL);
-    printf("event len : %x\n", event->len);
+    /* printf("event len : %x\n", event->len); */
 
 	event->event = HCI_EVENT_LE_META;
 	event->data[0] = subevent_code;

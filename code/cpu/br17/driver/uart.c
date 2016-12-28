@@ -14,9 +14,9 @@
 
 
 #if (DEBUG_UART == UART0)
-    #define UART_TXPA5_RXPA6
+    /* #define UART_TXPA5_RXPA6 */
     /* #define  UART_TXPB6_RXPB7*/
-    /* #define UART_TXPC2_RXPC3 */
+    #define UART_TXPC2_RXPC3
     //#define UART_TXPA14_RXPA15
 #endif
 

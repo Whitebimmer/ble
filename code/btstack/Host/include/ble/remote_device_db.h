@@ -43,7 +43,7 @@
 #define __REMOTE_DEVICE_DB_H
 
 #include <utils.h>
-#include "ble/gap.h"
+#include "gap.h"
 
 #if defined __cplusplus
 extern "C" {

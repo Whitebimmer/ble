@@ -218,7 +218,7 @@ void sm_bonding_decline(uint8_t addr_type, bd_addr_t address);
  */
 void sm_just_works_confirm(uint8_t addr_type, bd_addr_t address);
 
-void sm_just_works_confirm1(sm_connection_t * sm_conn);
+void sm_just_works_confirm1(hci_con_handle_t con_handle);
 /**
  * @brief Reports passkey input by user
  * @param addr_type and address

@@ -84,7 +84,6 @@ objs += \
 
 else
 objs += \
-   user/ble/ble_peripheral_test.o \
    btstack/Host/BLE/le_device_db_memory.o \
    btstack/Host/common/btstack_memory.o \
    btstack/Host/common/hci.o \
@@ -98,6 +97,14 @@ objs += \
    btstack/Protocol/BLE/att_dispatch.o \
    btstack/Protocol/BLE/att_server.o \
    btstack/Protocol/BLE/sm.o \
+
+objs += \
+   btstack/Profile/BLE/gatt_client.o \
+   btstack/Profile/BLE/ancs_client.o \
+   user/ble/ancs_client_demo.o \
+
+# objs += \
+   user/ble/ble_peripheral_test.o \
 
 endif
    #btstack/LL_TS_4_2_1_hci_test.o \
