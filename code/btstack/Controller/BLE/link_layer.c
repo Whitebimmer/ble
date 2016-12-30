@@ -4564,8 +4564,11 @@ static void __slave_ll_send_start_enc_req(void)
 
     ll_send_control_data(link, LL_START_ENC_REQ, 0);
 
-    /* printf("long_term_key_request_reply_param free : %08x\n",  le_param.long_term_key_request_reply_param); */
+    DEBUG_IOC_1(4)
+    printf("long_term_key_request_reply_param free : %08x\n",  le_param.long_term_key_request_reply_param);
     __hci_param_free(le_param.long_term_key_request_reply_param);
+    DEBUG_IOC_0(4)
+    while(1);
 }
 
 static const ll_step_extend start_encryption_req_steps[] = {
@@ -5315,6 +5318,7 @@ void le_ll_push_control_data(u8 opcode, const u8 *param)
             break;
         case HCI_LE_LONG_TERM_KEY_REQUEST_REPLY:
             le_start_encrypt_req(param);
+            puts("end 2\n");
             break;
         case HCI_LE_LONG_TERM_KEY_REQUEST_NAGATIVE_REPLY:
             le_reject(param);
@@ -5368,6 +5372,7 @@ static void echo_ll_ctrl_pdu_handler(struct le_link *link, ll_step step,
 		case LL_START_ENC_REQ:
             ll_puts("LL_START_ENC_REQ\n");
             __slave_ll_send_start_enc_req();
+            ll_puts("end 1\n");
 			break;
         case LL_START_ENC_RSP:
             ll_puts("LL_START_ENC_RSP\n");
@@ -5449,6 +5454,7 @@ static void rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 
     //process send 
     ll_send_control_data_state_machine(link, rx, NULL);
+    puts("Z\n");
 }
 
 static void rx_unknow_pdu_handler(struct le_link *link, struct ble_rx *rx)
@@ -5646,6 +5652,7 @@ static void tx_ctrl_pdu_handler(struct le_link *link, struct ble_tx *tx)
 
     //process send 
     ll_send_control_data_state_machine(link, NULL, tx);
+    puts("Q\n");
 }
 
 static void ll_tx_probe_handler(void *priv, struct ble_tx *tx)

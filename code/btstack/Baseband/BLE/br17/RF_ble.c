@@ -1887,7 +1887,10 @@ static void __hw_tx_process(struct ble_hw *hw)
                 /* ble_hw_txdecrypt(hw, hw->tx[i]); */
                 hw->handler->tx_probe_handler(hw->priv, hw->tx[i]);
             }
+            ASSERT(((u32)hw->tx[i] & 0x03)==0, "%x\n", hw->tx[i]);
 			lbuf_free(hw->tx[i]);
+            /* put_u32hex(hw->tx[i]); */
+            /* putchar('$'); */
 		}
 		tx = lbuf_pop(hw->lbuf_tx);
 		if (!tx){
@@ -1899,10 +1902,12 @@ static void __hw_tx_process(struct ble_hw *hw)
             tx_buf = tx;
 		} else {
 			/* rf_putchar('$'); */
-			rf_u8hex(tx->data[0]);
+            /* putchar('$'); */
+			/* put_u8hex(tx->data[0]); */
             tx_buf = hw->tx_buf[i];
 			hw->tx[i] = tx;
-            memcpy(tx_buf, tx, sizeof(*tx)+tx->len+4);
+            memcpy(tx_buf, tx, TX_PACKET_SIZE(tx->len));//sizeof(*tx)+tx->len+4
+            putchar('$');
 			ble_hw_encrpty(hw, tx_buf);
 		}
         //if more data 
@@ -1977,6 +1982,20 @@ static struct ble_rx *ble_rx_buf_alloc(struct ble_hw *hw, struct ble_rx *rx, int
     return rx_alloc;
 }
 
+static void __hw_agc_adjust(struct ble_hw *hw, u8 adv)
+{
+    if (adv){
+        if ((hw->state != SLAVE_CONN_ST) && (hw->state != MASTER_CONN_ST)){
+            ble_agc_reset(hw);
+        }
+    }
+    else {
+        if ((hw->state != SLAVE_CONN_ST) && (hw->state != MASTER_CONN_ST)){
+            ble_agc_normal_set(hw, 1, 0);
+        }
+    }
+}
+
 static void __hw_rx_process(struct ble_hw *hw)
 {
 	int ind;
@@ -1996,15 +2015,7 @@ static void __hw_rx_process(struct ble_hw *hw)
             /* [> rf_puts("\n---------------------"); <] */
         /* } */
     }
-
-	if (hw->state == SLAVE_CONN_ST || hw->state == MASTER_CONN_ST)
-    {
-        ble_agc_normal_set(hw, 1, 0);
-        /* ble_agc_normal_set(hw, 0, 19); */
-    }
-    else{
-        ble_agc_normal_set(hw, 0, 27);
-    }
+    __hw_agc_adjust(hw, 0);
 
 	ind = !(ble_fp->RXTOG & BIT(0));
 	rxahdr = *((u16 *)&ble_fp->RXAHDR0 + ind);
@@ -2125,12 +2136,14 @@ static void ble_irq_handler()
 		if(BLE_INT_CON2 & BIT(i+8))//rx int
 		{
 			BLE_INT_CON1 |= BIT(i+8);     ///  !!! must be clear twice
-            /* DEBUG_IO_1(3) */
+            /* DEBUG_IO_1(2) */
+            DEBUG_IOC_1(5)
             /* {PORTA_DIR &= ~BIT(3); PORTA_OUT ^= BIT(3);} */
             /* trig_fun(); */
             /* ADC_CON = 1; */
 			__hw_rx_process(hw);
-            /* DEBUG_IO_0(0) */
+            DEBUG_IOC_0(5)
+            /* DEBUG_IO_0(2) */
 
 			/* BLE_INT_CON1 |= BIT(i+8); */
 		}
@@ -2139,10 +2152,11 @@ static void ble_irq_handler()
 		if(BLE_INT_CON2 & BIT(i))//event_end int
 		{
 			BLE_INT_CON1 = BIT(i);     ///  !!! must be clear twice
-            /* DEBUG_IOB_1(1) */
+            /* DEBUG_IO_1(1) */
+            __hw_agc_adjust(hw, 1);
 			__hw_event_process(hw);
 
-            /* DEBUG_IOB_0(1) */
+            /* DEBUG_IO_0(1) */
 			/* BLE_INT_CON1 = BIT(i); */
 
 

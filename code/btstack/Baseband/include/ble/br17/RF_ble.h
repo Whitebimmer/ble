@@ -169,6 +169,7 @@ struct ble_hw{
 	struct list_head        event_oneshot_head;
     struct ble_backoff      backoff;
 
+    u8 scan_agc_set;
     char pwr_set;
 	char agc_set;
 	u16 agc_buf1;

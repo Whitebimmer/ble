@@ -62,6 +62,24 @@
 
 #include "ble/core.h"
 
+#define GATT_DEBUG_EN
+
+#ifdef GATT_DEBUG_EN
+#define gatt_putchar(x)        putchar(x)
+#define gatt_puts(x)           puts(x)
+#define gatt_u32hex(x)         put_u32hex(x)
+#define gatt_u8hex(x)          put_u8hex(x)
+#define gatt_pbuf(x,y)         printf_buf(x,y)
+#define gatt_printf            printf
+#else
+#define gatt_putchar(...)
+#define gatt_puts(...)
+#define gatt_u32hex(...)
+#define gatt_u8hex(...)
+#define gatt_pbuf(...)
+#define gatt_printf(...)
+#endif
+
 #define l2cap_reserve_packet_buffer             le_l2cap_reserve_packet_buffer    
 #define l2cap_get_outgoing_buffer               le_l2cap_get_outgoing_buffer
 #define l2cap_send_prepared_connectionless      le_l2cap_send_prepared_connectionless
@@ -145,10 +163,10 @@ static gatt_client_t * get_gatt_client_context_for_handle(uint16_t handle){
 // returns existing one, or tries to setup new one
 static gatt_client_t * provide_context_for_conn_handle(hci_con_handle_t con_handle){
     gatt_client_t * context = get_gatt_client_context_for_handle(con_handle);
-    if (context) return  context;
+    if (context) {puts("get_gatt_client_context_for_handle exist\n"); return context;}
 
     context = btstack_memory_gatt_client_get();
-    if (!context) return NULL;
+    if (!context) {puts("btstack_memory_gatt_client_get NULL\n");return NULL;}
     // init state
     memset(context, 0, sizeof(gatt_client_t));
     context->con_handle = con_handle;
@@ -1009,6 +1027,7 @@ static void gatt_client_hci_event_packet_handler(uint8_t packet_type, uint16_t c
         case HCI_EVENT_DISCONNECTION_COMPLETE:
         {
             log_info("GATT Client: HCI_EVENT_DISCONNECTION_COMPLETE");
+            gatt_puts("GATT Client: HCI_EVENT_DISCONNECTION_COMPLETE");
             hci_con_handle_t con_handle = little_endian_read_16(packet,3);
             gatt_client_t * peripheral = get_gatt_client_context_for_handle(con_handle);
             if (!peripheral) break;
@@ -1414,8 +1433,8 @@ uint8_t gatt_client_discover_primary_services_by_uuid16(btstack_packet_handler_t
 uint8_t gatt_client_discover_primary_services_by_uuid128(btstack_packet_handler_t callback, hci_con_handle_t con_handle, const uint8_t * uuid128){
     gatt_client_t * peripheral = provide_context_for_conn_handle_and_start_timer(con_handle);
     
-    if (!peripheral) return BTSTACK_MEMORY_ALLOC_FAILED; 
-    if (!is_ready(peripheral)) return GATT_CLIENT_IN_WRONG_STATE;
+    if (!peripheral) {puts("BTSTACK_MEMORY_ALLOC_FAILED\n");return BTSTACK_MEMORY_ALLOC_FAILED; }
+    if (!is_ready(peripheral)) {puts("GATT_CLIENT_IN_WRONG_STATE\n");return GATT_CLIENT_IN_WRONG_STATE;}
 
     peripheral->callback = callback;
     peripheral->start_group_handle = 0x0001;

@@ -2,6 +2,7 @@
 #include "cpu.h"
 #include "typedef.h"
 
+extern void delay(unsigned long  t);
 #define bt_printf(...)
 /*
     bt trim vlaue deal

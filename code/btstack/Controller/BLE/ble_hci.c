@@ -980,7 +980,7 @@ static void le_hci_command_handler(u16 opcode, u8 *data, int size)
 		case HCI_LE_LONG_TERM_KEY_REQUEST_REPLY:
 			hci_puts("HCI_LE_LONG_TERM_KEY_REQUEST_REPLY\n");
             /* printf_buf(data, size); */
-            printf_buf(data, sizeof (struct long_term_key_request_reply_parameter));
+            hci_buf(data, sizeof (struct long_term_key_request_reply_parameter));
             le_hci_push_control_data(opcode, data);
             __hci_emit_event_of_cmd_complete(opcode, "12", 0,
                     READ_CONNECTION_HANDLE(data));

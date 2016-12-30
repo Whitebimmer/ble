@@ -67,6 +67,23 @@
 #include "btstack_event.h"
 /*#include "stdin_support.h"*/
  
+#define APP_DEBUG_EN
+
+#ifdef APP_DEBUG_EN
+#define app_putchar(x)        putchar(x)
+#define app_puts(x)           puts(x)
+#define app_u32hex(x)         put_u32hex(x)
+#define app_u8hex(x)          put_u8hex(x)
+#define app_pbuf(x,y)         printf_buf(x,y)
+#define app_printf            printf
+#else
+#define app_putchar(...)
+#define app_puts(...)
+#define app_u32hex(...)
+#define app_u8hex(...)
+#define app_pbuf(...)
+#define app_printf(...)
+#endif
 static u8 test_buf[32]={0x04, 'a', 'b', 'c', 'd'};
 #define HEARTBEAT_PERIOD_MS 1000
 //服务0xfff1,属性0xff01
@@ -372,18 +389,18 @@ static void app_run(void){
     int result = -1;
     switch (client_configuration){
         case 0x01:
-            printf("Notify value %u\n", counter);
+            app_printf("Notify value %u\n", counter);
             result = att_server_notify(client_configuration_handle - 1, &counter, 1);
             break;
         case 0x02:
-            printf("Indicate value %u\n", counter);
+            app_printf("Indicate value %u\n", counter);
             result = att_server_indicate(client_configuration_handle - 1, &counter, 1);
             break;
         default:
             return;
     }        
     if (result){
-        printf("Error 0x%02x\n", result);
+        app_printf("Error 0x%02x\n", result);
         return;        
     }
     update_client = 0;
@@ -398,7 +415,7 @@ static uint16_t att_read_callback(uint16_t con_handle, uint16_t attribute_handle
     uint16_t  att_value_len;
 	uint16_t handle = attribute_handle;
 
-    printf("READ Callback, handle %04x, offset %u, buffer size %u\n", handle, offset, buffer_size);
+    app_printf("READ Callback, handle %04x, offset %u, buffer size %u\n", handle, offset, buffer_size);
 
     uint16_t uuid16 = att_uuid_for_handle(handle);
     switch (uuid16){
@@ -431,25 +448,25 @@ static uint16_t att_read_callback(uint16_t con_handle, uint16_t attribute_handle
 		case 0xff01:
 			if (buffer){
 				memcpy(buffer, test_buf+1, test_buf[0]);
-				printf("buffer: %x\n", buffer);
+				app_printf("buffer: %x\n", buffer);
 			}
 			return test_buf[0];
 
         case ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE:
-            puts("ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE\n");
+            app_puts("ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE\n");
             att_value_len = strlen(gap_device_name);
             if (buffer) {
                 memcpy(buffer, gap_device_name, att_value_len);
             }
             return att_value_len; 
         case ATT_CHARACTERISTIC_GAP_APPEARANCE_00_VALUE_HANDLE:
-            puts("ATT_CHARACTERISTIC_GAP_APPEARANCE_00_VALUE_HANDLE \n");
+            app_puts("ATT_CHARACTERISTIC_GAP_APPEARANCE_00_VALUE_HANDLE \n");
             if (buffer){
                 little_endian_store_16(buffer, 0, gap_appearance);
             }
             return 2;
         case ATT_CHARACTERISTIC_2A19_01_VALUE_HANDLE:
-            puts("ATT_CHARACTERISTIC_2A19_01_VALUE_HANDLE \n");
+            app_puts("ATT_CHARACTERISTIC_2A19_01_VALUE_HANDLE \n");
             if (buffer){
                 static u8 data = 0;
                 buffer[0] = data++;
@@ -479,7 +496,7 @@ static uint16_t att_read_callback(uint16_t con_handle, uint16_t attribute_handle
         att_value     = att_attributes[index].value;
         att_value_len = att_attributes[index].len;
     }
-    printf("Attribute len %u, data: ", att_value_len);
+    app_printf("Attribute len %u, data: ", att_value_len);
     printf_hexdump(att_value, att_value_len);
 
     // assert offset <= att_value_len
@@ -504,7 +521,7 @@ static int att_write_callback(uint16_t con_handle, uint16_t attribute_handle, ui
 
     uint16_t uuid16 = att_uuid_for_handle(attribute_handle);
 
-    /* printf("WRITE Callback, handle %04x, mode %u, offset %u, data: ", handle, transaction_mode, offset); */
+    /* app_printf("WRITE Callback, handle %04x, mode %u, offset %u, data: ", handle, transaction_mode, offset); */
 
 	printf_buf(buffer, buffer_size);
 
@@ -512,25 +529,25 @@ static int att_write_callback(uint16_t con_handle, uint16_t attribute_handle, ui
         case 0x2902:
             client_configuration = buffer[0];
             client_configuration_handle = handle;
-            /*printf("Client Configuration set to %u for handle %04x\n", client_configuration, handle);*/
+            /*app_printf("Client Configuration set to %u for handle %04x\n", client_configuration, handle);*/
             return 0;   // ok
         case 0x2a00:
             memcpy(gap_device_name, buffer, buffer_size);
             gap_device_name[buffer_size]=0;
-            /*printf("Setting device name to '%s'\n", gap_device_name);*/
+            /*app_printf("Setting device name to '%s'\n", gap_device_name);*/
             return 0;
         case 0x2a01:
             gap_appearance = READ_BT_16(buffer, 0);
-            /*printf("Setting appearance to 0x%04x'\n", gap_appearance);*/
+            /*app_printf("Setting appearance to 0x%04x'\n", gap_appearance);*/
             return 0;
         case 0x2a02:
             gap_privacy = buffer[0];
-            /*printf("Setting privacy to 0x%04x'\n", gap_privacy);*/
+            /*app_printf("Setting privacy to 0x%04x'\n", gap_privacy);*/
             //update_advertisements();
             return 0;
         case 0x2A03:
             bt_flip_addr(gap_reconnection_address, buffer);
-            /*printf("Setting Reconnection Address to %s\n", bd_addr_to_str(gap_reconnection_address));*/
+            /*app_printf("Setting Reconnection Address to %s\n", bd_addr_to_str(gap_reconnection_address));*/
             return 0;
 		case 0xff01:
 			test_buf[0] = buffer_size;
@@ -628,17 +645,17 @@ static const u8 scan_rsp_data[] = {
 static void gap_run(void){
     if (!hci_can_send_command_packet_now()) return;
 
-    printf("todos : %x\n", todos);
+    app_printf("todos : %x\n", todos);
     if (todos & DISABLE_ADVERTISEMENTS){
         todos &= ~DISABLE_ADVERTISEMENTS;
-        printf("GAP_RUN: disable advertisements\n");
+        app_printf("GAP_RUN: disable advertisements\n");
         advertisements_enabled = 0;
         hci_send_cmd(&hci_le_set_advertise_enable, 0);
         return;
     }    
 
     if (todos & SET_ADVERTISEMENT_DATA){
-        printf("GAP_RUN: set advertisement data\n");
+        app_printf("GAP_RUN: set advertisement data\n");
         todos &= ~SET_ADVERTISEMENT_DATA;
         /* printf_buf(adv_data, adv_data_len); */
         /* hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data_len, adv_data); */
@@ -653,7 +670,7 @@ static void gap_run(void){
         memset(null_addr, 0, 6);
         uint16_t adv_int_min = 0x320;
         uint16_t adv_int_max = 0x320;
-        printf("GAP_RUN: set advertisement params\n");
+        app_printf("GAP_RUN: set advertisement params\n");
         switch (adv_type){
             case 0:
             case 2:
@@ -669,7 +686,7 @@ static void gap_run(void){
     }    
 
     if (todos & SET_SCAN_RESPONSE_DATA){
-        printf("GAP_RUN: set scan response data\n");
+        app_printf("GAP_RUN: set scan response data\n");
         todos &= ~SET_SCAN_RESPONSE_DATA;
 
         /* hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data_len, adv_data); */
@@ -680,7 +697,7 @@ static void gap_run(void){
     }    
 
     if (todos & ENABLE_ADVERTISEMENTS){
-        printf("GAP_RUN: enable advertisements\n");
+        app_printf("GAP_RUN: enable advertisements\n");
         todos &= ~ENABLE_ADVERTISEMENTS;
         advertisements_enabled = 1;
         hci_send_cmd(&hci_le_set_advertise_enable, 1);
@@ -691,18 +708,18 @@ static void gap_run(void){
 
 static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)
 {
-    puts("Layer - app_packet_handler :");    
+    app_puts("Layer - app_packet_handler :");    
     switch (packet_type) {
             
         case HCI_EVENT_PACKET:
-            puts("HCI_EVENT_PACKET - ");
+            app_puts("HCI_EVENT_PACKET - ");
             switch (packet[0]) {
                 
                 case BTSTACK_EVENT_STATE:
-                    puts("BTSTACK_EVENT_STATE\n");
+                    app_puts("BTSTACK_EVENT_STATE\n");
                     // bt stack activated, get started
                     if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
-                        printf("SM Init completed\n");
+                        app_printf("SM Init completed\n");
                         todos = SET_ADVERTISEMENT_PARAMS | SET_ADVERTISEMENT_DATA | SET_SCAN_RESPONSE_DATA | ENABLE_ADVERTISEMENTS;
                         update_advertisements();
                         gap_run();
@@ -710,14 +727,16 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
                 
                 case HCI_EVENT_LE_META:
-                    puts("HCI_EVENT_LE_META\n");
+                    app_puts("HCI_EVENT_LE_META\n");
                     switch (hci_event_le_meta_get_subevent_code(packet)) {
                         case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
                             advertisements_enabled = 0;
                             handle = READ_BT_16(packet, 4);
-                            printf("Connection handle 0x%04x\n", handle);
+                            app_printf("Connection handle 0x%04x\n", handle);
                             // request connection parameter update - test parameters
                             // l2cap_le_request_connection_parameter_update(READ_BT_16(packet, 4), 20, 1000, 100, 100);
+                            //
+                            sm_send_security_request(handle);
                             break;
 
                         default:
@@ -726,7 +745,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
 
                 case HCI_EVENT_DISCONNECTION_COMPLETE:
-                    puts("HCI_EVENT_DISCONNECTION_COMPLETE\n");
+                    app_puts("HCI_EVENT_DISCONNECTION_COMPLETE\n");
                     if (!advertisements_enabled == 0 && gap_discoverable){
                         todos = ENABLE_ADVERTISEMENTS;
                     }
@@ -735,19 +754,19 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
                     
                 case SM_EVENT_JUST_WORKS_REQUEST: {
-                    puts("SM_EVENT_JUST_WORKS_REQUEST\n");
+                    app_puts("SM_EVENT_JUST_WORKS_REQUEST\n");
                     sm_event_t * event = (sm_event_t *) packet;
                     sm_just_works_confirm(event->addr_type, event->address);
                     break;
                 }
 
                 case SM_EVENT_PASSKEY_INPUT_NUMBER: {
-                    puts("SM_EVENT_PASSKEY_INPUT_NUMBER\n");
+                    app_puts("SM_EVENT_PASSKEY_INPUT_NUMBER\n");
                     // display number
                     sm_event_t * event = (sm_event_t *) packet;
                     memcpy(master_address, event->address, 6);
                     master_addr_type = event->addr_type;
-                    printf("\nGAP Bonding %s (%u): Enter 6 digit passkey: '", bd_addr_to_str(master_address), master_addr_type);
+                    app_printf("\nGAP Bonding %s (%u): Enter 6 digit passkey: '", bd_addr_to_str(master_address), master_addr_type);
                     /*fflush(stdout);*/
                     ui_passkey = 0;
                     ui_digits_for_passkey = 6;
@@ -755,40 +774,40 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                 }
 
                 case SM_EVENT_PASSKEY_DISPLAY_NUMBER: {
-                    puts("SM_EVENT_PASSKEY_DISPLAY_NUMBER\n");
+                    app_puts("SM_EVENT_PASSKEY_DISPLAY_NUMBER\n");
                     // display number
                     sm_event_t * event = (sm_event_t *) packet;
-                    printf("\nGAP Bonding %s (%u): Display Passkey '%06u\n", bd_addr_to_str(event->address), event->addr_type, event->passkey);
+                    app_printf("\nGAP Bonding %s (%u): Display Passkey '%06u\n", bd_addr_to_str(event->address), event->addr_type, event->passkey);
                     break;
                 }
 
                 case SM_EVENT_PASSKEY_DISPLAY_CANCEL: {
 
                     sm_event_t * event = (sm_event_t *) packet;
-                    printf("\nGAP Bonding %s (%u): Display cancel\n", bd_addr_to_str(event->address), event->addr_type);
+                    app_printf("\nGAP Bonding %s (%u): Display cancel\n", bd_addr_to_str(event->address), event->addr_type);
                     break;
                   }
 
                 case SM_EVENT_AUTHORIZATION_REQUEST: {
-                    puts("SM_EVENT_AUTHORIZATION_REQUEST\n");
+                    app_puts("SM_EVENT_AUTHORIZATION_REQUEST\n");
                     // auto-authorize connection if requested
                     sm_event_t * event = (sm_event_t *) packet;
                     sm_authorization_grant(event->addr_type, event->address);
                     break;
                 }
                 case ATT_HANDLE_VALUE_INDICATION_COMPLETE:
-                    printf("ATT_HANDLE_VALUE_INDICATION_COMPLETE status %u\n", packet[2]);
+                    app_printf("ATT_HANDLE_VALUE_INDICATION_COMPLETE status %u\n", packet[2]);
                     break;
 
                 /***************L2CAP layer Event****************/
                 case L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_RESPONSE:
-                    puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_RESPONSE\n");
+                    app_puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_RESPONSE\n");
                     break;
                 case L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST:
-                    puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST\n");
+                    app_puts("L2CAP_EVENT_CONNECTION_PARAMETER_UPDATE_REQUEST\n");
                     break;
                 default:
-                    puts("default\n");
+                    app_puts("default\n");
                     break;
             }
     }
@@ -796,49 +815,49 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
 }
 
 void show_usage(void){
-    printf("\n--- CLI for LE Peripheral ---\n");
-    printf("GAP: discoverable %u, connectable %u, bondable %u, directed connectable %u, random addr %u, ads enabled %u, adv type %u \n",
+    app_printf("\n--- CLI for LE Peripheral ---\n");
+    app_printf("GAP: discoverable %u, connectable %u, bondable %u, directed connectable %u, random addr %u, ads enabled %u, adv type %u \n",
         gap_discoverable, gap_connectable, gap_bondable, gap_directed_connectable, gap_random, gap_advertisements, gap_adv_type());
-    printf("ADV Data: "); printf_buf(adv_data, adv_data_len);//printf_hexdump(adv_data, adv_data_len);
-    printf("SM: %s, MITM protection %u, OOB data %u, key range [%u..16]\n",
+    app_printf("ADV Data: "); printf_buf(adv_data, adv_data_len);//printf_hexdump(adv_data, adv_data_len);
+    app_printf("SM: %s, MITM protection %u, OOB data %u, key range [%u..16]\n",
         sm_io_capabilities, sm_mitm_protection, sm_have_oob_data, sm_min_key_size);
-    printf("Default value: '%s'\n", att_default_value_long ? default_value_long : default_value_short);
-    printf("Privacy %u\n", gap_privacy);
-    printf("Device name %s\n", gap_device_name);
-    printf("---\n");
-    printf("a/A - advertisements off/on\n");
-    printf("b/B - bondable off/on\n");
-    printf("c/C - connectable off\n");
-    printf("d/D - discoverable off\n");
-    printf("r/R - random address off/on\n");
-    printf("x/X - directed connectable off\n");
-    printf("y/Y - scannable on/off\n");
-    printf("---\n");
-    printf("1   - AD Manufacturer Data    | 7 - AD Slave Preferred... | = - AD Public Target Address\n");
-    printf("2   - AD Local Name           | 8 - AD Tx Power Level     | / - AD Random Target Address\n");
-    printf("3   - AD flags                | 9 - AD SM OOB             | # - AD Advertising interval\n");
-    printf("4   - AD Service Data         | 0 - AD SM TK              | & - AD LE Role\n");
-    printf("5   - AD Service Solicitation | + - AD LE BD_ADDR\n");
-    printf("6   - AD Services             | - - AD Appearance\n");
-    printf("---\n");
-    printf("l/L - default attribute value '%s'/'%s'\n", default_value_short, default_value_long);
-    printf("p/P - privacy flag off\n");
-    printf("s   - send security request\n");
-    printf("z   - send Connection Parameter Update Request\n");
-    printf("t   - terminate connection\n");
-    printf("j   - create L2CAP LE connection to %s\n", bd_addr_to_str(tester_address));
-    printf("---\n");
-    printf("e   - IO_CAPABILITY_DISPLAY_ONLY\n");
-    printf("f   - IO_CAPABILITY_DISPLAY_YES_NO\n");
-    printf("g   - IO_CAPABILITY_NO_INPUT_NO_OUTPUT\n");
-    printf("h   - IO_CAPABILITY_KEYBOARD_ONLY\n");
-    printf("i   - IO_CAPABILITY_KEYBOARD_DISPLAY\n");
-    printf("o/O - OOB data off/on ('%s')\n", sm_oob_data);
-    printf("m/M - MITM protection off\n");
-    printf("k/k - encryption key range [7..16]/[16..16]\n");
-    printf("---\n");
-    printf("Ctrl-c - exit\n");
-    printf("---\n");
+    app_printf("Default value: '%s'\n", att_default_value_long ? default_value_long : default_value_short);
+    app_printf("Privacy %u\n", gap_privacy);
+    app_printf("Device name %s\n", gap_device_name);
+    app_printf("---\n");
+    app_printf("a/A - advertisements off/on\n");
+    app_printf("b/B - bondable off/on\n");
+    app_printf("c/C - connectable off\n");
+    app_printf("d/D - discoverable off\n");
+    app_printf("r/R - random address off/on\n");
+    app_printf("x/X - directed connectable off\n");
+    app_printf("y/Y - scannable on/off\n");
+    app_printf("---\n");
+    app_printf("1   - AD Manufacturer Data    | 7 - AD Slave Preferred... | = - AD Public Target Address\n");
+    app_printf("2   - AD Local Name           | 8 - AD Tx Power Level     | / - AD Random Target Address\n");
+    app_printf("3   - AD flags                | 9 - AD SM OOB             | # - AD Advertising interval\n");
+    app_printf("4   - AD Service Data         | 0 - AD SM TK              | & - AD LE Role\n");
+    app_printf("5   - AD Service Solicitation | + - AD LE BD_ADDR\n");
+    app_printf("6   - AD Services             | - - AD Appearance\n");
+    app_printf("---\n");
+    app_printf("l/L - default attribute value '%s'/'%s'\n", default_value_short, default_value_long);
+    app_printf("p/P - privacy flag off\n");
+    app_printf("s   - send security request\n");
+    app_printf("z   - send Connection Parameter Update Request\n");
+    app_printf("t   - terminate connection\n");
+    app_printf("j   - create L2CAP LE connection to %s\n", bd_addr_to_str(tester_address));
+    app_printf("---\n");
+    app_printf("e   - IO_CAPABILITY_DISPLAY_ONLY\n");
+    app_printf("f   - IO_CAPABILITY_DISPLAY_YES_NO\n");
+    app_printf("g   - IO_CAPABILITY_NO_INPUT_NO_OUTPUT\n");
+    app_printf("h   - IO_CAPABILITY_KEYBOARD_ONLY\n");
+    app_printf("i   - IO_CAPABILITY_KEYBOARD_DISPLAY\n");
+    app_printf("o/O - OOB data off/on ('%s')\n", sm_oob_data);
+    app_printf("m/M - MITM protection off\n");
+    app_printf("k/k - encryption key range [7..16]/[16..16]\n");
+    app_printf("---\n");
+    app_printf("Ctrl-c - exit\n");
+    app_printf("---\n");
 }
 
 void update_advertisements(void){
@@ -893,13 +912,13 @@ int stdin_process(char cmd){
     // passkey input
     if (ui_digits_for_passkey){
         if (buffer < '0' || buffer > '9') return 0;
-        printf("%c", buffer);
+        app_printf("%c", buffer);
         /* fflush(stdout); */
         ui_passkey = ui_passkey * 10 + buffer - '0';
         ui_digits_for_passkey--;
         if (ui_digits_for_passkey == 0){
             sm_passkey_input(master_addr_type, master_address, ui_passkey);
-            printf("\nUser Sending Passkey %s (%u): n '%06x'", bd_addr_to_str(master_address), master_addr_type, ui_passkey);
+            app_printf("\nUser Sending Passkey %s (%u): n '%06x'", bd_addr_to_str(master_address), master_addr_type, ui_passkey);
         }
         return 0;
     }
@@ -1003,7 +1022,7 @@ int stdin_process(char cmd){
             update_advertisements();
             break;
         case 's':
-            printf("SM: sending security request\n");
+            app_printf("SM: sending security request\n");
             sm_send_security_request(handle);
             break;
         case 'e':
@@ -1032,11 +1051,11 @@ int stdin_process(char cmd){
             show_usage();
             break;
         case 't':
-            printf("Terminating connection : 0x%04x\n", handle);
+            app_printf("Terminating connection : 0x%04x\n", handle);
             hci_send_cmd(&hci_disconnect, handle, 0x13);
             break;
         case 'z':
-            printf("Sending l2cap connection update parameter request\n");
+            app_printf("Sending l2cap connection update parameter request\n");
             gap_request_connection_parameter_update(handle, 50, 120, 0, 550);
             break;
         case 'l':
@@ -1084,7 +1103,7 @@ int stdin_process(char cmd){
             show_usage();
             break;
         case 'j':
-            printf("Create L2CAP Connection to %s\n", bd_addr_to_str(tester_address));
+            app_printf("Create L2CAP Connection to %s\n", bd_addr_to_str(tester_address));
             hci_send_cmd(&hci_le_create_connection, 
                 1000,      // scan interval: 625 ms
                 1000,      // scan interval: 625 ms
@@ -1140,7 +1159,7 @@ int stdin_process(char cmd){
 static int get_oob_data_callback(uint8_t addres_type, bd_addr_t addr, uint8_t * oob_data){
     if(!sm_have_oob_data) return 0;
     memcpy(oob_data, sm_oob_data, 16);
-    puts("\nOOB Data : ");printf_buf(oob_data, 16);
+    app_puts("\nOOB Data : ");printf_buf(oob_data, 16);
     return 1;
 }
 
@@ -1149,7 +1168,7 @@ static int get_oob_data_callback(uint8_t addres_type, bd_addr_t addr, uint8_t * 
 
 int btstack_main()
 {
-    puts("ble peripheral test\n");
+    app_puts("ble peripheral test\n");
 	le_hci_init(ble_hci_transport_h4_instance(), 0, 0, 0);
 
 	le_btstack_memory_init();

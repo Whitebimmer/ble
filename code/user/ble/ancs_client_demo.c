@@ -85,12 +85,15 @@ static btstack_packet_callback_registration_t hci_event_callback_registration;
 static btstack_packet_callback_registration_t sm_event_callback_registration;
 
 static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+    puts("Layer - app_packet_handler \n");
     switch (packet_type) {
         case HCI_EVENT_PACKET:
             switch (hci_event_packet_get_type(packet)) {
                 case SM_EVENT_JUST_WORKS_REQUEST:
-                    printf("SM_EVENT_JUST_WORKS_REQUEST : %08x\n", sm_event_just_works_request_get_handle(packet));
-                    sm_just_works_confirm1(sm_event_just_works_request_get_handle(packet));
+                    {
+                        sm_event_t * event = (sm_event_t *) packet;
+                        sm_just_works_confirm(event->addr_type, event->address);
+                    }
                     printf("Just Works Confirmed.\n");
                     break;
                 case SM_EVENT_PASSKEY_DISPLAY_NUMBER:

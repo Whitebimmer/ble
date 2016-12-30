@@ -1456,6 +1456,7 @@ static void sm_run(void){
 
             // responder side
             case SM_RESPONDER_PH0_SEND_LTK_REQUESTED_NEGATIVE_REPLY:
+                puts("SM_RESPONDER_PH0_SEND_LTK_REQUESTED_NEGATIVE_REPLY\n");
                 connection->sm_engine_state = SM_RESPONDER_IDLE;
                 hci_send_cmd(&hci_le_long_term_key_negative_reply, connection->sm_handle);
                 return;
@@ -1619,6 +1620,7 @@ static void sm_run(void){
                 return;
             }
             case SM_RESPONDER_PH2_SEND_LTK_REPLY: {
+                /* puts("SM_RESPONDER_PH2_SEND_LTK_REPLY\n"); */
                 sm_key_t stk_flipped;
                 swap128(setup->sm_ltk, stk_flipped);
                 connection->sm_engine_state = SM_PH2_W4_CONNECTION_ENCRYPTED;
@@ -2088,7 +2090,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                                 if (sm_conn->sm_engine_state == SM_GENERAL_IDLE){
                                     if (sm_slave_request_security) {
                                         // request security if requested by app
-										sm_puts("rsp_security\n");
+										sm_puts("sm_slave_request_security - \n");
                                         sm_conn->sm_engine_state = SM_RESPONDER_SEND_SECURITY_REQUEST;
                                     } else {
                                         // otherwise, wait for pairing request 
@@ -2105,7 +2107,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                             break;
 
                         case HCI_SUBEVENT_LE_LONG_TERM_KEY_REQUEST:
-							sm_puts("hci_le_long_term_key_request\n");
+							sm_puts("sm HCI_SUBEVENT_LE_LONG_TERM_KEY_REQUEST\n");
                             handle = READ_BT_16(packet, 3);
                             sm_conn = sm_get_connection_for_handle(handle);
                             if (!sm_conn) break;
@@ -2119,6 +2121,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                             // assume that we don't have a LTK for ediv == 0 and random == null
                             if (READ_BT_16(packet, 13) == 0 && sm_is_null_random(&packet[5])){
                                 log_info("LTK Request: ediv & random are empty");
+                                sm_puts("LTK Request: ediv & random are empty");
                                 sm_conn->sm_engine_state = SM_RESPONDER_PH0_SEND_LTK_REQUESTED_NEGATIVE_REPLY;
                                 break;
                             }

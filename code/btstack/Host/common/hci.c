@@ -62,7 +62,7 @@
 #include "btstack_event.h"
 
 /************************HCI DEBUG CONTROL**************************/
-#define HCI_DEBUG
+/* #define HCI_DEBUG */
 
 #ifdef HCI_DEBUG
 #define hci_puts        puts
@@ -868,7 +868,7 @@ static void hci_initializing_run()
             hci_send_cmd(&hci_le_read_white_list_size);
             break;
         case HCI_INIT_ADD_DEVICE_TO_WHITE_LIST:
-            puts("HCI_INIT_ADD_DEVICE_TO_WHITE_LIST\n");
+            hci_puts("HCI_INIT_ADD_DEVICE_TO_WHITE_LIST\n");
             hci_stack->substate = HCI_INIT_W4_ADD_DEVICE_TO_WHITE_LIST;
             hci_send_cmd(&hci_le_add_device_to_white_list,0,&tester_address);
             break;
@@ -1810,13 +1810,13 @@ static bool hci_le_sub_run(void)
             case LE_START_SCAN:
                 hci_stack->le_scanning_state = LE_SCANNING;
                 hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
-                puts("hci_le_set_scan_enable 1\n");
+                hci_puts("hci_le_set_scan_enable 1\n");
                 return TRUE;
                 
             case LE_STOP_SCAN:
                 hci_stack->le_scanning_state = LE_SCAN_IDLE;
                 hci_send_cmd(&hci_le_set_scan_enable, 0, 0);
-                puts("hci_le_set_scan_enable 0\n");
+                hci_puts("hci_le_set_scan_enable 0\n");
                 return TRUE;
             default:
                 break;
@@ -1826,7 +1826,7 @@ static bool hci_le_sub_run(void)
             int scan_type = hci_stack->le_scan_type;
             hci_stack->le_scan_type = 0xff;
             hci_send_cmd(&hci_le_set_scan_parameters, scan_type, hci_stack->le_scan_interval, hci_stack->le_scan_window, hci_stack->adv_addr_type, 0);
-            puts("hci_le_set_scan_parameters\n");
+            hci_puts("hci_le_set_scan_parameters\n");
             return TRUE;
         }
         // le advertisement control
@@ -2040,7 +2040,7 @@ static void hci_run(void)
             
             uint16_t connection_interval_min = connection->le_conn_interval_min;
             connection->le_conn_interval_min = 0;
-            puts("hci_le_connection_update\n");
+            hci_puts("hci_le_connection_update\n");
             hci_send_cmd(&hci_le_connection_update, connection->con_handle, connection_interval_min,
                 connection->le_conn_interval_max, connection->le_conn_latency, connection->le_supervision_timeout,
                 0x0000, 0xffff);
@@ -2633,7 +2633,7 @@ static void gap_advertisments_changed(void){
  * @note data is not copied, pointer has to stay valid
  */
 void gap_advertisements_set_data(uint8_t advertising_data_length, uint8_t * advertising_data){
-    puts("gap_advertisements_set_data\n");
+    hci_puts("gap_advertisements_set_data\n");
     hci_stack->le_advertisements_data_len = advertising_data_length;
     hci_stack->le_advertisements_data = advertising_data;
     hci_stack->le_advertisements_todo |= LE_ADVERTISEMENT_TASKS_SET_ADV_DATA;
@@ -2647,7 +2647,7 @@ void gap_advertisements_set_data(uint8_t advertising_data_length, uint8_t * adve
  * @note data is not copied, pointer has to stay valid
  */
 void gap_scan_response_set_data(uint8_t scan_response_data_length, uint8_t * scan_response_data){
-    puts("gap_scan_response_set_data\n");
+    hci_puts("gap_scan_response_set_data\n");
     hci_stack->le_scan_response_data_len = scan_response_data_length;
     hci_stack->le_scan_response_data = scan_response_data;
     hci_stack->le_advertisements_todo |= LE_ADVERTISEMENT_TASKS_SET_SCAN_DATA;
@@ -2690,7 +2690,7 @@ void hci_le_advertisements_set_params(uint16_t adv_int_min, uint16_t adv_int_max
  * @param enabled
  */
 void gap_advertisements_enable(int enabled){
-    puts("gap_advertisements_enable\n");
+    hci_puts("gap_advertisements_enable\n");
     hci_stack->le_advertisements_enabled = enabled;
     if (enabled && !hci_stack->le_advertisements_active){
         hci_stack->le_advertisements_todo |= LE_ADVERTISEMENT_TASKS_ENABLE;

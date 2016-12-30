@@ -2,6 +2,7 @@
 #include "typedef.h"
 
 
+extern void delay(unsigned long  t);
 
 unsigned const char bt_lo_sel[83] =
 {

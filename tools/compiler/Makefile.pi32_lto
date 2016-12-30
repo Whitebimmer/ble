@@ -66,13 +66,13 @@ export CC_ARGS = \
 -Oz \
 -flto \
 -Os  \
--w \
 -nostrictpi32 \
-
+-w \
 # -Wall  \
-# -Wno-unused-function \
-# -Wno-unused-const-variable \
-# -Wno-unused-variable \
+-Wno-unused-function \
+-Wno-unused-const-variable \
+-Wno-unused-variable \
+
 
 
 export SYS_LIBS = \

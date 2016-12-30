@@ -145,6 +145,19 @@ void exception_isr(void)
         puts("DSP illegal,DSP instruction\n");
     if (DEBUG_MSG & BIT(19))
         puts("DSP misaligned err\n");
+
+    u32 tmp;
+
+    __asm__ volatile ("mov %0,RETS" : "=r"(tmp));
+    printf("RETS = %08x \n", tmp);
+    __asm__ volatile ("mov %0,RETI" : "=r"(tmp));
+    printf("RETI = %08x \n", tmp);
+    __asm__ volatile ("mov %0,sp" : "=r"(tmp));
+    printf("SP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,usp" : "=r"(tmp));
+    printf("USP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,ssp" : "=r"(tmp));
+    printf("SSP = %08x \n", tmp);
     /* PWR_CON |= BIT(4); */
     while(1);
 }
@@ -186,6 +199,50 @@ const struct bt_low_power_param bt_power_param = {
 
 u8 ram2_memory[0x100] SEC(.db_memory);
 
+
+_NO_INLINE_
+void foo1(void)
+{
+    puts("---call foo1\n");
+    u32 tmp;
+    u8 buf[50];
+    buf[0] = 1;
+    __asm__ volatile ("mov %0,sp" : "=r"(tmp));
+    printf("SP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,usp" : "=r"(tmp));
+    printf("USP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,ssp" : "=r"(tmp));
+    printf("SSP = %08x \n", tmp);
+}
+
+_NO_INLINE_
+void foo(void)
+{
+    u32 tmp;
+	ENABLE_INT();
+    puts("---call foo\n");
+    __asm__ volatile ("mov %0,ie0" : "=r"(tmp));
+    printf("ie0 = %08x \n", tmp);
+    __asm__ volatile ("mov %0,ie1" : "=r"(tmp));
+    printf("ie1 = %08x \n", tmp);
+    __asm__ volatile ("mov %0,icfg" : "=r"(tmp));
+    printf("icfg = %08x \n", tmp);
+    u8 buf[100];
+
+    buf[0] = 1;
+    __asm__ volatile ("mov %0,sp" : "=r"(tmp));
+    printf("SP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,usp" : "=r"(tmp));
+    printf("USP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,ssp" : "=r"(tmp));
+    printf("SSP = %08x \n", tmp);
+    foo1();
+    buf[0] = 2;
+    buf[1] = 2;
+    buf[2] = buf[0] + buf[1];
+    printf("buf = %08x \n", buf[0]);
+}
+
 int main()
 {
     /* printf("CLK_CON0 : %x\n", CLK_CON0); */
@@ -213,6 +270,14 @@ int main()
     put_u8hex(bt_power_is_poweroff_post());
     /* puts("\nbt_power_is_poweroff_probe : "); */
     /* put_u8hex(bt_power_is_poweroff_probe()); */
+    u32 tmp;
+    __asm__ volatile ("mov %0,sp" : "=r"(tmp));
+    printf("SP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,usp" : "=r"(tmp));
+    printf("USP = %08x \n", tmp);
+    __asm__ volatile ("mov %0,ssp" : "=r"(tmp));
+    printf("SSP = %08x \n", tmp);
+    foo();
 
     if (0)//if ((PWR_CON & 0xe0) != 0x80)
     {
@@ -274,7 +339,6 @@ int main()
 
 #endif
 
-    u32 tmp;
     /* __asm__ volatile ("mov %0,ie0" : "=r"(tmp)); */
     /* printf("ie0 = %08x \n", tmp); */
     /* __asm__ volatile ("mov %0,ie1" : "=r"(tmp)); */

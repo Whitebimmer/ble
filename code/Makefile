@@ -107,8 +107,6 @@ objs += \
    user/ble/ble_peripheral_test.o \
 
 endif
-   #btstack/LL_TS_4_2_1_hci_test.o \
-   btstack/hcitest_uart.o \
 
 obj_S = \
    cpu/$(CHIPID)/startup.o \

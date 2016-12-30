@@ -55,6 +55,23 @@
 #include "gap.h"
 #include "ble/att.h"
 
+#define ANCS_DEBUG_EN
+
+#ifdef ANCS_DEBUG_EN
+#define ancs_putchar(x)        putchar(x)
+#define ancs_puts(x)           puts(x)
+#define ancs_u32hex(x)         put_u32hex(x)
+#define ancs_u8hex(x)          put_u8hex(x)
+#define ancs_pbuf(x,y)         printf_buf(x,y)
+#define ancs_printf            printf
+#else
+#define ancs_putchar(...)
+#define ancs_puts(...)
+#define ancs_u32hex(...)
+#define ancs_u8hex(...)
+#define ancs_pbuf(...)
+#define ancs_printf(...)
+#endif
 
 // ancs_client.h Start
 typedef enum ancs_chunk_parser_state {
@@ -192,6 +209,7 @@ static void handle_hci_event(uint8_t packet_type, uint16_t channel, uint8_t *pac
                 case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
                     gc_handle = little_endian_read_16(packet, 4);
                     log_info("Connection handle 0x%04x, request encryption", gc_handle);
+                    ancs_printf("Connection handle 0x%04x, request encryption\n", gc_handle);
 
                     // we need to be paired to enable notifications
                     tc_state = TC_W4_ENCRYPTED_CONNECTION;
@@ -206,11 +224,13 @@ static void handle_hci_event(uint8_t packet_type, uint16_t channel, uint8_t *pac
             if (gc_handle != little_endian_read_16(packet, 3)) return;
             connection_encrypted = packet[5];
             log_info("Encryption state change: %u", connection_encrypted);
+            ancs_printf("Encryption state change: %u\n", connection_encrypted);
             if (!connection_encrypted) return;
             if (tc_state != TC_W4_ENCRYPTED_CONNECTION) return;
 
             // let's start
             log_info("\nANCS Client - CONNECTED, discover ANCS service");
+            ancs_puts("\nANCS Client - CONNECTED, discover ANCS service");
             tc_state = TC_W4_SERVICE_RESULT;
             gatt_client_discover_primary_services_by_uuid128(handle_hci_event, gc_handle, ancs_service_uuid);
             return;
