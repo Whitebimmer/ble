@@ -139,6 +139,7 @@ struct ble_addr{
 
 #define BLE_HW_RX_SIZE  (512*2)//(512*2)
 #define BLE_HW_TX_SIZE  (512*2)
+#define BLE_HW_ACK_SIZE  (256)
 
 #define BLE_HW_RX_BUF_SIZE		(((sizeof(struct ble_rx) + BLE_HW_MAX_RX_OCTETES + ENC_MIC_LEN)/4+1)*4)
 #define BLE_HW_TX_BUF_SIZE		(((sizeof(struct ble_tx) + BLE_HW_MAX_TX_OCTETES + ENC_MIC_LEN)/4+1)*4)
@@ -162,6 +163,7 @@ struct ble_hw{
 	struct ble_tx 			*tx[2];
 	struct lbuff_head 		*lbuf_rx;
 	struct lbuff_head 		*lbuf_tx;
+	struct lbuff_head 		*lbuf_ack;
 	struct ble_param 		ble_fp;
 	struct ble_encrypt 		encrypt;
     // struct ble_conn_param   conn_param;

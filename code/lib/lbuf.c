@@ -18,6 +18,14 @@ struct hentry{
 	char ref;
 };
 
+/*
+ *  buf[                                                    ]
+ *       (struct hfree)|
+ *                      (struct hfree free)|
+ *
+ *
+ */
+
 struct lbuff_head * lbuf_init(void *buf, u32 buf_len)
 {
 	struct hfree *free;

@@ -129,8 +129,14 @@ void *realloc(void *ptr, int len)
 /* void exception_isr(void) AT(.dll_api); */
 void exception_isr(void)
 {
+    u32 rets, reti;
+
+    __asm__ volatile ("mov %0,RETS" : "=r"(rets));
+    __asm__ volatile ("mov %0,RETI" : "=r"(reti));
+
     puts("\n\n---------------------------SDK exception_isr---------------------\n\n");
     put_u32hex(DEBUG_MSG);
+
     if (DEBUG_MSG & BIT(2))
         puts("Peripheral ex limit err\n");
     if (DEBUG_MSG & BIT(8))
@@ -148,10 +154,8 @@ void exception_isr(void)
 
     u32 tmp;
 
-    __asm__ volatile ("mov %0,RETS" : "=r"(tmp));
-    printf("RETS = %08x \n", tmp);
-    __asm__ volatile ("mov %0,RETI" : "=r"(tmp));
-    printf("RETI = %08x \n", tmp);
+    printf("RETS = %08x \n", rets);
+    printf("RETI = %08x \n", reti);
     __asm__ volatile ("mov %0,sp" : "=r"(tmp));
     printf("SP = %08x \n", tmp);
     __asm__ volatile ("mov %0,usp" : "=r"(tmp));
@@ -270,14 +274,14 @@ int main()
     put_u8hex(bt_power_is_poweroff_post());
     /* puts("\nbt_power_is_poweroff_probe : "); */
     /* put_u8hex(bt_power_is_poweroff_probe()); */
-    u32 tmp;
-    __asm__ volatile ("mov %0,sp" : "=r"(tmp));
-    printf("SP = %08x \n", tmp);
-    __asm__ volatile ("mov %0,usp" : "=r"(tmp));
-    printf("USP = %08x \n", tmp);
-    __asm__ volatile ("mov %0,ssp" : "=r"(tmp));
-    printf("SSP = %08x \n", tmp);
-    foo();
+    /* u32 tmp; */
+    /* __asm__ volatile ("mov %0,sp" : "=r"(tmp)); */
+    /* printf("SP = %08x \n", tmp); */
+    /* __asm__ volatile ("mov %0,usp" : "=r"(tmp)); */
+    /* printf("USP = %08x \n", tmp); */
+    /* __asm__ volatile ("mov %0,ssp" : "=r"(tmp)); */
+    /* printf("SSP = %08x \n", tmp); */
+    /* foo(); */
 
     if (0)//if ((PWR_CON & 0xe0) != 0x80)
     {

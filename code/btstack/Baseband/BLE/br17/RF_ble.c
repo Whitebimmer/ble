@@ -153,6 +153,7 @@ static struct ble_tx * le_hw_alloc_tx(struct ble_hw *hw,
 
 u8 pmalloc_rx[BLE_HW_NUM][BLE_HW_RX_SIZE];
 u8 pmalloc_tx[BLE_HW_NUM][BLE_HW_TX_SIZE];
+u8 pmalloc_ack[BLE_HW_NUM][BLE_HW_ACK_SIZE];
 
 //features 4.2 fix maximum buffer size for hw
 static void ble_rx_init(struct ble_hw *hw)
@@ -171,6 +172,7 @@ static void ble_tx_init(struct ble_hw *hw)
 	ASSERT(((u32)hw->tx_buf[0] & 0x03)==0, "%x\n", hw->tx_buf[0]);
 	ASSERT(((u32)hw->tx_buf[1] & 0x03)==0, "%x\n", hw->tx_buf[0]);
 	hw->lbuf_tx = lbuf_init(pmalloc_tx[HW_ID(hw)], BLE_HW_TX_SIZE);
+    hw->lbuf_ack = lbuf_init(pmalloc_ack[HW_ID(hw)], BLE_HW_ACK_SIZE);
 }
 
 static void ble_hw_tx(struct ble_hw *hw, struct ble_tx *tx, int index)
@@ -1829,7 +1831,8 @@ static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
 }
 
 //async PDUs upper to Link Layer
-static void le_hw_upload_data(void (*handler)(void *priv, struct ble_rx *rx))
+static void le_hw_upload_data(void (*tx_handler)(void *priv, struct ble_rx *rx),
+        void (*rx_handler)(void *priv, struct ble_rx *rx))
 {
     struct ble_hw *hw;
     struct ble_rx *rx;
@@ -1842,8 +1845,20 @@ static void le_hw_upload_data(void (*handler)(void *priv, struct ble_rx *rx))
         {
 			/* rf_puts("le_hw_upload_data"); */
             /* rf_buf(rx, sizeof(*rx)+rx->len); */
-            handler(hw->priv, rx);
+            rx_handler(hw->priv, rx);
             lbuf_free(rx);
+        }
+    }
+
+    struct ble_tx *ack;
+    //check available hw tx buf
+    list_for_each_entry(hw, &bb.head, entry)
+    {
+        ack = lbuf_pop(hw->lbuf_ack);
+        if (ack)
+        {
+            tx_handler(hw->priv, ack);
+            lbuf_free(ack);
         }
     }
 }
@@ -1858,7 +1873,34 @@ static int le_hw_upload_is_empty()
     {
         empty &= lbuf_empty(hw->lbuf_rx);
     }
+
+    list_for_each_entry(hw, &bb.head, entry)
+    {
+        empty &= lbuf_empty(hw->lbuf_ack);
+    }
     return empty;
+}
+
+static void ble_tx_probe(struct ble_hw *hw, struct ble_tx *tx)
+{
+	struct ble_tx *ack;
+
+    ack = lbuf_alloc(hw->lbuf_ack, ACK_PACKET_SIZE(1));
+
+    ASSERT(((u32)ack & 0x03) == 0, "%s\n", "tx not align\n");
+
+    if (ack)
+    {
+        //only push 1 payload for control state machine
+        memcpy(ack, tx, ACK_PACKET_SIZE(1));
+
+        lbuf_push(ack);
+    }
+
+    if (hw->handler && hw->handler->tx_probe_handler){
+
+        hw->handler->tx_probe_handler(hw->priv, tx);
+    }
 }
 
 static void __hw_tx_process(struct ble_hw *hw)
@@ -1882,12 +1924,7 @@ static void __hw_tx_process(struct ble_hw *hw)
         /* rf_putchar('0'+i); */
 
 		if (hw->tx[i]){
-            if (hw->handler && hw->handler->tx_probe_handler){
-
-                /* ble_hw_txdecrypt(hw, hw->tx[i]); */
-                hw->handler->tx_probe_handler(hw->priv, hw->tx[i]);
-            }
-            ASSERT(((u32)hw->tx[i] & 0x03)==0, "%x\n", hw->tx[i]);
+            ble_tx_probe(hw, hw->tx[i]);
 			lbuf_free(hw->tx[i]);
             /* put_u32hex(hw->tx[i]); */
             /* putchar('$'); */
@@ -1902,12 +1939,10 @@ static void __hw_tx_process(struct ble_hw *hw)
             tx_buf = tx;
 		} else {
 			/* rf_putchar('$'); */
-            /* putchar('$'); */
 			/* put_u8hex(tx->data[0]); */
             tx_buf = hw->tx_buf[i];
 			hw->tx[i] = tx;
             memcpy(tx_buf, tx, TX_PACKET_SIZE(tx->len));//sizeof(*tx)+tx->len+4
-            putchar('$');
 			ble_hw_encrpty(hw, tx_buf);
 		}
         //if more data 
@@ -2137,12 +2172,7 @@ static void ble_irq_handler()
 		{
 			BLE_INT_CON1 |= BIT(i+8);     ///  !!! must be clear twice
             /* DEBUG_IO_1(2) */
-            DEBUG_IOC_1(5)
-            /* {PORTA_DIR &= ~BIT(3); PORTA_OUT ^= BIT(3);} */
-            /* trig_fun(); */
-            /* ADC_CON = 1; */
 			__hw_rx_process(hw);
-            DEBUG_IOC_0(5)
             /* DEBUG_IO_0(2) */
 
 			/* BLE_INT_CON1 |= BIT(i+8); */
@@ -2157,9 +2187,6 @@ static void ble_irq_handler()
 			__hw_event_process(hw);
 
             /* DEBUG_IO_0(1) */
-			/* BLE_INT_CON1 = BIT(i); */
-
-
             /* ble_power_off(hw); */
 
 		}

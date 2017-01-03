@@ -68,6 +68,7 @@ struct ble_tx {
 
 #define TX_PACKET_SIZE(len)         (sizeof(struct ble_tx) + len + ENC_MIC_LEN)
 
+#define ACK_PACKET_SIZE(len)         (sizeof(struct ble_tx) + len)
 
 
 // struct ble_conn_param{
