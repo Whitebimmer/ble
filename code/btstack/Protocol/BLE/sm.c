@@ -50,7 +50,7 @@
 //
 // SM internal types and globals
 //
-#define SM_DEBUG_EN
+/* #define SM_DEBUG_EN */
 
 #ifdef SM_DEBUG_EN
 #define sm_putchar(x)        putchar(x)

@@ -66,7 +66,7 @@
 #include "ble/core.h"
 
 /************************ATT DEBUG CONTROL**************************/
-#define ATT_DEBUG
+/* #define ATT_DEBUG */
 
 #ifdef ATT_DEBUG
 #define att_puts     puts

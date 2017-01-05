@@ -62,7 +62,7 @@
 
 #include "ble/core.h"
 
-#define GATT_DEBUG_EN
+/* #define GATT_DEBUG_EN */
 
 #ifdef GATT_DEBUG_EN
 #define gatt_putchar(x)        putchar(x)

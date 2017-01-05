@@ -72,6 +72,24 @@
 // ancs client demo profile
 #include "ble/ancs_client_demo.h"
 
+#define ANCS_DEBUG_EN
+
+#ifdef ANCS_DEBUG_EN
+#define ancs_putchar(x)        putchar(x)
+#define ancs_puts(x)           puts(x)
+#define ancs_u32hex(x)         put_u32hex(x)
+#define ancs_u8hex(x)          put_u8hex(x)
+#define ancs_pbuf(x,y)         printf_buf(x,y)
+#define ancs_printf            printf
+#else
+#define ancs_putchar(...)
+#define ancs_puts(...)
+#define ancs_u32hex(...)
+#define ancs_u8hex(...)
+#define ancs_pbuf(...)
+#define ancs_printf(...)
+#endif
+
 static const uint8_t adv_data[] = {
     // Flags general discoverable, BR/EDR not supported
     0x02, 0x01, 0x06,
@@ -80,12 +98,13 @@ static const uint8_t adv_data[] = {
     // Service Solicitation, 128-bit UUIDs - ANCS (little endian)
     0x11,0x15,0xD0,0x00,0x2D,0x12,0x1E,0x4B,0x0F,0xA4,0x99,0x4E,0xCE,0xB5,0x31,0xF4,0x05,0x79
 };
+
 static uint8_t adv_data_len = sizeof(adv_data);
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 static btstack_packet_callback_registration_t sm_event_callback_registration;
 
 static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    puts("Layer - app_packet_handler \n");
+    /* puts("Layer - app_packet_handler \n"); */
     switch (packet_type) {
         case HCI_EVENT_PACKET:
             switch (hci_event_packet_get_type(packet)) {
@@ -109,15 +128,16 @@ static void ancs_callback(uint8_t packet_type, uint16_t channel, uint8_t *packet
     if (hci_event_packet_get_type(packet) != HCI_EVENT_ANCS_META) return;
     switch (hci_event_ancs_meta_get_subevent_code(packet)){
         case ANCS_SUBEVENT_CLIENT_CONNECTED:
-            printf("ANCS Client: Connected\n");
+            ancs_puts("ANCS Client: Connected\n");
             break;
         case ANCS_SUBEVENT_CLIENT_DISCONNECTED:
-            printf("ANCS Client: Disconnected\n");
+            ancs_puts("ANCS Client: Disconnected\n");
             break;
         case ANCS_SUBEVENT_CLIENT_NOTIFICATION:
+            ancs_puts("ANCS_SUBEVENT_CLIENT_NOTIFICATION\n");
             attribute_name = ancs_client_attribute_name_for_id(ancs_subevent_client_notification_get_attribute_id(packet));
             if (!attribute_name) break;
-            printf("Notification: %s - %s\n", attribute_name, ancs_subevent_client_notification_get_text(packet));
+            ancs_printf("Notification: %s - %s\n", attribute_name, ancs_subevent_client_notification_get_text(packet));
             break;
         default:
             break;
@@ -164,8 +184,8 @@ int btstack_main(int argc, const char * argv[]){
 
     
     // setup advertisements
-    uint16_t adv_int_min = 0x0030;
-    uint16_t adv_int_max = 0x0030;
+    uint16_t adv_int_min = 0x0320;
+    uint16_t adv_int_max = 0x0320;
     uint8_t adv_type = 0;
     bd_addr_t null_addr;
     memset(null_addr, 0, 6);

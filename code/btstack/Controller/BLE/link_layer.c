@@ -115,7 +115,7 @@ static struct link_layer ll SEC(.btmem_highly_available);
 #define SUBVERSNR   0x0000
 
 #ifndef	BLE_PRIVACY_EN
-#define LE_FEATURES         (LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE|LE_DATA_PACKET_LENGTH_EXTENSION)//CONNECTION_PARAMETER_REQUEST
+#define LE_FEATURES         (LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE)//CONNECTION_PARAMETER_REQUEST
 #else
 #define LE_FEATURES         (LE_ENCRYPTION|LE_SLAVE_INIT_FEATURES_EXCHANGE)
 #endif
@@ -2135,6 +2135,8 @@ static void __set_ll_adv_state(struct le_link *link)
     ll_printf("adv interval (N*625us): %x\n", adv->interval);
     ll_printf("adv pdu interval : %x\n", adv->pdu_interval);
     ll_printf("adv filter policy: %x\n", adv->filter_policy);
+    ll_printf("adv channel map: %x\n", adv->channel_map);
+
 
     __set_ll_adv_local_addr(link);
 
@@ -4538,8 +4540,8 @@ static void __slave_ll_send_start_enc_req(void)
     memcpy(iv, link->ivm, 4);
     //MSB - ivs
     memcpy(iv+4, link->ivs, 4);
-    /* ll_puts("IV :"); */
-    /* ll_pbuf(iv, 8); */
+    ll_puts("IV :");
+    ll_pbuf(iv, 8);
     __ble_ops->ioctrl(link->hw, BLE_SET_IV, iv);
 
 	u8 session_key[16];
@@ -4556,6 +4558,8 @@ static void __slave_ll_send_start_enc_req(void)
     ll_puts("STK : \n");
     printf_buf(link->long_term_key, 16);
 	swap128(session_key, skd);
+    ll_puts("SKD : \n");
+    printf_buf(skd, 16);
 	__ble_ops->ioctrl(link->hw, BLE_SET_SKD, skd);
 
     struct ble_hw *hw = link->hw;
@@ -4564,7 +4568,7 @@ static void __slave_ll_send_start_enc_req(void)
 
     ll_send_control_data(link, LL_START_ENC_REQ, 0);
 
-    printf("long_term_key_request_reply_param free : %08x\n",  le_param.long_term_key_request_reply_param);
+    /* printf("long_term_key_request_reply_param free : %08x\n",  le_param.long_term_key_request_reply_param); */
     __hci_param_free(le_param.long_term_key_request_reply_param);
 }
 
@@ -5261,6 +5265,7 @@ static void slave_rx_ctrl_pdu_handler(struct le_link *link, struct ble_rx *rx)
 
         case LL_PING_REQ:
             ll_puts("--LL_PING_REQ\n");
+            __ll_send_unknow_rsp_auto(link, rx);
             break;
         case LL_PING_RSP:
             ll_puts("--LL_PING_RSP\n");

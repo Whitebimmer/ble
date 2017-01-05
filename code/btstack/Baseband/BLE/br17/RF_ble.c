@@ -30,6 +30,7 @@
 
 #endif
 
+
 static volatile int ble_debug_signal[BLE_HW_NUM];
 
 #define READ_BT16(p, offset)  (((u16)p[(offset)+1]<<8) | p[offset])
@@ -1412,8 +1413,8 @@ static void ble_hw_encrpty(struct ble_hw *hw, struct ble_tx *tx)
     struct ble_encrypt *encrypt = &hw->encrypt;
 
 	u8 tag[4] = {0};
-	u8 nonce[16];
-	u8 pt[40] = {0};
+	u8 nonce[13];
+	u8 pt[TX_PACKET_SIZE(BLE_HW_MIN_TX_OCTETES)] = {0};
 	u8 head = tx->llid;
 	u8 skd[16];
 
@@ -1436,48 +1437,14 @@ static void ble_hw_encrpty(struct ble_hw *hw, struct ble_tx *tx)
 	rijndael_setup(encrypt->skd);
 	ccm_memory(nonce, &head, 1, tx->data, tx->len, pt, tag, 0);
 
+    //retransmissions not incremented
 	encrypt->tx_counter_l++;
+    ASSERT (encrypt->tx_counter_l != 0xffffffff, "%s\n", __func__);
 	memcpy(tx->data, pt, tx->len);
-	memcpy(tx->data+tx->len, tag, 4);
-	tx->len += 4;
+	memcpy(tx->data+tx->len, tag, ENC_MIC_LEN);
+	tx->len += ENC_MIC_LEN;
 }
 
-static void ble_hw_txdecrypt(struct ble_hw *hw, struct ble_tx *tx)
-{
-    struct ble_encrypt *encrypt = &hw->encrypt;
-
-	if (encrypt->tx_enable && tx->len!=0)
-	{
-		u8 tag[4] = {0};
-		u8 nonce[16];
-		u8 pt[40] = {0};
-		u8 head = tx->llid;
-		u8 skd[16];
-
-		nonce[0] = encrypt->rx_counter_l;
-		nonce[1] = encrypt->rx_counter_l>>8;
-		nonce[2] = encrypt->rx_counter_l>>16;
-		nonce[3] = encrypt->rx_counter_l>>24;
-		nonce[4] = encrypt->rx_counter_h;
-        if (hw->state == SLAVE_CONN_ST)
-        {
-            nonce[4] |= BIT(7);
-        }
-		memcpy(nonce+5, encrypt->iv, 8);
-
-		if (tx->llid != 1){
-			encrypt->tx_counter_l++;
-		}
-
-		tx->len -= 4;
-		rijndael_setup(encrypt->skd);
-		ccm_memory(nonce, &head, 1, pt, tx->len, tx->data,  tag, 1);
-		memcpy(tx->data, pt, tx->len);
-		if (memcmp(tag, tx->data+tx->len, 4)){
-			rf_deg("no_match: %d\n", tx->llid);
-		}
-	}
-}
 
 static void ble_hw_decrypt(struct ble_hw *hw, struct ble_rx *rx)
 {
@@ -1486,8 +1453,8 @@ static void ble_hw_decrypt(struct ble_hw *hw, struct ble_rx *rx)
 	if (encrypt->rx_enable && rx->len!=0)
 	{
 		u8 tag[4] = {0};
-		u8 nonce[16];
-		u8 pt[40] = {0};
+		u8 nonce[13];
+		u8 pt[RX_PACKET_SIZE(BLE_HW_MIN_RX_OCTETES)] = {0};
 		u8 head = rx->llid;
 		u8 skd[16];
 
@@ -1502,17 +1469,20 @@ static void ble_hw_decrypt(struct ble_hw *hw, struct ble_rx *rx)
         }
 		memcpy(nonce+5, encrypt->iv, 8);
 
-		if (rx->llid != 1){
-			encrypt->rx_counter_l++;
-		}
+        //retransmissions not incremented
+        if (hw->rx_ack)
+        {
+            encrypt->rx_counter_l++;
+            ASSERT (encrypt->rx_counter_l != 0xffffffff, "%s\n", __func__);
+        }
 
-		rx->len -= 4;
+		rx->len -= ENC_MIC_LEN;
 		rijndael_setup(encrypt->skd);
-		ccm_memory(nonce, &head, 1, pt, rx->len, rx->data,  tag, 1);
+		ccm_memory(nonce, &head, 1, pt, rx->len, rx->data, tag, 1);
 		memcpy(rx->data, pt, rx->len);
-		if (memcmp(tag, rx->data+rx->len, 4)){
+		if (memcmp(tag, rx->data+rx->len, ENC_MIC_LEN)){
 			rf_deg("no_match: %d\n", rx->llid);
-            printf("\n*******NO Match : %d\n", rx->llid);
+            printf("\n*******NO Match : %d / %d\n", rx->llid, rx->len);
 		}
 	}
 }
@@ -1830,6 +1800,7 @@ static void ble_rx_probe(struct ble_hw *hw, struct ble_rx *rx)
     }
 }
 
+
 //async PDUs upper to Link Layer
 static void le_hw_upload_data(void (*tx_handler)(void *priv, struct ble_rx *rx),
         void (*rx_handler)(void *priv, struct ble_rx *rx))
@@ -1843,8 +1814,8 @@ static void le_hw_upload_data(void (*tx_handler)(void *priv, struct ble_rx *rx),
         rx = lbuf_pop(hw->lbuf_rx);
         if (rx)
         {
-			/* rf_puts("le_hw_upload_data"); */
-            /* rf_buf(rx, sizeof(*rx)+rx->len); */
+            /* puts("le_hw_upload_data"); */
+            /* printf_buf(rx, sizeof(*rx)+rx->len); */
             rx_handler(hw->priv, rx);
             lbuf_free(rx);
         }
@@ -1926,8 +1897,6 @@ static void __hw_tx_process(struct ble_hw *hw)
 		if (hw->tx[i]){
             ble_tx_probe(hw, hw->tx[i]);
 			lbuf_free(hw->tx[i]);
-            /* put_u32hex(hw->tx[i]); */
-            /* putchar('$'); */
 		}
 		tx = lbuf_pop(hw->lbuf_tx);
 		if (!tx){
@@ -2012,6 +1981,7 @@ static struct ble_rx *ble_rx_buf_alloc(struct ble_hw *hw, struct ble_rx *rx, int
         rx_alloc = NULL;
 	}
 
+    /* printf_buf() */
 	memcpy((u8 *)rx_alloc, (u8 *)rx, sizeof(*rx) + rx->len);
 
     return rx_alloc;
@@ -2031,6 +2001,7 @@ static void __hw_agc_adjust(struct ble_hw *hw, u8 adv)
     }
 }
 
+
 static void __hw_rx_process(struct ble_hw *hw)
 {
 	int ind;
@@ -2040,16 +2011,6 @@ static void __hw_rx_process(struct ble_hw *hw)
 	u16 *rxptr;
 	struct ble_param *ble_fp = &hw->ble_fp;
 
-    if (BLE_CON0 & BIT(5))
-    {
-        /* rf_puts("XXXX\n"); */
-        /* trig_fun(); */
-        /* while(1) */
-        /* { */
-             /* ADC_CON = 0; */
-            /* [> rf_puts("\n---------------------"); <] */
-        /* } */
-    }
     __hw_agc_adjust(hw, 0);
 
 	ind = !(ble_fp->RXTOG & BIT(0));
@@ -2073,6 +2034,7 @@ static void __hw_rx_process(struct ble_hw *hw)
 	rx->res = rx_check;
 	hw->rx_ack = (rxstat>>8) & 0x1;
 	rx->event_count = ble_fp->EVTCOUNT;
+	rx->channel = ble_fp->LASTCHMAP;
 
 	if (rx_check != 0x01){
         if (rx_check & BIT(2))
@@ -2098,7 +2060,7 @@ static void __hw_rx_process(struct ble_hw *hw)
 #ifndef FPGA
 	/* fsk_offset(1); */
 #endif
-	ble_hw_encrypt_check(hw);
+	/* ble_hw_encrypt_check(hw); */
 
 	/* rf_putchar('r'); */
     //baseband loop buf switch
