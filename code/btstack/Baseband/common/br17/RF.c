@@ -370,8 +370,8 @@ void RF_mdm_init(void)
     SFR(BT_MDM_CON2, 7, 3, 1);         // fsk preamble number threshold
     SFR(BT_MDM_CON2, 10, 1, 0);        // fsm preamble n sample match,  0: 4 sample  1: 3 sample
     SFR(BT_MDM_CON2, 12, 2, 3);        // fsk syncword mode,  01: by best sample phase  10: by syncword window  11: by both
-    SFR(BT_MDM_CON2, 16, 4, 0);        // ble v4.x fsk sync word error bit margin
-    SFR(BT_MDM_CON2, 20, 4, 0);        // noise level power select, np = 1 << nlp_sel
+    SFR(BT_MDM_CON2, 16, 4, 1);        // ble v4.x fsk sync word error bit margin
+    SFR(BT_MDM_CON2, 20, 4, 3);        // noise level power select, np = 1 << nlp_sel
     SFR(BT_MDM_CON2, 24, 8, 0);        // fsk tx preamble early time select, time = (n)uS, set '0' means disable
     SFR(BT_MDM_CON3, 0, 10, 256);      // psk amplitude i channel
     SFR(BT_MDM_CON3, 10, 5, 24);        // fade in/fade out guard time setting, time = ((n + 1) * 0.125)uS
@@ -387,7 +387,7 @@ void RF_mdm_init(void)
     SFR(BT_MDM_CON7, 16, 10, 0);       // psk carrier frequency deviation setting
         // BT_MDM_CON7[9:0]:           // psk carrier frequency deviation value
     SFR(BT_MDM_CON8, 0, 8, 140);       // fsk v2.1 rx syncword timeout setting  71 + 69
-    SFR(BT_MDM_CON8, 8, 8, 82);        // fsk v4.x rx syncword timeout setting  43 + 39
+    SFR(BT_MDM_CON8, 8, 8, (82+MDM_PREP_T));        // fsk v4.x rx syncword timeout setting  43 + 39
 
     BT_BSB_EDR  = (1<<7) | 57;         // rxmch  to edr sync
     SFR(BT_MDM_CON2, 14, 1, 1);        // FADE_EN

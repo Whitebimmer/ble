@@ -253,19 +253,20 @@ static void handle_hci_event(uint8_t packet_type, uint16_t channel, uint8_t *pac
         case TC_W4_SERVICE_RESULT:
             switch(hci_event_packet_get_type(packet)){
                 case GATT_EVENT_SERVICE_QUERY_RESULT:
+                    ancs_puts("GATT_EVENT_SERVICE_QUERY_RESULT\n");
                     gatt_event_service_query_result_get_service(packet, &ancs_service);
                     ancs_service_found = 1;
                     break;
                 case GATT_EVENT_QUERY_COMPLETE:
                     if (!ancs_service_found){
                         log_info("ANCS Service not found");
-                        ancs_puts("ANCS Service not found");
+                        ancs_puts("ANCS Service not found\n");
                         tc_state = TC_IDLE;
                         break;
                     }
                     tc_state = TC_W4_CHARACTERISTIC_RESULT;
                     log_info("ANCS Client - Discover characteristics for ANCS SERVICE ");
-                    ancs_puts("ANCS Client - Discover characteristics for ANCS SERVICE ");
+                    ancs_puts("ANCS Client - Discover characteristics for ANCS SERVICE\n");
                     gatt_client_discover_characteristics_for_service(handle_hci_event, gc_handle, &ancs_service);
                     break;
                 default:
