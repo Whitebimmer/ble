@@ -59,6 +59,11 @@ typedef struct {
 
 
 /**
+ * @brief 128 bit key used with AES128 in Security Manager
+ */
+typedef uint8_t sm_key_t[16];
+
+/**
  * packet types - used in BTstack and over the H4 UART interface
  */
 #define HCI_COMMAND_DATA_PACKET 0x01
@@ -498,6 +503,7 @@ typedef struct {
  * @param status
  */
 #define GATT_QUERY_COMPLETE                                0xA0
+#define GATT_EVENT_QUERY_COMPLETE                                0xA0
 
 /**
  * @format HX
@@ -505,6 +511,7 @@ typedef struct {
  * @param service
  */
 #define GATT_SERVICE_QUERY_RESULT                          0xA1
+#define GATT_EVENT_SERVICE_QUERY_RESULT                          0xA1
 
 /**
  * @format HY
@@ -512,6 +519,7 @@ typedef struct {
  * @param characteristic
  */
 #define GATT_CHARACTERISTIC_QUERY_RESULT                   0xA2
+#define GATT_EVENT_CHARACTERISTIC_QUERY_RESULT                   0xA2
 
 /**
  * @format HX
@@ -519,6 +527,7 @@ typedef struct {
  * @param service
  */
 #define GATT_INCLUDED_SERVICE_QUERY_RESULT                 0xA3
+#define GATT_EVENT_INCLUDED_SERVICE_QUERY_RESULT                 0xA3
 
 /**
  * @format HZ
@@ -526,6 +535,7 @@ typedef struct {
  * @param characteristic_descriptor
  */
 #define GATT_ALL_CHARACTERISTIC_DESCRIPTORS_QUERY_RESULT   0xA4
+#define GATT_EVENT_ALL_CHARACTERISTIC_DESCRIPTORS_QUERY_RESULT   0xA4
 
 /**
  * @format H2LV
@@ -535,6 +545,7 @@ typedef struct {
  * @param value
  */
 #define GATT_CHARACTERISTIC_VALUE_QUERY_RESULT             0xA5
+#define GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT             0xA5
 
 /**
  * @format H2LV
@@ -544,6 +555,7 @@ typedef struct {
  * @param value
  */
 #define GATT_LONG_CHARACTERISTIC_VALUE_QUERY_RESULT        0xA6
+#define GATT_EVENT_LONG_CHARACTERISTIC_VALUE_QUERY_RESULT        0xA6
 
 /**
  * @format H2LV
@@ -553,6 +565,7 @@ typedef struct {
  * @param value
  */
 #define GATT_NOTIFICATION                                  0xA7
+#define GATT_EVENT_NOTIFICATION                                  0xA7
 
 /**
  * @format H2LV
@@ -562,9 +575,13 @@ typedef struct {
  * @param value
  */
 #define GATT_INDICATION                                    0xA8
+#define GATT_EVENT_INDICATION                                    0xA8
 
 #define GATT_CHARACTERISTIC_DESCRIPTOR_QUERY_RESULT        0xA9
+#define GATT_EVENT_CHARACTERISTIC_DESCRIPTOR_QUERY_RESULT        0xA9
+
 #define GATT_LONG_CHARACTERISTIC_DESCRIPTOR_QUERY_RESULT   0xAA
+#define GATT_EVENT_LONG_CHARACTERISTIC_DESCRIPTOR_QUERY_RESULT   0xAA
 
 /** 
  * @format H2
@@ -737,6 +754,11 @@ typedef struct {
  */
 #define GAP_LE_ADVERTISING_REPORT                          0xE2
 
+// Meta Events, see below for sub events
+#define HCI_EVENT_HSP_META                                 0xE8
+#define HCI_EVENT_HFP_META                                 0xE9
+#define HCI_EVENT_ANCS_META                                0xEA
+
 #define HCI_EVENT_HSP_META                                 0xE8
 
 #define HSP_SUBEVENT_AUDIO_CONNECTION_COMPLETE             0x01
@@ -749,10 +771,28 @@ typedef struct {
 #define HSP_SUBEVENT_RING                                  0x08
 
 
-// ANCS Client
-#define ANCS_CLIENT_CONNECTED                              0xF0
-#define ANCS_CLIENT_NOTIFICATION                           0xF1
-#define ANCS_CLIENT_DISCONNECTED                           0xF2
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param handle
+ */ 
+#define ANCS_SUBEVENT_CLIENT_CONNECTED                              0xF0
+
+/**
+ * @format 1H2T
+ * @param subevent_code
+ * @param handle
+ * @param attribute_id
+ * @param text
+ */ 
+#define ANCS_SUBEVENT_CLIENT_NOTIFICATION                           0xF1
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param handle
+ */ 
+#define ANCS_SUBEVENT_CLIENT_DISCONNECTED                           0xF2
 
 
 
@@ -820,6 +860,11 @@ typedef struct {
 
 #define GATT_CLIENT_NOT_CONNECTED                          0x93
 #define GATT_CLIENT_BUSY                                   0x94
+#define GATT_CLIENT_IN_WRONG_STATE                         0x95
+#define GATT_CLIENT_DIFFERENT_CONTEXT_FOR_ADDRESS_ALREADY_EXISTS 0x96
+#define GATT_CLIENT_VALUE_TOO_LONG                         0x97
+#define GATT_CLIENT_CHARACTERISTIC_NOTIFICATION_NOT_SUPPORTED 0x98
+#define GATT_CLIENT_CHARACTERISTIC_INDICATION_NOT_SUPPORTED   0x99 
 
 #define BNEP_SERVICE_ALREADY_REGISTERED                    0xA0
 #define BNEP_CHANNEL_NOT_CONNECTED                         0xA1

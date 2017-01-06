@@ -258,14 +258,6 @@ typedef enum {
     CON_PARAMETER_UPDATE_DENY
 } le_con_parameter_update_state_t;
 
-typedef struct le_connection_parameter_range{
-    uint16_t le_conn_interval_min;
-    uint16_t le_conn_interval_max;
-    uint16_t le_conn_latency_min;
-    uint16_t le_conn_latency_max;
-    uint16_t le_supervision_timeout_min;
-    uint16_t le_supervision_timeout_max;
-} le_connection_parameter_range_t;
 
 // Authentication flags
 typedef enum {
@@ -626,10 +618,11 @@ typedef enum hci_init_state{
 } hci_substate_t;
 
 enum {
-    LE_ADVERTISEMENT_TASKS_DISABLE      = 1 << 0,
-    LE_ADVERTISEMENT_TASKS_SET_DATA     = 1 << 1,
-    LE_ADVERTISEMENT_TASKS_SET_PARAMS   = 1 << 2,
-    LE_ADVERTISEMENT_TASKS_ENABLE       = 1 << 3,
+    LE_ADVERTISEMENT_TASKS_DISABLE       = 1 << 0,
+    LE_ADVERTISEMENT_TASKS_SET_ADV_DATA  = 1 << 1,
+    LE_ADVERTISEMENT_TASKS_SET_SCAN_DATA = 1 << 2,
+    LE_ADVERTISEMENT_TASKS_SET_PARAMS    = 1 << 3,
+    LE_ADVERTISEMENT_TASKS_ENABLE        = 1 << 4,
 };
 
 enum {
@@ -766,6 +759,9 @@ typedef struct {
     uint8_t  * le_advertisements_data;
     uint8_t    le_advertisements_data_len;
 
+    uint8_t  * le_scan_response_data;
+    uint8_t    le_scan_response_data_len;
+
     uint8_t  le_advertisements_active;
     uint8_t  le_advertisements_enabled;
     uint8_t  le_advertisements_todo;
@@ -805,7 +801,6 @@ uint16_t hci_create_cmd_internal(uint8_t *hci_cmd_buffer, const hci_cmd_t *cmd, 
 /**
  * run the hci control loop once
  */
-void hci_run(void);
 
 // send ACL packet prepared in hci packet buffer
 int hci_send_acl_packet_buffer(int size);
@@ -816,8 +811,8 @@ int hci_send_sco_packet_buffer(int size);
 
 int hci_can_send_acl_packet_now(hci_con_handle_t con_handle);
 int hci_can_send_prepared_acl_packet_now(hci_con_handle_t con_handle);
-int hci_can_send_sco_packet_now(hci_con_handle_t con_handle);
-int hci_can_send_prepared_sco_packet_now(hci_con_handle_t con_handle);
+int hci_can_send_sco_packet_now(void);
+int hci_can_send_prepared_sco_packet_now(void);
 
 // reserves outgoing packet buffer. @returns 1 if successful
 int  hci_reserve_packet_buffer(void);
@@ -834,10 +829,9 @@ hci_connection_t * hci_connection_for_handle(hci_con_handle_t con_handle);
 hci_connection_t * hci_connection_for_bd_addr_and_type(bd_addr_t addr, bd_addr_type_t addr_type);
 int      hci_is_le_connection(hci_connection_t * connection);
 uint8_t  hci_number_outgoing_packets(hci_con_handle_t handle);
-uint8_t  hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle);
+int hci_number_free_acl_slots_for_handle(hci_con_handle_t con_handle);
 int      hci_authentication_active_for_handle(hci_con_handle_t handle);
 uint16_t hci_max_acl_data_packet_length(void);
-uint16_t hci_max_acl_le_data_packet_length(void);
 uint16_t hci_usable_acl_packet_types(void);
 int      hci_non_flushable_packet_boundary_flag_supported(void);
 
@@ -890,7 +884,6 @@ le_command_status_t le_central_start_scan(void);
 le_command_status_t le_central_stop_scan(void);
 le_command_status_t le_central_connect(bd_addr_t addr, bd_addr_type_t addr_type);
 le_command_status_t le_central_connect_cancel(void);
-le_command_status_t gap_disconnect(hci_con_handle_t handle);
 void le_central_set_scan_parameters(uint8_t scan_type, uint16_t scan_interval, uint16_t scan_window);
 
 /* LE Client End */
@@ -902,6 +895,11 @@ void hci_close(void);
  * @note New functions replacing: hci_can_send_packet_now[_using_packet_buffer]
  */
 int hci_can_send_command_packet_now(void);
+
+/**
+ * @brief Creates and sends HCI command packets based on a template and a list of parameters. Will return error if outgoing data buffer is occupied. 
+ */
+int hci_send_cmd(const hci_cmd_t *cmd, ...);
     
 /**
  * @brief Gets local address.
@@ -972,7 +970,6 @@ void hci_ssp_set_auto_accept(int auto_accept);
 void hci_le_advertisement_address(uint8_t * addr_type, bd_addr_t addr);
 /* API_END */
 
-void le_hci_run(void);
 
 void le_hci_emit_nr_connections_changed();
 

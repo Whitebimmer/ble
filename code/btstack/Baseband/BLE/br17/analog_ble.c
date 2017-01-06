@@ -7,6 +7,32 @@
 /*
  *                   HW Analog  
  */
+char ble_agc_normal_set(void *fp, char sel , char inc);
+void ble_agc_reset(void *fp)
+{
+    u8 agc_value = 0;
+
+    struct ble_hw *hw = (struct ble_hw *)fp;
+    struct ble_param *packet_ptr;
+    packet_ptr = &hw->ble_fp;
+
+    hw->scan_agc_set++;
+    if (hw->scan_agc_set > 5) hw->scan_agc_set = 0;
+
+    if (hw->scan_agc_set == 0 || hw->scan_agc_set == 1)
+    {
+        agc_value = 8;
+    }
+    if (hw->scan_agc_set == 2 || hw->scan_agc_set == 3)
+    {
+        agc_value = 21;
+    }
+    if (hw->scan_agc_set == 4 || hw->scan_agc_set == 5)
+    {
+        agc_value = 27;
+    }
+    ble_agc_normal_set(hw, 0, agc_value);
+}
 
 //===================================//
 //sel: 1    auto_set agc
@@ -29,49 +55,49 @@ char ble_agc_normal_set(void *fp, char sel , char inc)
   	if(!sel)
 	{
         hw->agc_set = inc;
-        hw->agc_buf1 = 550;
-        hw->agc_buf2 = 550;
+        hw->agc_buf1 = 800;
+        hw->agc_buf2 = 800;
 	}
 	else
     {
-        hw->agc_buf1 = (hw->agc_buf1 + packet_ptr->RSSI1)/2;
+        hw->agc_buf2 = (hw->agc_buf2 + packet_ptr->RSSI1)/2;
 
-       if(hw->agc_set < 17)                      /// LNA && DMIX
-       {
-            if(  hw->agc_buf1 < 364)      hw->agc_set += 2;    //-15
-            else if(hw->agc_buf1 < 458)   hw->agc_set += 1;     //-13
-            else if(hw->agc_buf1 > 864)   hw->agc_set -= 2;     //-7.5
-            else if(hw->agc_buf1 > 686)   hw->agc_set -= 1;     //-9.5
-            else                        hw->agc_set  = hw->agc_set;
-       }
-       else if(hw->agc_set < 23)
-       {
-           if(  hw->agc_buf1 < 409)       hw->agc_set += 2;      //-14
-           else if(  hw->agc_buf1 < 514)  hw->agc_set += 1;      //-12
-           else if(hw->agc_buf1 > 969)    hw->agc_set -= 2;      //-6.5
-           else if(hw->agc_buf1 > 770)    hw->agc_set -= 1;      //-8.5
-           else                       hw->agc_set  = hw->agc_set;
-       }
-       else if(hw->agc_set < 27)
-       {
-            if(hw->agc_buf1 < 458)        hw->agc_set += 2;      //-13
-            else if(hw->agc_buf1 < 648)   hw->agc_set += 1;      //-10
-            else if(hw->agc_buf1 > 1450)  hw->agc_set -= 2;      //-3
-            else if(hw->agc_buf1 > 1026)   hw->agc_set -= 1;      //-6
-            else                      hw->agc_set  = hw->agc_set;
-       }
-       else
-       {
-            if(hw->agc_buf1 < 648)        hw->agc_set += 2;      //-10
-            else if(hw->agc_buf1 < 815)   hw->agc_set += 1;      //-8
-            else if(hw->agc_buf1 > 1723)  hw->agc_set -= 2;      //-1.5
-            else if(hw->agc_buf1 > 1292)  hw->agc_set -= 1;      //-4
-            else                      hw->agc_set  = hw->agc_set;
-       }
-    }
+        /* put_u16hex(packet_ptr->RSSI1);puts("/"); */
+
+	  if(hw->agc_set < 27)                      /// LNA && DMIX
+	  {
+		   if(  hw->agc_buf2 < 611)       hw->agc_set += 1;     //-10.5
+		   else if(hw->agc_buf2 > 864)    hw->agc_set -= 1;     //-7.5
+		   else                      		hw->agc_set  = hw->agc_set;
+	  }
+	  else if(hw->agc_set == 27)
+	  {
+		   if(  hw->agc_buf2 < 686)       hw->agc_set += 1;     //-9.5
+		   else if(hw->agc_buf2 > 969)    hw->agc_set -= 1;     //-6.5
+		   else                      		hw->agc_set  = hw->agc_set;
+	  }
+	  else if(hw->agc_set == 28)
+	  {
+		   if(  hw->agc_buf2 < 770)       hw->agc_set += 1;     //-8.5
+		   else if(hw->agc_buf2 > 1087)   hw->agc_set -= 1;     //-5.5
+		   else                      		hw->agc_set  = hw->agc_set;
+	  }
+	  else if(hw->agc_set == 29)
+	  {
+		   if(  hw->agc_buf2 < 815)       hw->agc_set += 1;     //-8
+		   else if(hw->agc_buf2 > 1152)   hw->agc_set -= 1;     //-5
+		   else                      		hw->agc_set  = hw->agc_set;
+	  }
+	  else
+	  {
+		   if(  hw->agc_buf2 < 864)       hw->agc_set += 1;     //-7.5
+		   else if(hw->agc_buf2 > 1220)   hw->agc_set -= 1;     //-4.5
+		   else                      		hw->agc_set  = hw->agc_set;
+	  }
+	}
 
     if(hw->agc_set< 0)        hw->agc_set = 0;
-    else if(hw->agc_set > 34) hw->agc_set = 34;
+    else if(hw->agc_set > 30) hw->agc_set = 30;
     else                  hw->agc_set  = hw->agc_set;
 
     if(hw->agc_set< 9)        dato = 1;

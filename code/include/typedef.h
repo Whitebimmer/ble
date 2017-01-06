@@ -19,6 +19,7 @@ Date£º
 #define SET(x)          __attribute__((x))
 #define _PACKED_        __attribute__((packed))
 #define _INLINE_        __attribute__((always_inline))
+#define _NO_INLINE_     __attribute__((noinline))
 #define _ALIGNED(x)_    __attribute__((aligned(x)))
 #else 
 #define SEC_USED(x)     
@@ -27,6 +28,7 @@ Date£º
 #define SET(x)       
 #define _PACKED_     
 #define _INLINE_     
+#define _NO_INLINE_    
 #define _ALIGNED(x)_
 #endif
 

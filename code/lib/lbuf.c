@@ -18,6 +18,16 @@ struct hentry{
 	char ref;
 };
 
+/*
+ * Function: lbuf_init
+ *
+ *  buf[                                                     ]
+ *       (struct hfree)|
+ *       (lbuff_head)  |(struct hfree free)|<------len----->|
+ *        head,free    |
+ *
+ */
+
 struct lbuff_head * lbuf_init(void *buf, u32 buf_len)
 {
 	struct hfree *free;
@@ -69,6 +79,17 @@ u32 lbuf_remain_len(struct lbuff_head *head, u32 len)
 	return res;
 }
 
+/*
+ * Function: lbuf_alloc
+ *
+ *  buf[                                                                    ]
+ *       (struct hfree)|
+ *       (lbuff_head)  |(free)|<------------------remain------------------>|
+ *        head,free    |                   |
+ *                     |                   |<----len--->|(new)|<--remain-->|
+ *                     |                   |
+ *
+ */
 void * lbuf_alloc(struct lbuff_head *head, u32 len)
 {
 	struct hentry *entry;

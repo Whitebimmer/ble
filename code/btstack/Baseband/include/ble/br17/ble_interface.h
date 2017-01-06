@@ -68,6 +68,7 @@ struct ble_tx {
 
 #define TX_PACKET_SIZE(len)         (sizeof(struct ble_tx) + len + ENC_MIC_LEN)
 
+#define ACK_PACKET_SIZE(len)         (sizeof(struct ble_tx) + len)
 
 
 // struct ble_conn_param{
@@ -186,6 +187,8 @@ extern const struct ble_operation *__ble_ops;
 #define DEBUG_IOB_1(x)    {PORTB_DIR &= ~BIT(x); PORTB_OUT |= BIT(x);}
 #define DEBUG_IOB_0(x)    {PORTB_DIR &= ~BIT(x); PORTB_OUT &= ~BIT(x);}
 
+#define DEBUG_IOC_1(x)    {PORTC_DIR &= ~BIT(x); PORTC_OUT |= BIT(x);}
+#define DEBUG_IOC_0(x)    {PORTC_DIR &= ~BIT(x); PORTC_OUT &= ~BIT(x);}
 
 
 

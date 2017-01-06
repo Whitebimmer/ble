@@ -219,6 +219,45 @@ void printf_hexdump(const void *data, int size){
     printf("\n");
 }
 
+void log_info_hexdump(const void *data, int size){
+#ifdef ENABLE_LOG_INFO
+
+    const int items_per_line = 16;
+    const int bytes_per_byte = 6;   // strlen('0x12, ')
+    const uint8_t low = 0x0F;
+    const uint8_t high = 0xF0;
+
+    char buffer[bytes_per_byte*items_per_line+1];
+    int i, j;
+    j = 0;
+    for (i=0; i<size;i++){
+
+        // help static analyzer proof that j stays within bounds
+        if (j > bytes_per_byte * (items_per_line-1)){
+            j = 0;
+        }
+
+        uint8_t byte = ((uint8_t *)data)[i];
+        buffer[j++] = '0';
+        buffer[j++] = 'x';
+        buffer[j++] = char_for_nibble((byte & high) >> 4);
+        buffer[j++] = char_for_nibble(byte & low);
+        buffer[j++] = ',';
+        buffer[j++] = ' ';     
+
+        if (j >= bytes_per_byte * items_per_line ){
+            buffer[j] = 0;
+            log_info("%s", buffer);
+            j = 0;
+        }
+    }
+    if (j != 0){
+        buffer[j] = 0;
+        log_info("%s", buffer);
+    }
+#endif
+}
+
 void hexdump(const void *data, int size){
 	return;
     char buffer[6*16+1];
@@ -279,6 +318,20 @@ void log_key(const char * name, sm_key_t key){
 	return;
     log_info("%-6s ", name);
     hexdump(key, 16);
+}
+// UUIDs are stored in big endian, similar to bd_addr_t
+
+// Bluetooth Base UUID: 00000000-0000-1000-8000- 00805F9B34FB
+const uint8_t bluetooth_base_uuid[] = { 0x00, 0x00, 0x00, 0x00, /* - */ 0x00, 0x00, /* - */ 0x10, 0x00, /* - */
+    0x80, 0x00, /* - */ 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB };
+
+void uuid_add_bluetooth_prefix(uint8_t *uuid, uint32_t shortUUID){
+    memcpy(uuid, bluetooth_base_uuid, 16);
+    big_endian_store_32(uuid, 0, shortUUID);
+}
+
+int uuid_has_bluetooth_prefix(uint8_t * uuid128){
+    return memcmp(&uuid128[4], &bluetooth_base_uuid[4], 12) == 0;
 }
 
 static char uuid128_to_str_buffer[32+4+1];

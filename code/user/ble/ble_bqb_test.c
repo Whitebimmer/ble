@@ -62,7 +62,7 @@
 #include "ble/sm.h"
 #include "ble/att.h"
 #include "ble/att_server.h"
-#include "ble/gap_le.h"
+#include "gap.h"
 #include "ble/le_device_db.h"
 #include "btstack_event.h"
 /*#include "stdin_support.h"*/
@@ -557,7 +557,7 @@ static void gap_run(void){
         todos &= ~DISABLE_ADVERTISEMENTS;
         printf("GAP_RUN: disable advertisements\n");
         advertisements_enabled = 0;
-        le_hci_send_cmd(&hci_le_set_advertise_enable, 0);
+        hci_send_cmd(&hci_le_set_advertise_enable, 0);
         return;
     }    
 
@@ -565,7 +565,7 @@ static void gap_run(void){
         printf("GAP_RUN: set advertisement data\n");
         todos &= ~SET_ADVERTISEMENT_DATA;
         /* printf_buf(adv_data, adv_data_len); */
-        le_hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data_len, adv_data);
+        hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data_len, adv_data);
         return;
     }    
 
@@ -581,11 +581,11 @@ static void gap_run(void){
             case 0:
             case 2:
             case 3:
-                le_hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, 0, &null_addr, 0x07, 0x00);
+                hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, 0, &null_addr, 0x07, 0x00);
                 break;
             case 1:
             case 4:
-                le_hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, tester_address_type, &tester_address, 0x07, 0x00);
+                hci_send_cmd(&hci_le_set_advertising_parameters, adv_int_min, adv_int_max, adv_type, gap_random, tester_address_type, &tester_address, 0x07, 0x00);
                 break;
         }
         return;
@@ -594,7 +594,7 @@ static void gap_run(void){
     if (todos & SET_SCAN_RESPONSE_DATA){
         printf("GAP_RUN: set scan response data\n");
         todos &= ~SET_SCAN_RESPONSE_DATA;
-        le_hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data_len, adv_data);
+        hci_send_cmd(&hci_le_set_scan_response_data, adv_data_len, adv_data_len, adv_data);
         // hack for menu
         /* if ((todos & ENABLE_ADVERTISEMENTS) == 0) show_usage(); */
         return;
@@ -604,7 +604,7 @@ static void gap_run(void){
         printf("GAP_RUN: enable advertisements\n");
         todos &= ~ENABLE_ADVERTISEMENTS;
         advertisements_enabled = 1;
-        le_hci_send_cmd(&hci_le_set_advertise_enable, 1);
+        hci_send_cmd(&hci_le_set_advertise_enable, 1);
         show_usage();
         return;
     }
@@ -958,7 +958,7 @@ int stdin_process(char cmd){
             break;
         case 't':
             printf("Terminating connection : 0x%04x\n", handle);
-            le_hci_send_cmd(&hci_disconnect, handle, 0x13);
+            hci_send_cmd(&hci_disconnect, handle, 0x13);
             break;
         case 'z':
             printf("Sending l2cap connection update parameter request\n");
@@ -1010,7 +1010,7 @@ int stdin_process(char cmd){
             break;
         case 'j':
             printf("Create L2CAP Connection to %s\n", bd_addr_to_str(tester_address));
-            le_hci_send_cmd(&hci_le_create_connection, 
+            hci_send_cmd(&hci_le_create_connection, 
                 1000,      // scan interval: 625 ms
                 1000,      // scan interval: 625 ms
                 0,         // don't use whitelist
@@ -1029,7 +1029,7 @@ int stdin_process(char cmd){
             {
                 u32 event_mask_low = 0x00018890;
                 u32 event_mask_high = 0x20000800;
-                le_hci_send_cmd(&hci_set_event_mask, event_mask_low, event_mask_high);
+                hci_send_cmd(&hci_set_event_mask, event_mask_low, event_mask_high);
             }
             break;
         case 'Q':
@@ -1037,21 +1037,21 @@ int stdin_process(char cmd){
 
                 u32 le_event_mask_low = 0x0000001f;
                 u32 le_event_mask_high = 0x00000000;
-                le_hci_send_cmd(&hci_le_set_event_mask, le_event_mask_low, le_event_mask_high);
+                hci_send_cmd(&hci_le_set_event_mask, le_event_mask_low, le_event_mask_high);
             }
             break;
         case 'w':
-            /* le_hci_send_cmd(&hci_reset); */
-			le_hci_send_cmd(&hci_le_set_scan_parameters, 1, 320, 300, 0, 1);
+            /* hci_send_cmd(&hci_reset); */
+			hci_send_cmd(&hci_le_set_scan_parameters, 1, 320, 300, 0, 1);
             break;
         case 'W':
-            /* le_hci_send_cmd(&hci_reset); */
-            le_hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
-            /* le_hci_send_cmd(&hci_read_remote_version_information, 0x0001); */
+            /* hci_send_cmd(&hci_reset); */
+            hci_send_cmd(&hci_le_set_scan_enable, 1, 0);
+            /* hci_send_cmd(&hci_read_remote_version_information, 0x0001); */
             break;
         case 'T':
-            /* le_hci_send_cmd(&hci_reset); */
-            le_hci_send_cmd(&hci_le_create_connection, 0x320, 0x300, 0, 0, &tester_address1, 0, 0x320, 0x320, 5, 0x3000, 0x0, 0x0);
+            /* hci_send_cmd(&hci_reset); */
+            hci_send_cmd(&hci_le_create_connection, 0x320, 0x300, 0, 0, &tester_address1, 0, 0x320, 0x320, 5, 0x3000, 0x0, 0x0);
             break;
 
         default:

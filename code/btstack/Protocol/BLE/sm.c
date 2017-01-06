@@ -44,13 +44,13 @@
 #include "l2cap.h"
 #include "ble/le_device_db.h"
 #include "ble/sm.h"
-#include "ble/gap_le.h"
+#include "gap.h"
 
 #include "ble/core.h"
 //
 // SM internal types and globals
 //
-#define SM_DEBUG_EN
+/* #define SM_DEBUG_EN */
 
 #ifdef SM_DEBUG_EN
 #define sm_putchar(x)        putchar(x)
@@ -402,7 +402,7 @@ static void gap_random_address_update_stop(void){
 
 static void sm_random_start(void * context){
     sm_random_context = context;
-    le_hci_send_cmd(&hci_le_rand);
+    hci_send_cmd(&hci_le_rand);
 }
 
 // pre: sm_aes128_state != SM_AES128_ACTIVE, hci_can_send_command == 1
@@ -413,7 +413,7 @@ static void sm_aes128_start(sm_key_t key, sm_key_t plaintext, void * context){
     swap128(key, key_flipped);
     swap128(plaintext, plaintext_flipped);
     sm_aes128_context = context;
-    le_hci_send_cmd(&hci_le_encrypt, key_flipped, plaintext_flipped);
+    hci_send_cmd(&hci_le_encrypt, key_flipped, plaintext_flipped);
 }
 
 // ah(k,r) helper
@@ -522,6 +522,7 @@ static void sm_notify_client_base(uint8_t type, hci_con_handle_t con_handle, uin
     sm_setup_event_base(&event, sizeof(event), type, con_handle, addr_type, address);
     log_info("sm_notify_client_base %02x, addres_type %u, address %s\n", event.type, event.addr_type, bd_addr_to_str(event.address));
 
+    printf_buf((uint8_t*) &event, sizeof(event));
     sm_dispatch_event(HCI_EVENT_PACKET, 0, (uint8_t*) &event, sizeof(event));
 }
 
@@ -1209,7 +1210,7 @@ static void sm_run(void){
 			sm_puts("sm run : RAU_SET_ADDRESS\n");
             log_info("New random address: %s", bd_addr_to_str(sm_random_address));
             rau_state = RAU_IDLE;
-            le_hci_send_cmd(&hci_le_set_random_address, sm_random_address);
+            hci_send_cmd(&hci_le_set_random_address, sm_random_address);
             return;
         default:
             break;
@@ -1440,8 +1441,8 @@ static void sm_run(void){
                     connection->sm_engine_state = SM_INITIATOR_PH0_W4_CONNECTION_ENCRYPTED;
                     uint32_t rand_high = READ_NET_32(setup->sm_peer_rand, 0);
                     uint32_t rand_low  = READ_NET_32(setup->sm_peer_rand, 4);
-                    /* le_hci_send_cmd(&hci_le_start_encryption, connection->sm_handle, setup->sm_peer_rand, setup->sm_peer_ediv, peer_ltk_flipped); */
-                    le_hci_send_cmd(&hci_le_start_encryption, connection->sm_handle,rand_low, rand_high, setup->sm_peer_ediv, peer_ltk_flipped);
+                    /* hci_send_cmd(&hci_le_start_encryption, connection->sm_handle, setup->sm_peer_rand, setup->sm_peer_ediv, peer_ltk_flipped); */
+                    hci_send_cmd(&hci_le_start_encryption, connection->sm_handle,rand_low, rand_high, setup->sm_peer_ediv, peer_ltk_flipped);
                     return;
                 }
 
@@ -1455,8 +1456,9 @@ static void sm_run(void){
 
             // responder side
             case SM_RESPONDER_PH0_SEND_LTK_REQUESTED_NEGATIVE_REPLY:
+                puts("SM_RESPONDER_PH0_SEND_LTK_REQUESTED_NEGATIVE_REPLY\n");
                 connection->sm_engine_state = SM_RESPONDER_IDLE;
-                le_hci_send_cmd(&hci_le_long_term_key_negative_reply, connection->sm_handle);
+                hci_send_cmd(&hci_le_long_term_key_negative_reply, connection->sm_handle);
                 return;
 
             case SM_RESPONDER_PH1_SEND_PAIRING_RESPONSE:
@@ -1618,10 +1620,11 @@ static void sm_run(void){
                 return;
             }
             case SM_RESPONDER_PH2_SEND_LTK_REPLY: {
+                /* puts("SM_RESPONDER_PH2_SEND_LTK_REPLY\n"); */
                 sm_key_t stk_flipped;
                 swap128(setup->sm_ltk, stk_flipped);
                 connection->sm_engine_state = SM_PH2_W4_CONNECTION_ENCRYPTED;
-                le_hci_send_cmd(&hci_le_long_term_key_request_reply, connection->sm_handle, stk_flipped);
+                hci_send_cmd(&hci_le_long_term_key_request_reply, connection->sm_handle, stk_flipped);
                 return;
             }
             case SM_INITIATOR_PH3_SEND_START_ENCRYPTION: {
@@ -1629,14 +1632,14 @@ static void sm_run(void){
                 sm_key_t stk_flipped;
                 swap128(setup->sm_ltk, stk_flipped);
                 connection->sm_engine_state = SM_PH2_W4_CONNECTION_ENCRYPTED;
-                le_hci_send_cmd(&hci_le_start_encryption, connection->sm_handle, 0, 0, 0, stk_flipped);
+                hci_send_cmd(&hci_le_start_encryption, connection->sm_handle, 0, 0, 0, stk_flipped);
                 return;
             }
             case SM_RESPONDER_PH4_SEND_LTK: {
                 sm_key_t ltk_flipped;
                 swap128(setup->sm_ltk, ltk_flipped);
                 connection->sm_engine_state = SM_RESPONDER_IDLE;
-                le_hci_send_cmd(&hci_le_long_term_key_request_reply, connection->sm_handle, ltk_flipped);
+                hci_send_cmd(&hci_le_long_term_key_request_reply, connection->sm_handle, ltk_flipped);
                 return;
             }
             case SM_RESPONDER_PH4_Y_GET_ENC:
@@ -2087,7 +2090,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                                 if (sm_conn->sm_engine_state == SM_GENERAL_IDLE){
                                     if (sm_slave_request_security) {
                                         // request security if requested by app
-										sm_puts("rsp_security\n");
+										sm_puts("sm_slave_request_security - \n");
                                         sm_conn->sm_engine_state = SM_RESPONDER_SEND_SECURITY_REQUEST;
                                     } else {
                                         // otherwise, wait for pairing request 
@@ -2104,7 +2107,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                             break;
 
                         case HCI_SUBEVENT_LE_LONG_TERM_KEY_REQUEST:
-							sm_puts("hci_le_long_term_key_request\n");
+							sm_puts("sm HCI_SUBEVENT_LE_LONG_TERM_KEY_REQUEST\n");
                             handle = READ_BT_16(packet, 3);
                             sm_conn = sm_get_connection_for_handle(handle);
                             if (!sm_conn) break;
@@ -2118,6 +2121,7 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                             // assume that we don't have a LTK for ediv == 0 and random == null
                             if (READ_BT_16(packet, 13) == 0 && sm_is_null_random(&packet[5])){
                                 log_info("LTK Request: ediv & random are empty");
+                                sm_puts("LTK Request: ediv & random are empty");
                                 sm_conn->sm_engine_state = SM_RESPONDER_PH0_SEND_LTK_REQUESTED_NEGATIVE_REPLY;
                                 break;
                             }
@@ -2604,7 +2608,7 @@ void sm_init(void){
 }
 
 static sm_connection_t * sm_get_connection_for_handle(uint16_t con_handle){
-    hci_connection_t * hci_con = le_hci_connection_for_handle((hci_con_handle_t) con_handle);
+    hci_connection_t * hci_con = hci_connection_for_handle((hci_con_handle_t) con_handle);
     if (!hci_con) return NULL;
     return &hci_con->sm_connection;    
 }
@@ -2737,8 +2741,9 @@ void sm_just_works_confirm(uint8_t addr_type, bd_addr_t address){
     sm_run();
 }
 
-void sm_just_works_confirm1(sm_connection_t * sm_conn)
+void sm_just_works_confirm1(hci_con_handle_t con_handle)
 {
+    sm_connection_t * sm_conn = sm_get_connection_for_handle(con_handle);
     if (!sm_conn) return;     // wrong connection
 
     sm_puts("sm_just_works_confirm...\n");
@@ -2800,6 +2805,7 @@ void gap_random_address_set(bd_addr_t addr){
     sm_run();
 }
 
+#endif
 /*
  * @brief Set Advertisement Paramters
  * @param adv_int_min
@@ -2814,10 +2820,10 @@ void gap_random_address_set(bd_addr_t addr){
  */
 void gap_advertisements_set_params(uint16_t adv_int_min, uint16_t adv_int_max, uint8_t adv_type,
     uint8_t direct_address_typ, bd_addr_t direct_address, uint8_t channel_map, uint8_t filter_policy){
+    puts("gap_advertisements_set_params\n");
     hci_le_advertisements_set_params(adv_int_min, adv_int_max, adv_type, gap_random_adress_type,
         direct_address_typ, direct_address, channel_map, filter_policy);
 }
 
 
-#endif
 

@@ -54,6 +54,7 @@
 ./code/btstack/Host/include/classic/btstack_link_key_db.h
 ./code/btstack/Host/include/common/btstack_defines.h
 ./code/btstack/Host/include/common/btstack_event.h
+./code/btstack/Host/include/common/gap.h
 ./code/btstack/Host/include/common/hci.h
 ./code/btstack/Host/include/common/hci_cmds.h
 ./code/btstack/Host/include/common/l2cap.h
@@ -62,9 +63,10 @@
 ./code/btstack/Host/include/common/utils.h
 ./code/btstack/LL_TS_4_2_1_hci_test.c
 ./code/btstack/LL_TS_4_2_1_hci_test.h
+./code/btstack/Profile/BLE/ancs_client.c
 ./code/btstack/Profile/BLE/gatt_client.c
 ./code/btstack/Profile/include/ble/ad_parser.h
-./code/btstack/Profile/include/ble/gap.h
+./code/btstack/Profile/include/ble/ancs_client.h
 ./code/btstack/Profile/include/ble/gap_le.h
 ./code/btstack/Profile/include/ble/gatt_client.h
 ./code/btstack/Protocol/BLE/att.c
@@ -130,5 +132,8 @@
 ./code/os/spin_lock.c
 ./code/os/sys_timer.c
 ./code/os/thread.c
+./code/user/ble/ancs_client_demo.c
+./code/user/ble/ble_bqb_test.c
 ./code/user/ble/ble_peripheral_test.c
+./code/user/include/ble/ancs_client_demo.h
 ./code/user/include/common/btstack-config.h
